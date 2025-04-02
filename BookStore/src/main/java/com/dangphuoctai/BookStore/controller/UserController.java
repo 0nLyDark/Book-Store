@@ -1,0 +1,60 @@
+package com.dangphuoctai.BookStore.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.dangphuoctai.BookStore.config.AppConstants;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
+import com.dangphuoctai.BookStore.payloads.response.UserResponse;
+import com.dangphuoctai.BookStore.service.UserService;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/public/users/email/{email}")
+    public ResponseEntity<UserDTO> getUserByEmail(@PathVariable String email) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String emailUser = jwt.getClaim("email");
+        String roleUser = jwt.getClaim("scope");
+        if (!roleUser.contains("ADMIN") && !emailUser.equals(email)) {
+            throw new AccessDeniedException("You don't have permission to access this resource");
+        }
+        UserDTO userDTO = userService.getUserByEmail(email);
+
+        return new ResponseEntity<UserDTO>(userDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/admin/users")
+    public ResponseEntity<UserResponse> getAllUser(
+            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+            @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+            @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_USERS_BY, required = false) String sortBy,
+            @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
+
+        UserResponse userResponse = userService.getAllUsers(
+                pageNumber == 0 ? pageNumber : pageNumber - 1,
+                pageSize,
+                "id".equals(sortBy) ? "userId" : sortBy,
+                sortOrder);
+        return new ResponseEntity<UserResponse>(userResponse, HttpStatus.OK);
+    }
+
+}

@@ -1,0 +1,64 @@
+package com.dangphuoctai.BookStore.entity;
+
+import java.time.LocalDateTime;
+
+import com.dangphuoctai.BookStore.enums.AccountType;
+import com.dangphuoctai.BookStore.enums.PostType;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Entity
+@Table(name = "posts")
+@NoArgsConstructor
+@AllArgsConstructor
+public class Post {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long postId;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false, unique = true)
+    private String slug;
+
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'POST'")
+    private PostType type = PostType.POST;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean status;
+
+    @ManyToOne
+    @JoinColumn(name = "topic_id")
+    private Topic topic;
+
+    @OneToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+    @OneToOne
+    @JoinColumn(name = "update_by")
+    private User updateBy;
+    @Column(nullable = false)
+    LocalDateTime createdAt;
+    @Column(nullable = false)
+    LocalDateTime updatedAt;
+
+}

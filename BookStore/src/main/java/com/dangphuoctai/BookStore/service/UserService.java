@@ -1,0 +1,13 @@
+package com.dangphuoctai.BookStore.service;
+
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
+import com.dangphuoctai.BookStore.payloads.response.UserResponse;
+
+public interface UserService {
+    // UserDTO getUserById(Long userId);
+
+    UserDTO getUserByEmail(String email);
+
+    UserResponse getAllUsers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+
+}

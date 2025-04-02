@@ -1,0 +1,26 @@
+package com.dangphuoctai.BookStore.config;
+
+public class AppConstants {
+    public static final String PAGE_NUMBER = "0";
+    public static final String PAGE_SIZE = "5";
+    public static final String SORT_CATEGORIES_BY = "categoryId";
+    public static final String SORT_PRODUCTS_BY = "productId";
+    public static final String SORT_USERS_BY = "userId";
+    public static final String SORT_ORDERS_BY = "totalAmount";
+    public static final String SORT_DIR = "asc";
+    public static final Long ADMIN_ID = 101L;
+    public static final Long USER_ID = 102L;
+    public static final Long STAFF_ID = 103L;
+    public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
+    public static final String[] PUBLIC_URLS = { "/v3/api-docs/**", "/swagger-ui/**", "/api/register/**",
+            "/api/auth/login",
+            "/api/auth/verify/**",
+            "/api/public/categories/**",
+            "/api/public/products/**",
+            "/api/public/products/image/**",
+            "api/public/payment/create_payment/**" };
+    public static final String[] USER_URLS = { "/api/public/**" };
+    public static final String[] ADMIN_URLS = { "/api/admin/**" };
+    public static final String[] STAFF_URLS = { "/api/staff/**" };
+
+}
