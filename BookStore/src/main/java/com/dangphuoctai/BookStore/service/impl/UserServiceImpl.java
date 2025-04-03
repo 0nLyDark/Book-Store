@@ -12,10 +12,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dangphuoctai.BookStore.entity.Address;
 import com.dangphuoctai.BookStore.entity.User;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
-import com.dangphuoctai.BookStore.payloads.dto.AddressDTO;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
 import com.dangphuoctai.BookStore.payloads.response.UserResponse;
 import com.dangphuoctai.BookStore.repository.AddressRepo;

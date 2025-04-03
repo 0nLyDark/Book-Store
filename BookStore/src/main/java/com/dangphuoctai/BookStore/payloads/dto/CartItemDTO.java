@@ -1,7 +1,5 @@
 package com.dangphuoctai.BookStore.payloads.dto;
 
-import com.dangphuoctai.BookStore.entity.Product;
-
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

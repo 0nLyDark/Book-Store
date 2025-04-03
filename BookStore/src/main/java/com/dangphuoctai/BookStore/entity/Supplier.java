@@ -35,7 +35,7 @@ public class Supplier {
     @Column(nullable = false)
     private String supplierName;
 
-    @NaturalId
+    @Column(nullable = false, unique = true)
     private String slug;
 
     @Email

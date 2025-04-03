@@ -39,7 +39,6 @@ public class Topic {
     @Size(min = 3, message = "Topic name must contain atleast 3 characters")
     private String topicName;
 
-    @NaturalId
     @Column(nullable = false, unique = true)
     private String slug;
 
@@ -51,17 +50,14 @@ public class Topic {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean status;
 
-    @OneToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-
-    @OneToOne
-    @JoinColumn(name = "update_by")
-    private User updateBy;
+    @Column(nullable = false)
+    private Long createdBy;
+    @Column(nullable = false)
+    private Long updateBy;
 
     @Column(nullable = false)
-    LocalDateTime createdAt;
+    private LocalDateTime createdAt;
     @Column(nullable = false)
-    LocalDateTime updatedAt;
+    private LocalDateTime updatedAt;
 
 }

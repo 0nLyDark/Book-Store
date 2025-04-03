@@ -111,15 +111,23 @@ public class JWTUtil {
 
     public OtpDTO extractCodeOTP(String code) {
         try {
+            JWSVerifier verifier = new MACVerifier(jwt_key.getBytes());
+
             SignedJWT signedJWT = SignedJWT.parse(code);
+
+            boolean verified = signedJWT.verify(verifier);
+            if (!verified) {
+                throw new RuntimeException("Error while verifying code Otp");
+            }
+
             JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
 
             OtpDTO otpDTO = new OtpDTO();
             otpDTO.setEmail(claims.getClaimAsString("email"));
             otpDTO.setCode(claims.getClaimAsString("otp"));
             return otpDTO;
-        } catch (ParseException e) {
-            throw new RuntimeException("Error while verifying JWT", e);
+        } catch (ParseException | JOSEException e) {
+            throw new RuntimeException("Error while verifying code Otp", e);
         }
     }
 }
