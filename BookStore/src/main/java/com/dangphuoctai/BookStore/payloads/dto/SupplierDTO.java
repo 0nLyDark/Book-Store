@@ -9,15 +9,17 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TopicDTO {
-    private Long topicId;
-    private String topicName;
+public class SupplierDTO {
+    private Long supplierId;
+    private String supplierName;
     private String slug;
-    private String description;
+    private String email;
+    private String address;
+    private String mobieNumber;
     private Boolean status;
+
     private Long createdBy;
     private Long updatedBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
 }

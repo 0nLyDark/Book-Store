@@ -69,7 +69,7 @@ public class PostController {
     public ResponseEntity<PostDTO> updatePost(@RequestBody PostDTO post) {
         PostDTO postDTO = postService.updatePost(post);
 
-        return new ResponseEntity<PostDTO>(postDTO, HttpStatus.ACCEPTED);
+        return new ResponseEntity<PostDTO>(postDTO, HttpStatus.OK);
     }
 
     @DeleteMapping("/admin/posts/{postId}")

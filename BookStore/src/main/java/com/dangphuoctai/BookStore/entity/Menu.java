@@ -60,13 +60,11 @@ public class Menu {
     @JsonManagedReference
     private List<Menu> menuChildren;
 
-    @OneToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
+    @Column(nullable = false)
+    private Long createdBy;
 
-    @OneToOne
-    @JoinColumn(name = "update_by")
-    private User updateBy;
+    @Column(nullable = false)
+    private Long updatedBy;
 
     @Column(nullable = false)
     LocalDateTime createdAt;

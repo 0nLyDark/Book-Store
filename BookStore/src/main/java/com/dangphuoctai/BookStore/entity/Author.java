@@ -1,5 +1,6 @@
 package com.dangphuoctai.BookStore.entity;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,15 +34,25 @@ public class Author {
     @Column(nullable = false, unique = true)
     private String authorName;
 
-    @Column(nullable = false, unique = true)
-    private String slug;
-
     private String image;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false)
+    private Boolean status;
+
     @ManyToMany(mappedBy = "authors", cascade = { CascadeType.ALL })
     private List<Product> products = new ArrayList<>();
+
+    @Column(nullable = false)
+    private Long createdBy;
+    @Column(nullable = false)
+    private Long updatedBy;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
 }

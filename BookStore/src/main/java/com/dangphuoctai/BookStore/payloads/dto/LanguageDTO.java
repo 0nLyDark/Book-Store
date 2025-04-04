@@ -7,17 +7,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class TopicDTO {
-    private Long topicId;
-    private String topicName;
-    private String slug;
-    private String description;
+@NoArgsConstructor
+public class LanguageDTO {
+    private Long languageId;
+    private String name;
     private Boolean status;
+
     private Long createdBy;
     private Long updatedBy;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
 
 }

@@ -20,6 +20,7 @@ import com.dangphuoctai.BookStore.payloads.APIResponse;
 
 @RestControllerAdvice
 public class MyGlobalExceptionHandler {
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<APIResponse> myResourceNotFoundException(ResourceNotFoundException e) {
         String message = e.getMessage();
@@ -93,5 +94,11 @@ public class MyGlobalExceptionHandler {
         APIResponse res = new APIResponse(e.getMessage(), false);
 
         return new ResponseEntity<APIResponse>(res, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<APIResponse> handleGlobalException(Exception e) {
+        APIResponse res = new APIResponse(e.getMessage(), false);
+        return new ResponseEntity<APIResponse>(res, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

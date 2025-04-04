@@ -40,6 +40,7 @@ public class TopicServiceImpl implements TopicService {
         return modelMapper.map(topic, TopicDTO.class);
     }
 
+    @Override
     public TopicDTO getTopicBySlug(String slug) {
         Topic topic = topicRepo.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Topic", "slug", slug));
@@ -47,6 +48,7 @@ public class TopicServiceImpl implements TopicService {
         return modelMapper.map(topic, TopicDTO.class);
     }
 
+    @Override
     public TopicResponse getAllTopic(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
@@ -67,6 +69,7 @@ public class TopicServiceImpl implements TopicService {
         return topicResponse;
     }
 
+    @Override
     public TopicDTO createTopic(TopicDTO topicDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
@@ -77,7 +80,7 @@ public class TopicServiceImpl implements TopicService {
         topic.setDescription(topicDTO.getDescription());
         topic.setStatus(false);
         topic.setCreatedBy(userId);
-        topic.setUpdateBy(userId);
+        topic.setUpdatedBy(userId);
         topic.setCreatedAt(LocalDateTime.now());
         topic.setUpdatedAt(LocalDateTime.now());
         topicRepo.save(topic);
@@ -85,6 +88,7 @@ public class TopicServiceImpl implements TopicService {
         return modelMapper.map(topic, TopicDTO.class);
     }
 
+    @Override
     public TopicDTO updateTopic(TopicDTO topicDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
@@ -95,18 +99,19 @@ public class TopicServiceImpl implements TopicService {
         topic.setSlug(CreateSlug.toSlug(topicDTO.getTopicName()));
         topic.setDescription(topicDTO.getDescription());
         topic.setStatus(topicDTO.getStatus());
-        topic.setUpdateBy(userId);
+        topic.setUpdatedBy(userId);
         topic.setUpdatedAt(LocalDateTime.now());
         topicRepo.save(topic);
 
         return modelMapper.map(topic, TopicDTO.class);
     }
 
+    @Override
     public String deleteTopic(Long topicId) {
         Topic topic = topicRepo.findById(topicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Topic", "topicId", topicId));
         topicRepo.delete(topic);
 
-        return "Successfully delete topic";
+        return "Topic with ID: " + topicId + " deleted successfully";
     }
 }

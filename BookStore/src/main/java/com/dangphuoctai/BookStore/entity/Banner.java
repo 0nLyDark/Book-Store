@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,4 +32,14 @@ public class Banner {
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean status;
+
+    @Column(nullable = false)
+    private Long createdBy;
+    @Column(nullable = false)
+    private Long updatedBy;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 }

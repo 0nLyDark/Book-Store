@@ -1,5 +1,6 @@
 package com.dangphuoctai.BookStore.entity;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +22,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -49,13 +51,23 @@ public class Category {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id")
     @JacksonInject
-    private Category categoryParent;
+    private Category parent;
 
-    @OneToMany(mappedBy = "categoryParent", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
     @JsonManagedReference
-    private List<Category> categoryChildren;
+    private List<Category> childrens;
 
     @ManyToMany(mappedBy = "categories", cascade = CascadeType.ALL)
     private Set<Product> products = new HashSet<>();
+
+    @Column(nullable = false)
+    private Long createdBy;
+    @Column(nullable = false)
+    private Long updatedBy;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
 }

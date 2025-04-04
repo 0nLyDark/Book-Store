@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class TopicControlle {
+public class TopicController {
 
     @Autowired
     private TopicService topicService;
@@ -70,7 +70,7 @@ public class TopicControlle {
     public ResponseEntity<TopicDTO> updateTopic(@RequestBody TopicDTO topic) {
         TopicDTO topicDTO = topicService.updateTopic(topic);
 
-        return new ResponseEntity<TopicDTO>(topicDTO, HttpStatus.ACCEPTED);
+        return new ResponseEntity<TopicDTO>(topicDTO, HttpStatus.OK);
     }
 
     @DeleteMapping("/admin/topics/{topicId}")

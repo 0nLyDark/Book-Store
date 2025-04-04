@@ -2,22 +2,24 @@ package com.dangphuoctai.BookStore.payloads.dto;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class TopicDTO {
-    private Long topicId;
-    private String topicName;
-    private String slug;
+@NoArgsConstructor
+public class AuthorDTO {
+    private Long authorId;
+    private String authorName;
+    private String image;
     private String description;
     private Boolean status;
+
     private Long createdBy;
     private Long updatedBy;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
 }

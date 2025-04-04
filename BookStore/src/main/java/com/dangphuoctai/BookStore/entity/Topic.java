@@ -53,7 +53,7 @@ public class Topic {
     @Column(nullable = false)
     private Long createdBy;
     @Column(nullable = false)
-    private Long updateBy;
+    private Long updatedBy;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

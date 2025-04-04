@@ -45,17 +45,19 @@ public class Supplier {
 
     private String mobieNumber;
 
+    @Column(nullable = false)
+    private Boolean status = true;
+
     @OneToMany(mappedBy = "supplier", cascade = { CascadeType.ALL })
     private List<Product> products = new ArrayList<>();
 
-    @OneToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-    @OneToOne
-    @JoinColumn(name = "update_by")
-    private User updateBy;
     @Column(nullable = false)
-    LocalDateTime createdAt;
+    private Long createdBy;
     @Column(nullable = false)
-    LocalDateTime updatedAt;
+    private Long updatedBy;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 }

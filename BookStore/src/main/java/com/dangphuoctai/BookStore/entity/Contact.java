@@ -26,17 +26,23 @@ public class Contact {
     private Long contactId;
 
     @Email
+    @Column(nullable = false)
     private String email;
-    
+
+    @Column(nullable = false)
     @Size(min = 10, max = 10, message = "Delivery phone must be exactly 10 characters")
     private String mobieNumber;
 
     @NotBlank
+    @Column(nullable = false)
     private String title;
 
     @NotBlank
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    @Column(nullable = false)
+    private Boolean isRead = false;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
