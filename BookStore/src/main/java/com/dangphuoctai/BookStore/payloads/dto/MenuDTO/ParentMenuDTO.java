@@ -1,4 +1,4 @@
-package com.dangphuoctai.BookStore.payloads.dto.CategoryDTO;
+package com.dangphuoctai.BookStore.payloads.dto.MenuDTO;
 
 import java.util.List;
 
@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ParentCategoryDTO extends CategoryDTO {
+public class ParentMenuDTO extends MenuDTO {
 
-    private List<CategoryDTO> childrens;
+    private List<MenuDTO> childrens;
+
 }

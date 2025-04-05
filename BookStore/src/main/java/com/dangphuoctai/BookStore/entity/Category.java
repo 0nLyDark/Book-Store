@@ -1,11 +1,10 @@
 package com.dangphuoctai.BookStore.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.hibernate.annotations.NaturalId;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -22,7 +21,6 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.AssertTrue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,10 +36,9 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long categoryId;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String categoryName;
 
-    @NaturalId
     @Column(nullable = false, unique = true)
     private String slug;
 
@@ -50,11 +47,9 @@ public class Category {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id")
-    @JacksonInject
     private Category parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-    @JsonManagedReference
     private List<Category> childrens;
 
     @ManyToMany(mappedBy = "categories", cascade = CascadeType.ALL)

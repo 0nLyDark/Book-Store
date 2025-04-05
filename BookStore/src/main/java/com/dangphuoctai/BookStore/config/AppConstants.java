@@ -8,12 +8,13 @@ public class AppConstants {
     public static final String SORT_USERS_BY = "userId";
     public static final String SORT_TOPICS_BY = "topicId";
     public static final String SORT_POSTS_BY = "postId";
-    public static final String SORT_BANNERS_BY = "bannerId";
     public static final String SORT_AUTHORS_BY = "authorId";
     public static final String SORT_LANGUAGES_BY = "languageId";
     public static final String SORT_CONTACTS_BY = "contactId";
     public static final String SORT_PUBLISHERS_BY = "publisherId";
     public static final String SORT_SUPPLIERS_BY = "supplierId";
+    public static final String SORT_BANNERS_BY = "bannerId";
+    public static final String SORT_MENUS_BY = "menuId";
 
     public static final String SORT_ORDERS_BY = "totalAmount";
     public static final String SORT_DIR = "asc";
@@ -25,6 +26,7 @@ public class AppConstants {
             "/api/auth/login",
             "/api/auth/verify/**",
             "/api/public/banners/**",
+            "/api/public/menus/**",
             "/api/public/topics/**",
             "/api/public/posts/**",
             "/api/public/authors/**",
@@ -32,7 +34,6 @@ public class AppConstants {
             "/api/public/contacts",
             "/api/public/publishers",
             "/api/public/suppliers",
-
             "/api/public/categories/**",
             "/api/public/products/**",
             "/api/public/products/image/**",

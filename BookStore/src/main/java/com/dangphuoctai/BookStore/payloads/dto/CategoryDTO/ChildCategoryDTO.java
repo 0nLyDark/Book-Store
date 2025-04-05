@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.payloads.dto.CategoryDTO;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,9 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChildCategoryDTO {
-    private Long categoryId;
-    private String categoryName;
-    private String slug;
-    private Boolean status;
+public class ChildCategoryDTO extends CategoryDTO {
+
+    private CategoryDTO parent;
 }

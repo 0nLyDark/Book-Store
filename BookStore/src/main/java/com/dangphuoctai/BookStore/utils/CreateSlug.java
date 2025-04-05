@@ -10,7 +10,7 @@ public class CreateSlug {
 
         // Chuyển thành chữ thường và chuẩn hóa chuỗi
         String slug = Normalizer.normalize(input, Normalizer.Form.NFD);
-
+        slug = slug.replaceAll("đ|Đ", "d");
         // Loại bỏ dấu tiếng Việt và các ký tự đặc biệt
         slug = slug.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
 

@@ -46,19 +46,17 @@ public class Menu {
     private MenuPosition position;
 
     @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
-    private int sortOrder;
+    private int sortOrder = 0;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean status;
+    private Boolean status = false;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id")
-    @JsonBackReference
-    private Menu menuParent;
+    private Menu parent;
 
-    @OneToMany(mappedBy = "menuParent", cascade = CascadeType.ALL)
-    @JsonManagedReference
-    private List<Menu> menuChildren;
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+    private List<Menu> childrens;
 
     @Column(nullable = false)
     private Long createdBy;
@@ -67,7 +65,7 @@ public class Menu {
     private Long updatedBy;
 
     @Column(nullable = false)
-    LocalDateTime createdAt;
+    private LocalDateTime createdAt;
     @Column(nullable = false)
-    LocalDateTime updatedAt;
+    private LocalDateTime updatedAt;
 }
