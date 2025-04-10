@@ -15,7 +15,7 @@ public class AppConstants {
     public static final String SORT_SUPPLIERS_BY = "supplierId";
     public static final String SORT_BANNERS_BY = "bannerId";
     public static final String SORT_MENUS_BY = "menuId";
-
+    public static final String SORT_CARTS_BY = "cartId";
     public static final String SORT_ORDERS_BY = "totalAmount";
     public static final String SORT_DIR = "asc";
     public static final Long ADMIN_ID = 101L;
@@ -36,7 +36,7 @@ public class AppConstants {
             "/api/public/suppliers",
             "/api/public/categories/**",
             "/api/public/products/**",
-            "/api/public/products/image/**",
+            "/api/public/file/**",
             "api/public/payment/create_payment/**" };
     public static final String[] USER_URLS = { "/api/public/**" };
     public static final String[] ADMIN_URLS = { "/api/admin/**" };

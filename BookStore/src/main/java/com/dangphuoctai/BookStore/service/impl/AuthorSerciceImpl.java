@@ -26,7 +26,6 @@ import com.dangphuoctai.BookStore.payloads.response.AuthorResponse;
 import com.dangphuoctai.BookStore.repository.AuthorRepo;
 import com.dangphuoctai.BookStore.service.AuthorService;
 import com.dangphuoctai.BookStore.service.FileService;
-import com.dangphuoctai.BookStore.utils.CreateSlug;
 
 @Service
 public class AuthorSerciceImpl implements AuthorService {

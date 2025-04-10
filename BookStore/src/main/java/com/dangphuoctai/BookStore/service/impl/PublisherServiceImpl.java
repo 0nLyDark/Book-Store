@@ -21,7 +21,6 @@ import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
 import com.dangphuoctai.BookStore.payloads.response.PublisherResponse;
 import com.dangphuoctai.BookStore.repository.PublisherRepo;
 import com.dangphuoctai.BookStore.service.PublisherService;
-import com.dangphuoctai.BookStore.utils.CreateSlug;
 
 @Service
 public class PublisherServiceImpl implements PublisherService {

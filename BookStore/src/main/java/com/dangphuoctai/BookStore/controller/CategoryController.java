@@ -11,6 +11,8 @@ import com.dangphuoctai.BookStore.service.CategoryService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,20 @@ public class CategoryController {
     @GetMapping("/public/categories/{categoryId}")
     public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long categoryId) {
         CategoryDTO categoryDTO = categoryService.getCategoryById(categoryId);
+
+        return new ResponseEntity<CategoryDTO>(categoryDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/categories/ids")
+    public ResponseEntity<List<CategoryDTO>> getCategoryBySlug(@RequestParam(value = "id") List<Long> categoryIds) {
+        List<CategoryDTO> categoryDTOs = categoryService.getManyCategoryById(categoryIds);
+
+        return new ResponseEntity<List<CategoryDTO>>(categoryDTOs, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/categories/slug/{slug}")
+    public ResponseEntity<CategoryDTO> getCategoryBySlug(@PathVariable String slug) {
+        CategoryDTO categoryDTO = categoryService.getCategoryBySlug(slug);
 
         return new ResponseEntity<CategoryDTO>(categoryDTO, HttpStatus.OK);
     }
@@ -63,6 +79,9 @@ public class CategoryController {
 
     @PutMapping("/staff/categories")
     public ResponseEntity<CategoryDTO> updateCategory(@RequestBody ChildCategoryDTO category) {
+        System.out.println(category.getCategoryId());
+        System.out.println(category.getCategoryName());
+
         CategoryDTO categoryDTO = categoryService.updateCategory(category);
 
         return new ResponseEntity<CategoryDTO>(categoryDTO, HttpStatus.OK);

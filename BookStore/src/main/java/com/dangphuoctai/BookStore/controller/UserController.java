@@ -28,6 +28,27 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @GetMapping("/public/users/infor")
+    public ResponseEntity<UserDTO> getUserInfor() {
+        UserDTO userDTO = userService.getUserInfor();
+        return new ResponseEntity<UserDTO>(userDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/users/{userId}")
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long userId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        Long Id = jwt.getClaim("userId");
+        String role = jwt.getClaim("scope");
+        boolean isAdmin = role.contains("ADMIN");
+        if (userId != Id && !isAdmin) {
+            throw new AccessDeniedException("You are not authorized to access this resource");
+        }
+        UserDTO userDTO = userService.getUserById(userId);
+
+        return new ResponseEntity<UserDTO>(userDTO, HttpStatus.OK);
+    }
+
     @GetMapping("/public/users/email/{email}")
     public ResponseEntity<UserDTO> getUserByEmail(@PathVariable String email) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

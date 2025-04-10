@@ -6,9 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JacksonInject;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -53,7 +50,7 @@ public class Category {
     private List<Category> childrens;
 
     @ManyToMany(mappedBy = "categories", cascade = CascadeType.ALL)
-    private Set<Product> products = new HashSet<>();
+    private List<Product> products = new ArrayList<>();
 
     @Column(nullable = false)
     private Long createdBy;

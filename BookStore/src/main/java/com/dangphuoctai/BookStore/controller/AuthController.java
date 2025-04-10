@@ -1,21 +1,15 @@
 package com.dangphuoctai.BookStore.controller;
 
-import java.security.SecureRandom;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dangphuoctai.BookStore.entity.OTP;
-import com.dangphuoctai.BookStore.entity.User;
 import com.dangphuoctai.BookStore.exceptions.UserNotFoundException;
 import com.dangphuoctai.BookStore.payloads.EmailDetails;
 import com.dangphuoctai.BookStore.payloads.RequestLogin;

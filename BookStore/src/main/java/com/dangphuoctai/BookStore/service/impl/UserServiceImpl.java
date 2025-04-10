@@ -9,6 +9,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +36,26 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Override
+    public UserDTO getUserInfor() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        Long userId = jwt.getClaim("userId");
+
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
+
+        return modelMapper.map(user, UserDTO.class);
+    }
+
+    @Override
+    public UserDTO getUserById(Long userId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
+
+        return modelMapper.map(user, UserDTO.class);
+    }
 
     @Override
     public UserDTO getUserByEmail(String email) {

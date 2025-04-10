@@ -4,7 +4,10 @@ import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
 import com.dangphuoctai.BookStore.payloads.response.UserResponse;
 
 public interface UserService {
-    // UserDTO getUserById(Long userId);
+
+    UserDTO getUserInfor();
+
+    UserDTO getUserById(Long userId);
 
     UserDTO getUserByEmail(String email);
 

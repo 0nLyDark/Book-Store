@@ -3,14 +3,11 @@ package com.dangphuoctai.BookStore.entity;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.List;
 
-import org.hibernate.annotations.NaturalId;
-
-import com.dangphuoctai.BookStore.enums.AccountType;
-
-import jakarta.annotation.Generated;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,7 +20,6 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -58,6 +54,19 @@ public class Product {
     @Min(2000)
     private int year;
 
+    @Column(nullable = false)
+    private double price;
+
+    @Column(nullable = false)
+    private int quantity;
+    @Min(1)
+    private int pageNumber;
+
+    private int discount;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean status;
+
     @NotBlank
     @Column(columnDefinition = "TEXT")
     @Size(min = 6, message = "Product description must contain atleast 6 characters")
@@ -69,9 +78,11 @@ public class Product {
     @ManyToMany
     @JoinTable(name = "product_author", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "author_id"))
     private Set<Author> authors = new HashSet<>();
+
     @ManyToMany
     @JoinTable(name = "product_language", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "language_id"))
     private Set<Language> languages = new HashSet<>();
+
     @ManyToOne
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
@@ -79,22 +90,9 @@ public class Product {
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @Column(nullable = false)
-    private double price;
-
-    @Column(nullable = false)
-    private int quantity;
-
-    private int pageNumber;
-
-    private int discount;
-
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean status;
-
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER)
     @JoinTable(name = "product_categories", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
-    private Set<Category> categories = new HashSet<>();
+    private List<Category> categories = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     private List<Review> reviews = new ArrayList<>();
@@ -102,22 +100,30 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER)
     private List<CartItem> cartItems = new ArrayList<>();
 
-    @OneToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-    @OneToOne
-    @JoinColumn(name = "update_by")
-    private User updateBy;
     @Column(nullable = false)
-    LocalDateTime createdAt;
+    private Long createdBy;
     @Column(nullable = false)
-    LocalDateTime updatedAt;
+    private Long updatedBy;
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
     @PrePersist
     @PreUpdate
     private void validateSave() {
-        if (categories.size() == 0) {
-            throw new IllegalArgumentException("Categories can not be Empty");
-        }
+        // if (categories.size() == 0) {
+        // throw new IllegalArgumentException("Categories can not be Empty");
+        // }
+        // if (authors.size() == 0) {
+        // throw new IllegalArgumentException("Authors can not be Empty");
+        // }
+        // if (languages.size() == 0) {
+        // throw new IllegalArgumentException("Languages can not be Empty");
+        // }
+        // if (images.size() == 0) {
+        //     throw new IllegalArgumentException("Images can not be Empty");
+        // }
+
     }
 }

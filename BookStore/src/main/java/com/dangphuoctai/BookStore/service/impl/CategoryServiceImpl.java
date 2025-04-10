@@ -26,7 +26,8 @@ import com.dangphuoctai.BookStore.repository.CategoryRepo;
 import com.dangphuoctai.BookStore.service.CategoryService;
 import com.dangphuoctai.BookStore.utils.CreateSlug;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @Transactional
 @Service
@@ -44,6 +45,19 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId", categoryId));
 
         return modelMapper.map(category, ChildCategoryDTO.class);
+    }
+
+    @Override
+    public List<CategoryDTO> getManyCategoryById(List<Long> categoryIds) {
+        List<Category> categories = categoryRepo.findAllById(categoryIds);
+        if (categories.isEmpty()) {
+            throw new ResourceNotFoundException("Category", "categoryIds", categoryIds);
+        }
+        List<CategoryDTO> categoryDTOs = categories.stream()
+                .map(category -> modelMapper.map(category, ChildCategoryDTO.class))
+                .collect(Collectors.toList());
+                
+        return categoryDTOs;
     }
 
     @Override
