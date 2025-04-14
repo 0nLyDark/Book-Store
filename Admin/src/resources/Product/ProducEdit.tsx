@@ -1,0 +1,112 @@
+import {
+  BooleanInput,
+  Edit,
+  ImageField,
+  ImageInput,
+  NumberInput,
+  ReferenceInput,
+  SelectArrayInput,
+  SelectInput,
+  SimpleForm,
+  TextInput,
+} from "react-admin";
+const ProductEdit = () => (
+  <Edit
+    transform={(data) => ({
+      ...data,
+      // categoryIds: data.categories.map((c: any) => c.categoryId), // Khi Summit
+      // authorIds: data.authors.map((c: any) => c.authorId), // Khi Summit
+      // languageIds: data.languages?.map((c: any) => c.languageId), // Khi Summit
+    })}
+  >
+    <SimpleForm
+      defaultValues={(record: any) => ({
+        ...record,
+        categoryIds: record.categories?.map((c: any) => c.categoryId), // Khi load
+        authorIds: record.authors?.map((c: any) => c.authorId), // Khi load
+        languageIds: record.languages?.map((c: any) => c.languageId), // Khi load
+      })}
+    >
+      <TextInput source="productId" label="Product ID" disabled />
+      <TextInput source="productName" label="Tên sách" required />
+      <TextInput source="isbn" label="Mã sách" required />
+      <TextInput source="size" label="Kích thước" />
+      <NumberInput
+        source="year"
+        label="Năm xuất bản"
+        min={0}
+        defaultValue={0}
+      />
+      <NumberInput
+        source="pageNumber"
+        label="Số trang"
+        min={1}
+        defaultValue={1}
+      />
+      <NumberInput source="price" label="Giá" min={0} required />
+      <NumberInput source="quantity" label="Số lượng" min={0} required />
+      <NumberInput
+        source="discount"
+        label=" % Giảm giá"
+        min={0}
+        max={100}
+        defaultValue={0}
+        required
+      />
+      <ReferenceInput source="authorIds" reference="authors" multiple>
+        <SelectArrayInput
+          optionText="authorName"
+          label="Tác giả"
+          variant="outlined"
+        />
+      </ReferenceInput>
+      <ReferenceInput source="categoryIds" reference="categories" multiple>
+        <SelectArrayInput
+          optionText="categoryName"
+          label="Danh mục"
+          variant="outlined"
+        />
+      </ReferenceInput>
+      <ReferenceInput source="languageIds" reference="languages" multiple>
+        <SelectArrayInput
+          optionText="name"
+          label="Ngôn ngữ"
+          variant="outlined"
+        />
+      </ReferenceInput>
+      <ReferenceInput source="supplier.supplierId" reference="suppliers">
+        <SelectInput
+          optionText="supplierName"
+          label="Nhà cung cấp"
+          variant="outlined"
+        />
+      </ReferenceInput>
+      <ReferenceInput source="publisher.publisherId" reference="publishers">
+        <SelectInput
+          optionText="publisherName"
+          label="Nhà sản xuất"
+          variant="outlined"
+        />
+      </ReferenceInput>
+      <BooleanInput source="status" label="Trạng thái" />
+      <ImageInput
+        source="images"
+        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif"] }}
+        placeholder={"Nhấn để tải ảnh lên"}
+        multiple
+        format={(value) =>
+          Array.isArray(value)
+            ? value.map((img: any) => ({
+                src: img.imageUrl || img.src || img, // hỗ trợ cả string hoặc object
+                title: img.title || "Ảnh hiện tại",
+              }))
+            : []
+        }
+      >
+        <ImageField source="src" title="title" />
+      </ImageInput>
+      <TextInput source="description" label="Mô tả" multiline />
+    </SimpleForm>
+  </Edit>
+);
+export default ProductEdit;
