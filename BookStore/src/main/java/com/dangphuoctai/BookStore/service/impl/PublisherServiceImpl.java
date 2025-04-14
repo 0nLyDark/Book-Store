@@ -39,6 +39,18 @@ public class PublisherServiceImpl implements PublisherService {
     }
 
     @Override
+    public List<PublisherDTO> getManyPublisherById(List<Long> publisherIds) {
+        List<Publisher> publishers = publisherRepo.findAllById(publisherIds);
+        if (publishers.size() != publisherIds.size()) {
+            throw new ResourceNotFoundException("Publisher", "publisherIds", publisherIds);
+        }
+        List<PublisherDTO> publisherDTOs = publishers.stream()
+                .map(publisher -> modelMapper.map(publisher, PublisherDTO.class)).collect(Collectors.toList());
+
+        return publisherDTOs;
+    }
+
+    @Override
     public PublisherResponse getAllPublisher(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
@@ -88,7 +100,7 @@ public class PublisherServiceImpl implements PublisherService {
                         () -> new ResourceNotFoundException("Publisher", "publisherId", publisherDTO.getPublisherId()));
         publisher.setPublisherName(publisherDTO.getPublisherName());
         publisher.setStatus(publisherDTO.getStatus());
-        
+
         publisher.setUpdatedBy(userId);
         publisher.setUpdatedAt(LocalDateTime.now());
         publisherRepo.save(publisher);

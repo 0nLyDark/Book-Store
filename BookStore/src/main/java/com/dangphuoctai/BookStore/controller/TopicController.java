@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,13 @@ public class TopicController {
         TopicDTO topicDTO = topicService.getTopicById(topicId);
 
         return new ResponseEntity<TopicDTO>(topicDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/topics/ids")
+    public ResponseEntity<List<TopicDTO>> getManyTopicById(@RequestParam(value = "id") List<Long> topicIds) {
+        List<TopicDTO> topicDTOs = topicService.getManyTopicById(topicIds);
+
+        return new ResponseEntity<List<TopicDTO>>(topicDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/public/topics/slug/{slug}")

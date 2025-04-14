@@ -41,6 +41,18 @@ public class TopicServiceImpl implements TopicService {
     }
 
     @Override
+    public List<TopicDTO> getManyTopicById(List<Long> topicIds) {
+        List<Topic> topics = topicRepo.findAllById(topicIds);
+        if (topics.isEmpty()) {
+            throw new ResourceNotFoundException("Topic", "topicIds", topicIds);
+        }
+        List<TopicDTO> topicDTOs = topics.stream()
+                .map(topic -> modelMapper.map(topic, TopicDTO.class))
+                .collect(Collectors.toList());
+        return topicDTOs;
+    }
+
+    @Override
     public TopicDTO getTopicBySlug(String slug) {
         Topic topic = topicRepo.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Topic", "slug", slug));

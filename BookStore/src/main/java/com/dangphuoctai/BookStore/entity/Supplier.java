@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,8 +40,8 @@ public class Supplier {
 
     private String mobieNumber;
 
-    @Column(nullable = false)
-    private Boolean status = true;
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean status = false;
 
     @OneToMany(mappedBy = "supplier", cascade = { CascadeType.ALL })
     private List<Product> products = new ArrayList<>();

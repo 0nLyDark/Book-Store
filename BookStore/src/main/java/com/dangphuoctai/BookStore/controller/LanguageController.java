@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.payloads.dto.LanguageDTO;
+import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
 import com.dangphuoctai.BookStore.payloads.response.LanguageResponse;
 import com.dangphuoctai.BookStore.service.LanguageService;
 
@@ -32,6 +35,14 @@ public class LanguageController {
         LanguageDTO languageDTO = languageService.getLanguageById(languageId);
 
         return new ResponseEntity<LanguageDTO>(languageDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/languages/ids")
+    public ResponseEntity<List<LanguageDTO>> getManyLanguageByIds(
+            @RequestParam(value = "id") List<Long> languageIds) {
+        List<LanguageDTO> LanguageDTOs = languageService.getManyLanguageById(languageIds);
+
+        return new ResponseEntity<List<LanguageDTO>>(LanguageDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/public/languages")

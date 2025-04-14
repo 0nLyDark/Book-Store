@@ -47,13 +47,45 @@ public class ProductController {
         return new ResponseEntity<ProductDTO>(productDTO, HttpStatus.OK);
     }
 
+    // @GetMapping("/public/products")
+    // public ResponseEntity<ProductResponse> getAllProducts(
+    // @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER,
+    // required = false) Integer pageNumber,
+    // @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE,
+    // required = false) Integer pageSize,
+    // @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_PRODUCTS_BY,
+    // required = false) String sortBy,
+    // @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR,
+    // required = false) String sortOrder) {
+    // ProductResponse productResponse = productService.getAllProducts(pageNumber ==
+    // 0 ? pageNumber : pageNumber - 1,
+    // pageSize,
+    // "id".equals(sortBy) ? "productId" : sortBy,
+    // sortOrder);
+
+    // return new ResponseEntity<ProductResponse>(productResponse, HttpStatus.OK);
+    // }
+
     @GetMapping("/public/products")
     public ResponseEntity<ProductResponse> getAllProducts(
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "isbn", required = false) String isbn,
+            @RequestParam(name = "minPrice", required = false) Double minPrice,
+            @RequestParam(name = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(name = "categoryId", required = false) Long categoryId,
+            @RequestParam(name = "authorIds", required = false) List<Long> authorIds,
+            @RequestParam(name = "languageIds", required = false) List<Long> languageIds,
+            @RequestParam(name = "supplierId", required = false) Long supplierId,
+            @RequestParam(name = "publisherId", required = false) Long publisherId,
+            @RequestParam(name = "isSale", defaultValue = "false", required = false) Boolean isSale,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_PRODUCTS_BY, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
-        ProductResponse productResponse = productService.getAllProducts(pageNumber == 0 ? pageNumber : pageNumber - 1,
+        ProductResponse productResponse = productService.getAllProducts(
+                keyword,isbn, minPrice, maxPrice, isSale,
+                categoryId, authorIds, languageIds, supplierId, publisherId,
+                pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "productId" : sortBy,
                 sortOrder);
@@ -89,6 +121,7 @@ public class ProductController {
             @RequestParam("supplierId") Long supplierId,
             @RequestParam("publisherId") Long publisherId,
             @ModelAttribute ProductDTO productDTO) throws IOException {
+
         ProductDTO createdProduct = productService.updateProduct(productDTO, images, removeImage, categoryIds,
                 authorIds,
                 languageIds, supplierId, publisherId);

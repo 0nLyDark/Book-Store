@@ -50,7 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<CategoryDTO> getManyCategoryById(List<Long> categoryIds) {
         List<Category> categories = categoryRepo.findAllById(categoryIds);
-        if (categories.isEmpty()) {
+        if (categories.size() != categoryIds.size()) {
             throw new ResourceNotFoundException("Category", "categoryIds", categoryIds);
         }
         List<CategoryDTO> categoryDTOs = categories.stream()

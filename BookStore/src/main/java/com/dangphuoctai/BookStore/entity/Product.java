@@ -23,6 +23,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -47,8 +48,11 @@ public class Product {
     @Column(nullable = false, unique = true)
     private String slug;
 
+    @Column(nullable = false, unique = true)
     private String isbn;
+
     private String weight;
+
     private String size;
 
     @Min(2000)
@@ -62,7 +66,9 @@ public class Product {
     @Min(1)
     private int pageNumber;
 
-    private int discount;
+    @Min(0)
+    @Max(100)
+    private int discount = 0;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean status;
@@ -112,18 +118,18 @@ public class Product {
     @PrePersist
     @PreUpdate
     private void validateSave() {
-        // if (categories.size() == 0) {
-        // throw new IllegalArgumentException("Categories can not be Empty");
-        // }
-        // if (authors.size() == 0) {
-        // throw new IllegalArgumentException("Authors can not be Empty");
-        // }
-        // if (languages.size() == 0) {
-        // throw new IllegalArgumentException("Languages can not be Empty");
-        // }
-        // if (images.size() == 0) {
-        //     throw new IllegalArgumentException("Images can not be Empty");
-        // }
+        if (categories.size() == 0) {
+            throw new IllegalArgumentException("Categories can not be Empty");
+        }
+        if (authors.size() == 0) {
+            throw new IllegalArgumentException("Authors can not be Empty");
+        }
+        if (languages.size() == 0) {
+            throw new IllegalArgumentException("Languages can not be Empty");
+        }
+        if (images.size() == 0) {
+            throw new IllegalArgumentException("Images can not be Empty");
+        }
 
     }
 }

@@ -72,7 +72,7 @@ public class MyGlobalExceptionHandler {
 
         String res = e.getMessage();
 
-        return new ResponseEntity<String>(res, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<String>(res, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(MissingPathVariableException.class)

@@ -1,6 +1,7 @@
 package com.dangphuoctai.BookStore.controller;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,13 @@ public class AuthorController {
         return new ResponseEntity<AuthorDTO>(authorDTO, HttpStatus.OK);
     }
 
+    @GetMapping("/public/authors/ids")
+    public ResponseEntity<List<AuthorDTO>> getManyAuthorByIds(@RequestParam(value = "id") List<Long> authorIds) {
+        List<AuthorDTO> authorDTOs = authorService.getManyAuthorById(authorIds);
+
+        return new ResponseEntity<List<AuthorDTO>>(authorDTOs, HttpStatus.OK);
+    }
+
     @GetMapping("/public/authors")
     public ResponseEntity<AuthorResponse> getAllAuthor(
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
@@ -58,6 +66,7 @@ public class AuthorController {
     @PostMapping("/staff/authors")
     public ResponseEntity<AuthorDTO> createAuthor(@RequestParam(value = "file", required = false) MultipartFile image,
             @ModelAttribute AuthorDTO author) throws IOException {
+        System.out.println("create author: " + author);
         AuthorDTO authorDTO = authorService.createAuthor(author, image);
 
         return new ResponseEntity<AuthorDTO>(authorDTO, HttpStatus.CREATED);

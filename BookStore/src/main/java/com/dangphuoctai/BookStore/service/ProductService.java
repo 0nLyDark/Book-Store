@@ -16,6 +16,12 @@ public interface ProductService {
 
         ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
+        ProductResponse getAllProducts(String keyword,String isbn, Double minPrice, Double maxPrice,
+                        Boolean isSale, Long categoryId,
+                        List<Long> authorIds, List<Long> languageIds,
+                        Long supplierId, Long publisherId,
+                        Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+
         ProductDTO createProduct(ProductDTO productDTO, List<MultipartFile> images, List<Long> categoryIds,
                         List<Long> authorIds, List<Long> languageIds, Long supplierId, Long publisherId)
                         throws IOException;

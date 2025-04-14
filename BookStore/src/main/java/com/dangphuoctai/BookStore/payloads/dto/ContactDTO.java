@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class ContactDTO {
     private Long contactId;
     private String email;
-    private String mobieNumber;
+    private String mobileNumber;
     private String title;
     private String content;
     private Boolean isRead;

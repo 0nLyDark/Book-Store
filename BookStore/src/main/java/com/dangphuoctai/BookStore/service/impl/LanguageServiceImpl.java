@@ -40,6 +40,18 @@ public class LanguageServiceImpl implements LanguageService {
     }
 
     @Override
+    public List<LanguageDTO> getManyLanguageById(List<Long> languageIds) {
+        List<Language> languages = languageRepo.findAllById(languageIds);
+        if (languages.size() != languageIds.size()) {
+            throw new ResourceNotFoundException("Language", "languageIds", languageIds);
+        }
+        List<LanguageDTO> languageDTOs = languages.stream()
+                .map(language -> modelMapper.map(language, LanguageDTO.class)).collect(Collectors.toList());
+
+        return languageDTOs;
+    }
+
+    @Override
     public LanguageResponse getAllLanguages(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();

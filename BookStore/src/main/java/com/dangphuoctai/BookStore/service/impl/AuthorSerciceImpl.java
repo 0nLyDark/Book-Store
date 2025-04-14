@@ -51,6 +51,18 @@ public class AuthorSerciceImpl implements AuthorService {
     }
 
     @Override
+    public List<AuthorDTO> getManyAuthorById(List<Long> authorIds) {
+        List<Author> authors = authorRepo.findAllById(authorIds);
+        if (authors.size() != authorIds.size()) {
+            throw new ResourceNotFoundException("Author", "authorIds", authorIds);
+        }
+        List<AuthorDTO> authorDTOs = authors.stream()
+                .map(author -> modelMapper.map(author, AuthorDTO.class)).collect(Collectors.toList());
+
+        return authorDTOs;
+    }
+
+    @Override
     public AuthorResponse getAllAuthors(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();

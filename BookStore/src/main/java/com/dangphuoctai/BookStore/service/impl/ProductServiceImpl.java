@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -27,6 +28,7 @@ import com.dangphuoctai.BookStore.entity.Publisher;
 import com.dangphuoctai.BookStore.entity.Supplier;
 import com.dangphuoctai.BookStore.enums.FileType;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
+import com.dangphuoctai.BookStore.payloads.ProductSpecification;
 import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
 import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
 import com.dangphuoctai.BookStore.payloads.response.ProductResponse;
@@ -43,7 +45,6 @@ import com.dangphuoctai.BookStore.service.ProductService;
 import com.dangphuoctai.BookStore.utils.CreateSlug;
 
 import org.springframework.transaction.annotation.Transactional;
-
 
 @Transactional
 @Service
@@ -95,6 +96,7 @@ public class ProductServiceImpl implements ProductService {
                 return modelMapper.map(product, ProductDTO.class);
         }
 
+        @Override
         public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize,
                         String sortBy, String sortOrder) {
                 Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
@@ -102,6 +104,36 @@ public class ProductServiceImpl implements ProductService {
                 Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
 
                 Page<Product> pageProducts = productRepo.findAll(pageDetails);
+                List<ProductDTO> productDTOs = pageProducts.getContent().stream()
+                                .map(product -> modelMapper.map(product, ProductDTO.class))
+                                .collect(Collectors.toList());
+
+                ProductResponse productResponse = new ProductResponse();
+                productResponse.setContent(productDTOs);
+                productResponse.setPageNumber(pageProducts.getNumber());
+                productResponse.setPageSize(pageProducts.getSize());
+                productResponse.setTotalElements(pageProducts.getTotalElements());
+                productResponse.setTotalPages(pageProducts.getTotalPages());
+                productResponse.setLastPage(pageProducts.isLast());
+
+                return productResponse;
+        }
+
+        @Override
+        public ProductResponse getAllProducts(String keyword, String isbn, Double minPrice, Double maxPrice,
+                        Boolean isSale, Long categoryId,
+                        List<Long> authorIds, List<Long> languageIds,
+                        Long supplierId, Long publisherId,
+                        Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+                Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
+                                : Sort.by(sortBy).descending();
+                Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+
+                Specification<Product> productSpecification = ProductSpecification.filter(keyword, isbn,
+                                minPrice, maxPrice, isSale, null, categoryId, null,
+                                authorIds, languageIds, supplierId, publisherId);
+
+                Page<Product> pageProducts = productRepo.findAll(productSpecification, pageDetails);
                 List<ProductDTO> productDTOs = pageProducts.getContent().stream()
                                 .map(product -> modelMapper.map(product, ProductDTO.class))
                                 .collect(Collectors.toList());
@@ -204,14 +236,17 @@ public class ProductServiceImpl implements ProductService {
                                 .filter(file -> !safeRemoveImage.contains(file.getFileId()))
                                 .collect(Collectors.toList());
                 // Set List Image
-                for (MultipartFile image : images) {
-                        String fileName = fileService.uploadImage(path, image);
-                        File file = new File();
-                        file.setFileName(fileName);
-                        file.setType(FileType.IMAGE);
-                        file.setProduct(product);
-                        updatedImages.add(file);
+                if (images != null) {
+                        for (MultipartFile image : images) {
+                                String fileName = fileService.uploadImage(path, image);
+                                File file = new File();
+                                file.setFileName(fileName);
+                                file.setType(FileType.IMAGE);
+                                file.setProduct(product);
+                                updatedImages.add(file);
+                        }
                 }
+
                 product.setImages(updatedImages);
                 // Set Categories
                 product.setCategories(categoryRepo.findAllById(categoryIds));

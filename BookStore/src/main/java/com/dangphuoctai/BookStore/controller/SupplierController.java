@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
+import com.dangphuoctai.BookStore.payloads.dto.AuthorDTO;
 import com.dangphuoctai.BookStore.payloads.dto.SupplierDTO;
 import com.dangphuoctai.BookStore.payloads.response.SupplierResponse;
 import com.dangphuoctai.BookStore.service.SupplierService;
@@ -32,6 +35,13 @@ public class SupplierController {
         SupplierDTO supplierDTO = supplierService.getSupplierById(supplierId);
 
         return new ResponseEntity<SupplierDTO>(supplierDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/suppliers/ids")
+    public ResponseEntity<List<SupplierDTO>> getManySupplierByIds(@RequestParam(value = "id") List<Long> supplierIds) {
+        List<SupplierDTO> supplierDTOs = supplierService.getManySupplierById(supplierIds);
+
+        return new ResponseEntity<List<SupplierDTO>>(supplierDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/public/suppliers/slug/{slug}")

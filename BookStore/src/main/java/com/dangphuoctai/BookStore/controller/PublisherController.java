@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
+import com.dangphuoctai.BookStore.payloads.dto.SupplierDTO;
 import com.dangphuoctai.BookStore.payloads.response.PublisherResponse;
 import com.dangphuoctai.BookStore.service.PublisherService;
 
@@ -32,6 +35,14 @@ public class PublisherController {
         PublisherDTO publisherDTO = publisherService.getPublisherById(publisherId);
 
         return new ResponseEntity<PublisherDTO>(publisherDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/publishers/ids")
+    public ResponseEntity<List<PublisherDTO>> getManyPublisherByIds(
+            @RequestParam(value = "id") List<Long> publisherIds) {
+        List<PublisherDTO> PublisherDTOs = publisherService.getManyPublisherById(publisherIds);
+
+        return new ResponseEntity<List<PublisherDTO>>(PublisherDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/public/publishers")

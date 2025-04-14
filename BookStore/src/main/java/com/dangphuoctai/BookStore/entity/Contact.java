@@ -31,7 +31,7 @@ public class Contact {
 
     @Column(nullable = false)
     @Size(min = 10, max = 10, message = "Delivery phone must be exactly 10 characters")
-    private String mobieNumber;
+    private String mobileNumber;
 
     @NotBlank
     @Column(nullable = false)

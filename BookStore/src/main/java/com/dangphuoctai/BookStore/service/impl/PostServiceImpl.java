@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.dangphuoctai.BookStore.entity.Post;
 import com.dangphuoctai.BookStore.entity.Topic;
+import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.dto.PostDTO;
 import com.dangphuoctai.BookStore.payloads.response.PostResponse;
@@ -80,6 +81,10 @@ public class PostServiceImpl implements PostService {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 Jwt jwt = (Jwt) authentication.getPrincipal();
                 Long userId = jwt.getClaim("userId");
+                // Check if the topic exists
+                if (postDTO.getTopic() == null || postDTO.getTopic().getTopicId() == null) {
+                        throw new APIException(" Topic ID is required to create a post.");
+                }
                 Topic topic = topicRepo.findById(postDTO.getTopic().getTopicId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Topic", "topicId",
                                                 postDTO.getTopic().getTopicId()));

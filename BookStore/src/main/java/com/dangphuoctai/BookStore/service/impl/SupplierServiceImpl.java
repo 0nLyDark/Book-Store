@@ -41,6 +41,18 @@ public class SupplierServiceImpl implements SupplierService {
     }
 
     @Override
+    public List<SupplierDTO> getManySupplierById(List<Long> supplierIds) {
+        List<Supplier> suppliers = supplierRepo.findAllById(supplierIds);
+        if (suppliers.size() != supplierIds.size()) {
+            throw new ResourceNotFoundException("Supplier", "supplierIds", supplierIds);
+        }
+        List<SupplierDTO> supplierDTOs = suppliers.stream()
+                .map(supplier -> modelMapper.map(supplier, SupplierDTO.class)).collect(Collectors.toList());
+
+        return supplierDTOs;
+    }
+
+    @Override
     public SupplierDTO getSupplierBySlug(String slug) {
         Supplier supplier = supplierRepo.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Supplier", "slug", slug));
@@ -81,7 +93,6 @@ public class SupplierServiceImpl implements SupplierService {
         supplier.setEmail(supplierDTO.getEmail());
         supplier.setMobieNumber(supplierDTO.getMobieNumber());
         supplier.setAddress(supplierDTO.getAddress());
-        supplier.setStatus(supplierDTO.getStatus());
 
         supplier.setCreatedBy(userId);
         supplier.setUpdatedBy(userId);

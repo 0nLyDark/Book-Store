@@ -18,6 +18,7 @@ import com.dangphuoctai.BookStore.payloads.dto.ContactDTO;
 import com.dangphuoctai.BookStore.payloads.response.ContactResponse;
 import com.dangphuoctai.BookStore.service.ContactService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -51,7 +52,7 @@ public class ContactController {
     }
 
     @PostMapping("/public/contacts")
-    public ResponseEntity<ContactDTO> createContact(@RequestBody ContactDTO contact) {
+    public ResponseEntity<ContactDTO> createContact(@Valid @RequestBody ContactDTO contact) {
         ContactDTO contactDTO = contactService.createContact(contact);
 
         return new ResponseEntity<ContactDTO>(contactDTO, HttpStatus.CREATED);

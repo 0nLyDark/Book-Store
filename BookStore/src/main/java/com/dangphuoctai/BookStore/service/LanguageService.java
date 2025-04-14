@@ -1,11 +1,14 @@
 package com.dangphuoctai.BookStore.service;
 
+import java.util.List;
 
 import com.dangphuoctai.BookStore.payloads.dto.LanguageDTO;
 import com.dangphuoctai.BookStore.payloads.response.LanguageResponse;
 
 public interface LanguageService {
     LanguageDTO getLanguageById(Long languageId);
+
+    List<LanguageDTO> getManyLanguageById(List<Long> languageIds);
 
     LanguageResponse getAllLanguages(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 

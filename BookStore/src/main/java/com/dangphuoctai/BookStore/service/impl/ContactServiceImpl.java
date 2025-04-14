@@ -32,6 +32,8 @@ public class ContactServiceImpl implements ContactService {
     public ContactDTO getContactById(Long contactId) {
         Contact contact = contactRepo.findById(contactId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contact", "contactId", contactId));
+        contact.setIsRead(true);
+        contactRepo.save(contact);
 
         return modelMapper.map(contact, ContactDTO.class);
     }
@@ -62,7 +64,7 @@ public class ContactServiceImpl implements ContactService {
     public ContactDTO createContact(ContactDTO contactDTO) {
         Contact contact = new Contact();
         contact.setEmail(contactDTO.getEmail());
-        contact.setMobieNumber(contactDTO.getMobieNumber());
+        contact.setMobileNumber(contactDTO.getMobileNumber());
         contact.setTitle(contactDTO.getTitle());
         contact.setContent(contactDTO.getContent());
         contact.setIsRead(false);

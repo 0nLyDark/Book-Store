@@ -1,10 +1,14 @@
 package com.dangphuoctai.BookStore.service;
 
+import java.util.List;
+
 import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
 import com.dangphuoctai.BookStore.payloads.response.PublisherResponse;
 
 public interface PublisherService {
     PublisherDTO getPublisherById(Long publisherId);
+
+    List<PublisherDTO> getManyPublisherById(List<Long> publisherIds);
 
     PublisherResponse getAllPublisher(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
