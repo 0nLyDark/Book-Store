@@ -8,6 +8,7 @@ interface CheckParamsErr {
   status: number;
 }
 // authProvider.ts
+
 const authProvider = {
   login: async ({ username, password }: LoginParams) => {
     try {
@@ -83,10 +84,12 @@ const authProvider = {
     }
   },
   checkError: (error: CheckParamsErr) => {
-    if (error.status === 401 || error.status === 403) {
+    if (error.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("role");
       return Promise.reject();
+    } else if (error.status === 403) {
+      throw new Error("Bạn không có quyền truy cập thông tin này");
     }
     return Promise.resolve();
   },

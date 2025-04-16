@@ -1,7 +1,7 @@
 import {
   Datagrid,
+  FunctionField,
   List,
-  NumberField,
   ShowButton,
   TextField,
 } from "react-admin";
@@ -15,11 +15,30 @@ const CartList = () => {
         <TextField source="user.fullName" label="Tên người dùng" />
         <TextField source="user.email" label="Email" />
         <TextField source="user.mobileNumber" label="Số điện thoại" />
-        <NumberField
-          source="totalPrice"
+        <FunctionField
           label="Tổng tiền"
-          options={{ style: "currency", currency: "VND" }}
-          locales="vi-VN"
+          render={(record) => {
+            const totalPrice = record.cartItems.reduce(
+              (total: number, item: any) => {
+                return (
+                  total +
+                  (item.product.price *
+                    item.quantity *
+                    (100 - item.product.discount)) /
+                    100
+                );
+              },
+              0,
+            );
+            return (
+              <span>
+                {totalPrice.toLocaleString("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                })}
+              </span>
+            );
+          }}
         />
         <ShowButton />
       </Datagrid>

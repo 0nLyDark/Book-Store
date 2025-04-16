@@ -6,7 +6,6 @@ import {
   NumberField,
   Show,
   SimpleShowLayout,
-  SingleFieldList,
   TextField,
 } from "react-admin";
 
@@ -68,7 +67,9 @@ const CartShow = () => (
             render={(record) =>
               (
                 (record.product.price ?? 0) *
-                (record.product.discount != 0 ? record.product.discount : 1) *
+                (record.product.discount != 0
+                  ? (100 - record.product.discount) / 100
+                  : 1) *
                 (record.quantity ?? 0)
               ).toLocaleString("vi-VN", {
                 style: "currency",

@@ -1,5 +1,5 @@
 import { Label } from "@mui/icons-material";
-import { Box } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import {
   ArrayField,
   ChipField,
@@ -75,7 +75,7 @@ const ProductShow = () => (
         <Box>
           <Labeled label="Tác giả" sx={{ fontWeight: "bold" }}>
             <ArrayField source="authors" label="Tác giả">
-              <SingleFieldList>
+              <SingleFieldList linkType={false}>
                 <ChipField source="authorName" />
               </SingleFieldList>
             </ArrayField>
@@ -85,7 +85,7 @@ const ProductShow = () => (
         <Box>
           <Labeled label="Danh mục" sx={{ fontWeight: "bold" }}>
             <ArrayField source="categories" label="Danh mục">
-              <SingleFieldList>
+              <SingleFieldList linkType={false}>
                 <ChipField source="categoryName" />
               </SingleFieldList>
             </ArrayField>
@@ -95,7 +95,7 @@ const ProductShow = () => (
         <Box>
           <Labeled label="Ngôn ngữ" sx={{ fontWeight: "bold" }}>
             <ArrayField source="languages" label="Ngôn ngữ">
-              <SingleFieldList>
+              <SingleFieldList linkType={false}>
                 <ChipField source="name" />
               </SingleFieldList>
             </ArrayField>

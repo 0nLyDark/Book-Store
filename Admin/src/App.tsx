@@ -1,4 +1,4 @@
-import { Admin, Resource } from "react-admin";
+import { Admin, Menu, Resource } from "react-admin";
 import { Layout } from "./Layout";
 import authProvider from "./authProvider";
 import { Dashboard } from "./Dashboard";
@@ -37,12 +37,19 @@ import BannerEdit from "./resources/Banners/BannerEdit";
 import BannerShow from "./resources/Banners/BannerShow";
 import ContactList from "./resources/Contacts/ContactList";
 import ContactEdit from "./resources/Contacts/ContactEdit";
-import ProductList from "./resources/Product/ProducList";
+import ProductList from "./resources/Product/ProductList";
 import ProductCreate from "./resources/Product/ProductCreate";
-import ProductEdit from "./resources/Product/ProducEdit";
+import ProductEdit from "./resources/Product/ProductEdit";
 import ProductShow from "./resources/Product/ProducShow";
 import CartList from "./resources/Cart/CartList";
 import CartShow from "./resources/Cart/CartShow";
+import ImportReceiptList from "./resources/ImportReceipt/ImportReceiptList";
+import ImportReceiptShow from "./resources/ImportReceipt/ImportReceiptShow";
+import ImportReceiptCreate from "./resources/ImportReceipt/ImportReceiptCreate";
+import MenuShow from "./resources/Menu/MenuShow";
+import MenuEdit from "./resources/Menu/MenuEdit";
+import MenuCreate from "./resources/Menu/MenuCreate";
+import MenuList from "./resources/Menu/MenuList";
 
 export const App = () => (
   <Admin
@@ -104,6 +111,21 @@ export const App = () => (
       list={CartList}
       show={CartShow}
       options={{ label: "Giỏ hàng" }}
+    />
+    <Resource
+      name="import-receipts"
+      list={ImportReceiptList}
+      create={ImportReceiptCreate}
+      show={ImportReceiptShow}
+      options={{ label: "Nhập hàng" }}
+    />
+    <Resource
+      name="menus"
+      list={MenuList}
+      create={MenuCreate}
+      edit={MenuEdit}
+      show={MenuShow}
+      options={{ label: "Menu" }}
     />
     <Resource
       name="topics"

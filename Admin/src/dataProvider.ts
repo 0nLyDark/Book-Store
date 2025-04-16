@@ -24,7 +24,7 @@ const httpClient = {
       .then((response) => ({ json: response.data }))
       .catch((error) => {
         console.error("API request failed:", error);
-        // throw error;
+        throw error;
       });
   },
 
@@ -91,6 +91,8 @@ const idFieldMapping: { [key: string]: string } = {
   suppliers: "supplierId",
   authors: "authorId",
   contacts: "contactId",
+  menus: "menuId",
+  "import-receipts": "importReceiptId",
 };
 const dataProvider: DataProvider = {
   getList: async (
@@ -101,7 +103,7 @@ const dataProvider: DataProvider = {
     const { field = "id", order = "ASC" } = sort;
     console.log("resource: ", resource);
     let baseUrl = "public";
-    if (resource === "contacts") {
+    if (resource === "contacts" || resource === "import-receipts") {
       baseUrl = "staff";
     }
     if (resource === "carts") {
@@ -148,6 +150,7 @@ const dataProvider: DataProvider = {
         }));
       });
     }
+
     return {
       data: data,
       total: response.json.totalElements,
@@ -156,7 +159,7 @@ const dataProvider: DataProvider = {
 
   getOne: async (resource, params) => {
     let baseUrl = "public";
-    if (resource === "contacts") {
+    if (resource === "contacts" || resource === "import-receipts") {
       baseUrl = "staff";
     }
     const url = `${API_URL}/${baseUrl}/${resource}/${params.id}`;
@@ -185,6 +188,21 @@ const dataProvider: DataProvider = {
             : null,
         },
       }));
+    }
+    if (resource === "import-receipts") {
+      data.importReceiptItems = response.json.importReceiptItems.map(
+        (item: any) => ({
+          ...item,
+          product: {
+            ...item.product,
+            images: item.product.images
+              ? item.product.images.map(
+                  (img: any) => `${API_IMAGE}${img.fileName}`,
+                )
+              : null,
+          },
+        }),
+      );
     }
     console.log("response data: ", data);
     return { data };
@@ -227,7 +245,11 @@ const dataProvider: DataProvider = {
   },
 
   create: async (resource, params) => {
-    const url = `${API_URL}/staff/${resource}`;
+    let baseUrl = "staff";
+    if (resource === "menus") {
+      baseUrl = "admin";
+    }
+    const url = `${API_URL}/${baseUrl}/${resource}`;
     const idField = idFieldMapping[resource] || "id";
     const { data } = params;
     console.log("params:", data);
@@ -283,13 +305,16 @@ const dataProvider: DataProvider = {
   },
 
   update: async (resource, params) => {
-    const url = `${API_URL}/staff/${resource}`;
+    let baseUrl = "staff";
+    if (resource === "menus") {
+      baseUrl = "admin";
+    }
+    const url = `${API_URL}/${baseUrl}/${resource}`;
     const idField = idFieldMapping[resource] || "id";
-    console.log("paramssssssssss:", params.data);
 
     const data = {
       ...params.data,
-      [idField]: params?.data.id,
+      [idField]: params.data.id,
     };
     let payload: FormData | typeof data;
     payload = data;

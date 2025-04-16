@@ -1,0 +1,121 @@
+import { Check, X } from "@mui/icons-material";
+import {
+  ArrayField,
+  Button,
+  Datagrid,
+  DateField,
+  FunctionField,
+  ImageField,
+  NumberField,
+  Show,
+  SimpleShowLayout,
+  TextField,
+  TopToolbar,
+  useNotify,
+  useRecordContext,
+  useRefresh,
+  useUpdate,
+} from "react-admin";
+const ChangeStatusButton = () => {
+  const record = useRecordContext();
+  const notify = useNotify();
+  const refresh = useRefresh();
+  const [update, { isLoading }] = useUpdate();
+  if (!record) return null;
+  const handleClick = () => {
+    const newStatus = !record.status;
+    update(
+      "import-receipts", // Tên resource
+      {
+        id: record.id,
+        data: { id: record.id, status: newStatus },
+        previousData: record,
+      },
+      {
+        onSuccess: () => {
+          notify("Trạng thái đã được cập nhật", { type: "success" });
+          refresh(); // làm mới lại show page
+        },
+        onError: (error: any) => {
+          if (error.status) {
+            notify(`Bạn không có quyền thay đổi trạng thái đơn hàng`, {
+              type: "error",
+            });
+          } else {
+            notify(`Lỗi: ${error.message}`, { type: "error" });
+          }
+        },
+      },
+    );
+  };
+
+  return (
+    <Button
+      label="Thay đổi trạng thái"
+      onClick={handleClick}
+      disabled={isLoading}
+    >
+      {record.status === "pending" ? <Check /> : <X />}
+    </Button>
+  );
+};
+
+const ShowActions = () => (
+  <TopToolbar>
+    <ChangeStatusButton />
+  </TopToolbar>
+);
+const ProductShow = () => {
+  return (
+    <Show actions={<ShowActions />}>
+      <SimpleShowLayout sx={{ mb: 4 }}>
+        <TextField source="importReceiptId" label="ID" />
+        <TextField source="createdBy" label="User ID" />
+        <TextField source="supplier.supplierName" label="Nhà cung cấp" />
+        <DateField source="importDate" label="Ngày nhập" showTime />
+        <NumberField
+          source="totalAmount"
+          label="Tổng tiền"
+          options={{ style: "currency", currency: "VND" }}
+          locales="vi-VN"
+        />
+        <FunctionField
+          label="Trạng thái"
+          render={(record) => (record.status ? "Tốt" : "Lỗi")}
+          sortBy="status"
+        />
+        <ArrayField source="importReceiptItems" label="Sản phẩm nhập hàng">
+          <Datagrid bulkActionButtons={false} rowClick={false}>
+            <TextField source="product.productId" label="Product ID" />
+            <TextField source="product.productName" label="Tên sản phẩm" />
+            <TextField source="product.isbn" label="Mã sản phẩm" />
+            <ImageField
+              source="product.images[0]"
+              label="Hình ảnh"
+              title="product.images[0]"
+            />
+            <NumberField
+              source="product.price"
+              label="Giá"
+              options={{ style: "currency", currency: "VND" }}
+              locales="vi-VN"
+            />
+            <NumberField source="quantity" label="Số lượng nhập" />
+            <FunctionField
+              label="% Chiết khấu"
+              render={(record) => `${record.discount ?? 0} %`}
+              sortBy="discount"
+            />
+            <NumberField
+              source="totalPrice"
+              label="Giá nhập hàng"
+              options={{ style: "currency", currency: "VND" }}
+              locales="vi-VN"
+            />
+          </Datagrid>
+        </ArrayField>
+      </SimpleShowLayout>
+    </Show>
+  );
+};
+export default ProductShow;
