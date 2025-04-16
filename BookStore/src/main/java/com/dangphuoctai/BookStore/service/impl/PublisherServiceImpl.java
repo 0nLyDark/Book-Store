@@ -51,12 +51,18 @@ public class PublisherServiceImpl implements PublisherService {
     }
 
     @Override
-    public PublisherResponse getAllPublisher(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+    public PublisherResponse getAllPublisher(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+            String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
 
-        Page<Publisher> pagePublishers = publisherRepo.findAll(pageDetails);
+        Page<Publisher> pagePublishers;
+        if (status != null) {
+            pagePublishers = publisherRepo.findAllByStatus(status,pageDetails);
+        } else {
+            pagePublishers = publisherRepo.findAll(pageDetails);
+        }
         List<PublisherDTO> publisherDTOs = pagePublishers.getContent().stream()
                 .map(publisher -> modelMapper.map(publisher, PublisherDTO.class))
                 .collect(Collectors.toList());

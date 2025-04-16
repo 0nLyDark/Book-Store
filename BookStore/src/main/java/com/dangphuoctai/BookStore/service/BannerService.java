@@ -11,7 +11,7 @@ public interface BannerService {
 
     BannerDTO getBannerById(Long bannerId);
 
-    BannerResponse getAllBanners(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    BannerResponse getAllBanners(Boolean status,Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     BannerDTO createBanner(BannerDTO bannerDTO, MultipartFile image) throws IOException;
 

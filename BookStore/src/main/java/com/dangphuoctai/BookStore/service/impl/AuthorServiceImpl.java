@@ -28,7 +28,7 @@ import com.dangphuoctai.BookStore.service.AuthorService;
 import com.dangphuoctai.BookStore.service.FileService;
 
 @Service
-public class AuthorSerciceImpl implements AuthorService {
+public class AuthorServiceImpl implements AuthorService {
 
     @Autowired
     private AuthorRepo authorRepo;
@@ -63,11 +63,17 @@ public class AuthorSerciceImpl implements AuthorService {
     }
 
     @Override
-    public AuthorResponse getAllAuthors(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+    public AuthorResponse getAllAuthors(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+            String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-        Page<Author> pageAuthors = authorRepo.findAll(pageDetails);
+        Page<Author> pageAuthors;
+        if (status == null) {
+            pageAuthors = authorRepo.findAll(pageDetails);
+        } else {
+            pageAuthors = authorRepo.findAllByStatus(status,pageDetails);
+        }
 
         List<AuthorDTO> authorDTOs = pageAuthors.getContent().stream()
                 .map(author -> modelMapper.map(author, AuthorDTO.class))

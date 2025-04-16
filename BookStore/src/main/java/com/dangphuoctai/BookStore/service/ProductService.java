@@ -12,14 +12,16 @@ public interface ProductService {
 
         ProductDTO getProductById(Long productId);
 
+        List<ProductDTO> getManyProductById(List<Long> productIds);
+
         ProductDTO getProductBySlug(String slug);
 
-        ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+        // ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
-        ProductResponse getAllProducts(String keyword,String isbn, Double minPrice, Double maxPrice,
+        ProductResponse getAllProducts(String keyword, String isbn, Double minPrice, Double maxPrice,
                         Boolean isSale, Long categoryId,
                         List<Long> authorIds, List<Long> languageIds,
-                        Long supplierId, Long publisherId,
+                        Long supplierId, Long publisherId, Boolean status,
                         Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
         ProductDTO createProduct(ProductDTO productDTO, List<MultipartFile> images, List<Long> categoryIds,

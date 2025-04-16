@@ -61,12 +61,18 @@ public class SupplierServiceImpl implements SupplierService {
     }
 
     @Override
-    public SupplierResponse getAllSupplier(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+    public SupplierResponse getAllSupplier(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+            String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
 
-        Page<Supplier> pageSuppliers = supplierRepo.findAll(pageDetails);
+        Page<Supplier> pageSuppliers;
+        if (status != null) {
+            pageSuppliers = supplierRepo.findAllByStatus(status, pageDetails);
+        } else {
+            pageSuppliers = supplierRepo.findAll(pageDetails);
+        }
         List<SupplierDTO> supplierDTOs = pageSuppliers.getContent().stream()
                 .map(supplier -> modelMapper.map(supplier, SupplierDTO.class))
                 .collect(Collectors.toList());

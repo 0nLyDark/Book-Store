@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,14 +28,23 @@ public class ImportReceiptItem {
     @JoinColumn(name = "import_receipt_id")
     private ImportReceipt importReceipt;
 
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
+
     @Min(0)
     @Column(nullable = false)
     private int quantity;
 
     @Column(nullable = false)
-    private double price;
+    private Double price;
+
+    @Min(0)
+    @Max(100)
+    @Column(nullable = false)
+    private Integer discount;
 
     @Column(nullable = false)
-    private double totalPrice;
+    private Double totalPrice;
 
 }

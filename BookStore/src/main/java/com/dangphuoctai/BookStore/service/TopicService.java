@@ -12,7 +12,7 @@ public interface TopicService {
 
     TopicDTO getTopicBySlug(String slug);
 
-    TopicResponse getAllTopic(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    TopicResponse getAllTopic(Boolean status,Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     TopicDTO createTopic(TopicDTO topicDTO);
 

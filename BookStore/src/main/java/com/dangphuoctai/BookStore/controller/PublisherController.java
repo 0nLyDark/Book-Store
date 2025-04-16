@@ -47,12 +47,13 @@ public class PublisherController {
 
     @GetMapping("/public/publishers")
     public ResponseEntity<PublisherResponse> getAllPublisher(
+            @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_PUBLISHERS_BY, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
 
-        PublisherResponse publisherResponse = publisherService.getAllPublisher(
+        PublisherResponse publisherResponse = publisherService.getAllPublisher(status,
                 pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "publisherId" : sortBy,

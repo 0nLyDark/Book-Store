@@ -27,7 +27,7 @@ public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cartId;
-    
+
     @Column(name = "user_id", insertable = false, updatable = false)
     private Long userId;
 
@@ -37,7 +37,5 @@ public class Cart {
 
     @OneToMany(mappedBy = "cart", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, orphanRemoval = true)
     private List<CartItem> cartItems = new ArrayList<>();
-
-    private Double totalPrice = 0.0;
 
 }

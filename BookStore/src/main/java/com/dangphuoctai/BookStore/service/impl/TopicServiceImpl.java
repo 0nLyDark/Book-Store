@@ -61,12 +61,18 @@ public class TopicServiceImpl implements TopicService {
     }
 
     @Override
-    public TopicResponse getAllTopic(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+    public TopicResponse getAllTopic(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+            String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
 
-        Page<Topic> pageTopics = topicRepo.findAll(pageDetails);
+        Page<Topic> pageTopics;
+        if (status != null) {
+            pageTopics = topicRepo.findAllByStatus(status,pageDetails);
+        } else {
+            pageTopics = topicRepo.findAll(pageDetails);
+        }
         List<TopicDTO> topicDTOs = pageTopics.getContent().stream().map(topic -> modelMapper.map(topic, TopicDTO.class))
                 .collect(Collectors.toList());
 

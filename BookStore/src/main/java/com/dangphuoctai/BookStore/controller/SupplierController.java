@@ -53,12 +53,13 @@ public class SupplierController {
 
     @GetMapping("/public/suppliers")
     public ResponseEntity<SupplierResponse> getAllSupplier(
+            @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_SUPPLIERS_BY, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
 
-        SupplierResponse supplierResponse = supplierService.getAllSupplier(
+        SupplierResponse supplierResponse = supplierService.getAllSupplier(status,
                 pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "supplierId" : sortBy,

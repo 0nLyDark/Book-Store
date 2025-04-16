@@ -28,7 +28,6 @@ import com.dangphuoctai.BookStore.utils.CreateSlug;
 
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Transactional
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -56,7 +55,7 @@ public class CategoryServiceImpl implements CategoryService {
         List<CategoryDTO> categoryDTOs = categories.stream()
                 .map(category -> modelMapper.map(category, ChildCategoryDTO.class))
                 .collect(Collectors.toList());
-                
+
         return categoryDTOs;
     }
 
@@ -69,7 +68,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse getAllCategories(String type, Integer pageNumber, Integer pageSize, String sortBy,
+    public CategoryResponse getAllCategories(Boolean status, String type, Integer pageNumber, Integer pageSize,
+            String sortBy,
             String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
@@ -79,11 +79,19 @@ public class CategoryServiceImpl implements CategoryService {
         List<CategoryDTO> categoryDTOs;
 
         if (type.equalsIgnoreCase("parent")) {
-            pageCategories = categoryRepo.findByParentIsNull(pageDetails);
+            if (status == null) {
+                pageCategories = categoryRepo.findAllByParentIsNull(pageDetails);
+            } else {
+                pageCategories = categoryRepo.findAllByParentIsNullAndStatus(status, pageDetails);
+            }
             categoryDTOs = pageCategories.getContent().stream()
                     .map(category -> modelMapper.map(category, ParentCategoryDTO.class)).collect(Collectors.toList());
         } else {
-            pageCategories = categoryRepo.findAll(pageDetails);
+            if (status == null) {
+                pageCategories = categoryRepo.findAll(pageDetails);
+            } else {
+                pageCategories = categoryRepo.findAllByStatus(status, pageDetails);
+            }
             categoryDTOs = pageCategories.getContent().stream()
                     .map(category -> modelMapper.map(category, ChildCategoryDTO.class)).collect(Collectors.toList());
         }

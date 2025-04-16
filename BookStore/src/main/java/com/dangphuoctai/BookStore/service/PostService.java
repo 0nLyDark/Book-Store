@@ -8,7 +8,7 @@ public interface PostService {
 
     PostDTO getPostBySlug(String slug);
 
-    PostResponse getAllPost(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    PostResponse getAllPost(Boolean status, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     PostDTO createPost(PostDTO PostDTO);
 

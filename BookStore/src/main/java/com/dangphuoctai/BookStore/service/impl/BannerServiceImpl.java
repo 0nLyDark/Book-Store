@@ -51,11 +51,17 @@ public class BannerServiceImpl implements BannerService {
     }
 
     @Override
-    public BannerResponse getAllBanners(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+    public BannerResponse getAllBanners(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+            String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-        Page<Banner> pageBanners = bannerRepo.findAll(pageDetails);
+        Page<Banner> pageBanners;
+        if (status == null) {
+            pageBanners = bannerRepo.findAll(pageDetails);
+        } else {
+            pageBanners = bannerRepo.findAllByStatus(status, pageDetails);
+        }
 
         List<BannerDTO> bannerDTOs = pageBanners.getContent().stream()
                 .map(banner -> modelMapper.map(banner, BannerDTO.class))

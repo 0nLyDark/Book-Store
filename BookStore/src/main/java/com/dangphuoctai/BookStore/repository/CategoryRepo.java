@@ -14,6 +14,10 @@ public interface CategoryRepo extends JpaRepository<Category, Long> {
 
     Optional<Category> findBySlug(String slug);
 
-    Page<Category> findByParentIsNull(Pageable pageDetails);
+    Page<Category> findAllByParentIsNull(Pageable pageDetails);
+
+    Page<Category> findAllByParentIsNullAndStatus(Boolean status, Pageable pageDetails);
+
+    Page<Category> findAllByStatus(Boolean status, Pageable pageDetails);
 
 }

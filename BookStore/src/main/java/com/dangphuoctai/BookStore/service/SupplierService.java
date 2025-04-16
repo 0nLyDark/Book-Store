@@ -12,7 +12,7 @@ public interface SupplierService {
 
     SupplierDTO getSupplierBySlug(String slug);
 
-    SupplierResponse getAllSupplier(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    SupplierResponse getAllSupplier(Boolean status,Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     SupplierDTO createSupplier(SupplierDTO supplierDTO);
 

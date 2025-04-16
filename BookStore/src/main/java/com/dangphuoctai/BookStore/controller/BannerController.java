@@ -40,11 +40,13 @@ public class BannerController {
 
     @GetMapping("/public/banners")
     public ResponseEntity<BannerResponse> getAllBanners(
+            @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_BANNERS_BY, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
-        BannerResponse bannerResponse = bannerService.getAllBanners(pageNumber == 0 ? pageNumber : pageNumber - 1,
+        BannerResponse bannerResponse = bannerService.getAllBanners(status,
+                pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "bannerId" : sortBy,
                 sortOrder);

@@ -10,7 +10,8 @@ public interface PublisherService {
 
     List<PublisherDTO> getManyPublisherById(List<Long> publisherIds);
 
-    PublisherResponse getAllPublisher(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    PublisherResponse getAllPublisher(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+            String sortOrder);
 
     PublisherDTO createPublisher(PublisherDTO PublisherDTO);
 

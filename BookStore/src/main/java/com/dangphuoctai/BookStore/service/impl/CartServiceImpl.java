@@ -1,6 +1,5 @@
 package com.dangphuoctai.BookStore.service.impl;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +27,6 @@ import com.dangphuoctai.BookStore.repository.ProductRepo;
 import com.dangphuoctai.BookStore.service.CartService;
 
 import org.springframework.transaction.annotation.Transactional;
-
 
 @Service
 @Transactional
@@ -68,12 +66,17 @@ public class CartServiceImpl implements CartService {
         cartItem.setQuantity(quantity);
         cartItem.setCart(cart);
         cart.getCartItems().add(cartItem);
-        cart.setTotalPrice(cart.getTotalPrice() + (product.getPrice() * quantity));
-
+        Double totalPrice = cart.getCartItems().stream()
+                .mapToDouble(item -> {
+                    Product productItem = item.getProduct();
+                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
+                }).sum();
         cartItemRepo.save(cartItem);
         cartRepo.save(cart);
 
-        return modelMapper.map(cart, CartDTO.class);
+        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+        cartDTO.setTotalPrice(totalPrice);
+        return cartDTO;
     }
 
     @Override
@@ -87,21 +90,24 @@ public class CartServiceImpl implements CartService {
         CartItem cartItem = cartItemRepo.findByCartIdAndProductId(cartId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("CartItem", "cartId and productId",
                         cartId + "" + productId));
-        Product product = cartItem.getProduct();
         Cart cart = cartItem.getCart();
         if (cart.getUserId() != userId) {
             throw new APIException("You are not authorized to add product to this cart");
         }
-
-        Double newPrice = cart.getTotalPrice() - product.getPrice() * cartItem.getQuantity()
-                + product.getPrice() * quantity;
         cartItem.setQuantity(quantity);
-        cart.setTotalPrice(newPrice);
+
+        Double totalPrice = cart.getCartItems().stream()
+                .mapToDouble(item -> {
+                    Product productItem = item.getProduct();
+                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
+                }).sum();
 
         cartItemRepo.save(cartItem);
         cartRepo.save(cart);
 
-        return modelMapper.map(cart, CartDTO.class);
+        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+        cartDTO.setTotalPrice(totalPrice);
+        return cartDTO;
     }
 
     @Override
@@ -115,8 +121,16 @@ public class CartServiceImpl implements CartService {
         if (cart.getUserId() != userId && !isAdmin) {
             throw new APIException("You are not authorized to add product to this cart");
         }
+        Double totalPrice = cart.getCartItems().stream()
+                .mapToDouble(item -> {
+                    Product productItem = item.getProduct();
 
-        return modelMapper.map(cart, CartDTO.class);
+                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
+                }).sum();
+
+        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+        cartDTO.setTotalPrice(totalPrice);
+        return cartDTO;
     }
 
     @Override
@@ -155,16 +169,21 @@ public class CartServiceImpl implements CartService {
             throw new APIException("You are not authorized to add product to this cart");
         }
 
-        Product product = cartItem.getProduct();
-        Double newPrice = cart.getTotalPrice() - product.getPrice() * cartItem.getQuantity();
         cartItem.setCart(null);
-        cart.setTotalPrice(newPrice);
         cart.getCartItems().remove(cartItem);
+
+        Double totalPrice = cart.getCartItems().stream()
+                .mapToDouble(item -> {
+                    Product productItem = item.getProduct();
+                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
+                }).sum();
 
         cartItemRepo.save(cartItem);
         cartRepo.save(cart);
 
-        return modelMapper.map(cart, CartDTO.class);
+        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+        cartDTO.setTotalPrice(totalPrice);
+        return cartDTO;
     }
 
     @Override
@@ -187,15 +206,19 @@ public class CartServiceImpl implements CartService {
                 })
                 .collect(Collectors.toList());
         cartItems.removeAll(cartItemRemove);
-        double newPrice = cartItems.stream()
-                .mapToDouble(cartItem -> cartItem.getProduct().getPrice() * cartItem.getQuantity())
-                .sum();
-        cart.setTotalPrice(newPrice);
+
+        Double totalPrice = cartItems.stream()
+                .mapToDouble(item -> {
+                    Product productItem = item.getProduct();
+                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
+                }).sum();
 
         cartItemRepo.deleteAll(cartItemRemove);
         cartRepo.save(cart);
 
-        return modelMapper.map(cart, CartDTO.class);
+        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+        cartDTO.setTotalPrice(totalPrice);
+        return cartDTO;
     }
 
     @Override
@@ -209,7 +232,6 @@ public class CartServiceImpl implements CartService {
         if (cart.getUserId() != userId && !isAdmin) {
             throw new APIException("You are not authorized to add product to this cart");
         }
-        cart.setTotalPrice(0.0);
         for (CartItem item : cart.getCartItems()) {
             item.setCart(null); // tách liên kết
         }

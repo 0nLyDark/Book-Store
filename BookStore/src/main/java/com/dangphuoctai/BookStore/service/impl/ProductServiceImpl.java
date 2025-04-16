@@ -96,41 +96,50 @@ public class ProductServiceImpl implements ProductService {
                 return modelMapper.map(product, ProductDTO.class);
         }
 
-        @Override
-        public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize,
-                        String sortBy, String sortOrder) {
-                Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
-                                : Sort.by(sortBy).descending();
-                Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-
-                Page<Product> pageProducts = productRepo.findAll(pageDetails);
-                List<ProductDTO> productDTOs = pageProducts.getContent().stream()
+        public List<ProductDTO> getManyProductById(List<Long> productIds) {
+                List<Product> products = productRepo.findAllById(productIds);
+                if (products.size() != productIds.size()) {
+                        throw new ResourceNotFoundException("Product", "productIds", productIds);
+                }
+                List<ProductDTO> productDTOs = products.stream()
                                 .map(product -> modelMapper.map(product, ProductDTO.class))
                                 .collect(Collectors.toList());
-
-                ProductResponse productResponse = new ProductResponse();
-                productResponse.setContent(productDTOs);
-                productResponse.setPageNumber(pageProducts.getNumber());
-                productResponse.setPageSize(pageProducts.getSize());
-                productResponse.setTotalElements(pageProducts.getTotalElements());
-                productResponse.setTotalPages(pageProducts.getTotalPages());
-                productResponse.setLastPage(pageProducts.isLast());
-
-                return productResponse;
+                return productDTOs;
         }
+
+        // @Override
+        // public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize,
+        // String sortBy, String sortOrder) {
+        // Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ?
+        // Sort.by(sortBy).ascending()
+        // : Sort.by(sortBy).descending();
+        // Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+        // Page<Product> pageProducts = productRepo.findAll(pageDetails);
+        // List<ProductDTO> productDTOs = pageProducts.getContent().stream()
+        // .map(product -> modelMapper.map(product, ProductDTO.class))
+        // .collect(Collectors.toList());
+        // ProductResponse productResponse = new ProductResponse();
+        // productResponse.setContent(productDTOs);
+        // productResponse.setPageNumber(pageProducts.getNumber());
+        // productResponse.setPageSize(pageProducts.getSize());
+        // productResponse.setTotalElements(pageProducts.getTotalElements());
+        // productResponse.setTotalPages(pageProducts.getTotalPages());
+        // productResponse.setLastPage(pageProducts.isLast());
+        // return productResponse;
+        // }
 
         @Override
         public ProductResponse getAllProducts(String keyword, String isbn, Double minPrice, Double maxPrice,
                         Boolean isSale, Long categoryId,
                         List<Long> authorIds, List<Long> languageIds,
-                        Long supplierId, Long publisherId,
+                        Long supplierId, Long publisherId, Boolean status,
                         Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
                 Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                                 : Sort.by(sortBy).descending();
                 Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
 
                 Specification<Product> productSpecification = ProductSpecification.filter(keyword, isbn,
-                                minPrice, maxPrice, isSale, null, categoryId, null,
+                                minPrice, maxPrice, isSale, status, categoryId, null,
                                 authorIds, languageIds, supplierId, publisherId);
 
                 Page<Product> pageProducts = productRepo.findAll(productSpecification, pageDetails);

@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.dangphuoctai.BookStore.enums.ImportReceiptType;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -34,31 +36,32 @@ public class ImportReceipt {
     @Column(nullable = false)
     private LocalDateTime importDate;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 
     @Column(nullable = false)
-    private double totalAmount;
+    private Double totalAmount;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'PENDING'")
-    private ImportReceiptType importReceiptType;
+    // @Enumerated(EnumType.STRING)
+    // @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'PENDING'")
+    // private ImportReceiptType importReceiptType;
 
-    @OneToMany(mappedBy = "importReceipt")
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private Boolean status = true;
+
+    @OneToMany(mappedBy = "importReceipt", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ImportReceiptItem> importReceiptItems = new ArrayList<>();
 
-    @OneToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-
-    @OneToOne
-    @JoinColumn(name = "update_by")
-    private User updateBy;
-
     @Column(nullable = false)
-    LocalDateTime createdAt;
-    @Column(nullable = false)
-    LocalDateTime updatedAt;
+    private Long createdBy;
+
+    // @Column(nullable = false)
+    // private Long updateBy;
+
+    // @Column(nullable = false)
+    // LocalDateTime createdAt;
+    // @Column(nullable = false)
+    // LocalDateTime updatedAt;
 
 }
