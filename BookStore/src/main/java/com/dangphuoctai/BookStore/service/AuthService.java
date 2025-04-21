@@ -10,6 +10,8 @@ public interface AuthService {
 
     UserDTO loginUser(String username, String password);
 
+    UserDTO loginGoogle(UserDTO userDTO);
+
     Boolean verityOTPEmail(OtpDTO otpDTO);
 
     String generateOTPEmail(String email);

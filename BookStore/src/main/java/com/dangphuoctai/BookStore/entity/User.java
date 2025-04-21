@@ -1,5 +1,6 @@
 package com.dangphuoctai.BookStore.entity;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +52,7 @@ public class User {
 
     @Column(unique = true)
     private String username;
+
     private String password;
     @Email
     @Column(unique = true)
@@ -82,6 +84,9 @@ public class User {
     @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'USER'")
     private AccountType accountType;
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
     @PrePersist
     @PreUpdate
     private void validateSave() {
@@ -98,6 +103,10 @@ public class User {
             }
             if (this.password == null || this.password.isBlank()) {
                 throw new IllegalArgumentException("Password is required for this account type");
+            }
+        } else if (this.accountType == AccountType.GOOGLE) {
+            if (this.email == null) {
+                throw new IllegalArgumentException("Email is required for this account type");
             }
         }
     }

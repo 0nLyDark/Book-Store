@@ -60,11 +60,11 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(name = "coupon_id")
-    private Promotion coupon;
+    private PromotionSnapshot coupon;
 
     @ManyToOne
     @JoinColumn(name = "freeship_id")
-    private Promotion freeship;
+    private PromotionSnapshot freeship;
 
     private double totalAmount;
 

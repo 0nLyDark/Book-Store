@@ -5,13 +5,17 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.service.FileService;
 
 @Service
@@ -45,6 +49,33 @@ public class FileServiceImpl implements FileService {
 
         return inputStream;
 
+    }
+
+    @Override
+    public String downloadImageFromUrl(String imageUrl, String folderPath) {
+        try {
+            // Lấy phần mở rộng từ URL nếu có
+            String extension = imageUrl.contains(".") ? imageUrl.substring(imageUrl.lastIndexOf('.')) : ".png";
+            String fileName = UUID.randomUUID() + extension;
+            Path targetPath = Paths.get(folderPath).resolve(fileName);
+
+            // Tạo thư mục nếu chưa tồn tại
+            File folder = new File(folderPath);
+            if (!folder.exists()) {
+                folder.mkdirs(); // Đảm bảo thư mục tồn tại
+            }
+
+            // Tải ảnh và lưu vào folder
+            try (InputStream in = new URL(imageUrl).openStream()) {
+                Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            return fileName;
+        } catch (IOException e) {
+            throw new APIException("Lỗi khi tải ảnh từ URL: " + imageUrl + "detail: " + e.getMessage());
+        } catch (Exception e) {
+            throw new APIException("Đã xảy ra lỗi không mong muốn: " + e.getMessage());
+        }
     }
 
 }

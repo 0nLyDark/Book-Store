@@ -1,11 +1,14 @@
 package com.dangphuoctai.BookStore.service.impl;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,9 +27,11 @@ import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.ParentCategoryDTO;
 import com.dangphuoctai.BookStore.payloads.response.CategoryResponse;
 import com.dangphuoctai.BookStore.repository.CategoryRepo;
 import com.dangphuoctai.BookStore.service.CategoryService;
+import com.dangphuoctai.BookStore.service.FileService;
 import com.dangphuoctai.BookStore.utils.CreateSlug;
 
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Transactional
 @Service
@@ -37,6 +42,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private FileService fileService;
+
+    @Value("${project.image}")
+    private String path;
 
     @Override
     public CategoryDTO getCategoryById(Long categoryId) {
@@ -108,7 +119,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryDTO createCategory(ChildCategoryDTO categoryDTO) {
+    public CategoryDTO createCategory(ChildCategoryDTO categoryDTO, MultipartFile image) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
@@ -122,6 +133,8 @@ public class CategoryServiceImpl implements CategoryService {
                             categoryDTO.getParent().getCategoryId()));
             category.setParent(parentCategory);
         }
+        String fileName = fileService.uploadImage(path, image);
+        category.setImage(fileName);
         category.setStatus(false);
 
         category.setCreatedBy(userId);
@@ -134,7 +147,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryDTO updateCategory(ChildCategoryDTO categoryDTO) {
+    public CategoryDTO updateCategory(ChildCategoryDTO categoryDTO, MultipartFile image) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
@@ -154,6 +167,10 @@ public class CategoryServiceImpl implements CategoryService {
         } else {
             category.setParent(null);
         }
+        if (image != null) {
+            String fileName = fileService.uploadImage(path, image);
+            category.setImage(fileName);
+        }
         category.setStatus(categoryDTO.getStatus());
 
         category.setUpdatedBy(userId);
@@ -171,4 +188,5 @@ public class CategoryServiceImpl implements CategoryService {
 
         return "Category with ID: " + categoryId + " deleted successfully";
     }
+
 }

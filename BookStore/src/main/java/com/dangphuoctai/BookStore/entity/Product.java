@@ -3,10 +3,8 @@ package com.dangphuoctai.BookStore.entity;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

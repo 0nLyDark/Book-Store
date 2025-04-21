@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,16 +12,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
-import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.CategoryDTO;
 import com.dangphuoctai.BookStore.payloads.response.ProductResponse;
 import com.dangphuoctai.BookStore.service.ProductService;
 
@@ -66,7 +62,7 @@ public class ProductController {
             @RequestParam(name = "languageIds", required = false) List<Long> languageIds,
             @RequestParam(name = "supplierId", required = false) Long supplierId,
             @RequestParam(name = "publisherId", required = false) Long publisherId,
-            @RequestParam(name = "isSale", defaultValue = "false", required = false) Boolean isSale,
+            @RequestParam(name = "isSale", required = false) Boolean isSale,
             @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,

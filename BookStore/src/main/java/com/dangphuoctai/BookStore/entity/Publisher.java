@@ -29,6 +29,8 @@ public class Publisher {
     @Column(nullable = false, unique = true)
     private String publisherName;
 
+    private String image;
+
     @Column(nullable = false)
     private Boolean status = false;
 

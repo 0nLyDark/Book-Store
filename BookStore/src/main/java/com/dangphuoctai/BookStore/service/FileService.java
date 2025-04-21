@@ -12,4 +12,5 @@ public interface FileService {
 
     InputStream getResource(String path, String fileName) throws FileNotFoundException;
 
+    String downloadImageFromUrl(String imageUrl, String folderPath);
 }

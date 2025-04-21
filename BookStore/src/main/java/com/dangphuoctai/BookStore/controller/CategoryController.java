@@ -2,6 +2,7 @@ package com.dangphuoctai.BookStore.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.CategoryDTO;
@@ -11,6 +12,7 @@ import com.dangphuoctai.BookStore.service.CategoryService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -72,18 +75,21 @@ public class CategoryController {
     }
 
     @PostMapping("/staff/categories")
-    public ResponseEntity<CategoryDTO> createCategory(@RequestBody ChildCategoryDTO category) {
-        CategoryDTO categoryDTO = categoryService.createCategory(category);
+    public ResponseEntity<CategoryDTO> createCategory(@RequestParam("file") MultipartFile image,
+            @ModelAttribute ChildCategoryDTO category) throws IOException {
+        CategoryDTO categoryDTO = categoryService.createCategory(category, image);
 
         return new ResponseEntity<CategoryDTO>(categoryDTO, HttpStatus.CREATED);
     }
 
     @PutMapping("/staff/categories")
-    public ResponseEntity<CategoryDTO> updateCategory(@RequestBody ChildCategoryDTO category) {
+    public ResponseEntity<CategoryDTO> updateCategory(
+            @RequestParam(name = "file", required = false) MultipartFile image,
+            @ModelAttribute ChildCategoryDTO category) throws IOException {
         System.out.println(category.getCategoryId());
         System.out.println(category.getCategoryName());
 
-        CategoryDTO categoryDTO = categoryService.updateCategory(category);
+        CategoryDTO categoryDTO = categoryService.updateCategory(category, image);
 
         return new ResponseEntity<CategoryDTO>(categoryDTO, HttpStatus.OK);
     }

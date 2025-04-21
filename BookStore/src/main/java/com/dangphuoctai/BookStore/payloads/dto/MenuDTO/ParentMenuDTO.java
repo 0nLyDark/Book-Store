@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ParentMenuDTO extends MenuDTO {
 
-    private List<MenuDTO> childrens;
+    private List<ParentMenuDTO> childrens;
 
 }

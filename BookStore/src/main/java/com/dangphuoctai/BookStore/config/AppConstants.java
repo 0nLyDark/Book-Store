@@ -17,6 +17,7 @@ public class AppConstants {
     public static final String SORT_MENUS_BY = "menuId";
     public static final String SORT_CARTS_BY = "cartId";
     public static final String SORT_IMPORTRECEIPT_BY = "importReceiptId";
+    public static final String SORT_PROMOTION_BY = "promotionId";
 
     public static final String SORT_ORDERS_BY = "totalAmount";
     public static final String SORT_DIR = "asc";
@@ -26,6 +27,7 @@ public class AppConstants {
     public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
     public static final String[] PUBLIC_URLS = { "/v3/api-docs/**", "/swagger-ui/**", "/api/register/**",
             "/api/auth/login",
+            "/api/auth/google",
             "/api/auth/verify/**",
             "/api/public/banners/**",
             "/api/public/menus/**",

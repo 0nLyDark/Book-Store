@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.dangphuoctai.BookStore.entity.Product;
 
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 public class ProductSpecification {
@@ -17,7 +18,7 @@ public class ProductSpecification {
             Double maxPrice,
             Boolean isSale,
             Boolean status,
-            Long categoryId,
+            List<Long> categoryIds,
             String slugCategory,
             List<Long> authorIds,
             List<Long> languageIds,
@@ -41,18 +42,17 @@ public class ProductSpecification {
                 predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
 
             // Lọc theo discount
-            if (isSale == true)
+            if (isSale != null && isSale == true)
                 predicates.add(cb.notEqual(root.get("discount"), 0));
 
             // Lọc theo trạng thái
             if (status != null)
                 predicates.add(cb.equal(root.get("status"), status));
 
-            // Lọc theo categoryId
-            if (categoryId != null) {
-                predicates.add(cb.equal(root.join("categories").get("categoryId"), categoryId));
+            // Lọc theo categoryIds
+            if (categoryIds != null && !categoryIds.isEmpty()) {
+                predicates.add(root.join("categories", JoinType.LEFT).get("categoryId").in(categoryIds));
             }
-
             // Lọc theo category slug
             if (slugCategory != null && !slugCategory.trim().isEmpty()) {
                 predicates.add(cb.equal(root.join("categories").get("slug"), slugCategory));

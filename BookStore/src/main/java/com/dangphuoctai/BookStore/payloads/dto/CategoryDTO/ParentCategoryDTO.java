@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ParentCategoryDTO extends CategoryDTO {
 
-    private List<CategoryDTO> childrens;
+    private List<ParentCategoryDTO> childrens;
 }

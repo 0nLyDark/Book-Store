@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 public class PublisherDTO {
     private Long publisherId;
     private String publisherName;
+    private String image;
+
     private Boolean status;
 
     private Long createdBy;

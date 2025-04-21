@@ -16,7 +16,8 @@ public class ImportReceiptDTO {
     private Double totalAmount;
     private Long createdBy;
     private LocalDateTime importDate;
-    private Boolean status ;
+    private Boolean status;
+    private String note;
 
     private List<ImportReceiptItemDTO> importReceiptItems;
 

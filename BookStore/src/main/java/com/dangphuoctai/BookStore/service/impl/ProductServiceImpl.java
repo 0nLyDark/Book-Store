@@ -2,6 +2,7 @@ package com.dangphuoctai.BookStore.service.impl;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,8 +22,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.dangphuoctai.BookStore.entity.Category;
 import com.dangphuoctai.BookStore.entity.File;
-import com.dangphuoctai.BookStore.entity.Language;
 import com.dangphuoctai.BookStore.entity.Product;
 import com.dangphuoctai.BookStore.entity.Publisher;
 import com.dangphuoctai.BookStore.entity.Supplier;
@@ -30,9 +31,7 @@ import com.dangphuoctai.BookStore.enums.FileType;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.ProductSpecification;
 import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
-import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
 import com.dangphuoctai.BookStore.payloads.response.ProductResponse;
-import com.dangphuoctai.BookStore.payloads.response.PublisherResponse;
 import com.dangphuoctai.BookStore.repository.AuthorRepo;
 import com.dangphuoctai.BookStore.repository.CategoryRepo;
 import com.dangphuoctai.BookStore.repository.FileRepo;
@@ -44,8 +43,11 @@ import com.dangphuoctai.BookStore.service.FileService;
 import com.dangphuoctai.BookStore.service.ProductService;
 import com.dangphuoctai.BookStore.utils.CreateSlug;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Transactional
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -128,6 +130,20 @@ public class ProductServiceImpl implements ProductService {
         // return productResponse;
         // }
 
+        private void getListCategoryIds(Category category, List<Long> ids) {
+                ids.add(category.getCategoryId());
+                category.getChildrens().forEach(c -> getListCategoryIds(c, ids));
+        }
+
+        // private List<Long> getListCategoryIds(Category category) {
+        // List<Long> list = new ArrayList<>();
+        // list.add(category.getCategoryId());
+        // category.getChildrens().forEach(c -> list.addAll(getListCategoryIds(c)));
+
+        // return list;
+        // }
+
+        @Transactional
         @Override
         public ProductResponse getAllProducts(String keyword, String isbn, Double minPrice, Double maxPrice,
                         Boolean isSale, Long categoryId,
@@ -137,9 +153,15 @@ public class ProductServiceImpl implements ProductService {
                 Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                                 : Sort.by(sortBy).descending();
                 Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-
+                List<Long> categoryIds = new ArrayList<>();
+                if (categoryId != null) {
+                        Category category = categoryRepo.findById(categoryId)
+                                        .orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId",
+                                                        categoryId));
+                        getListCategoryIds(category, categoryIds);
+                }
                 Specification<Product> productSpecification = ProductSpecification.filter(keyword, isbn,
-                                minPrice, maxPrice, isSale, status, categoryId, null,
+                                minPrice, maxPrice, isSale, status, categoryIds, null,
                                 authorIds, languageIds, supplierId, publisherId);
 
                 Page<Product> pageProducts = productRepo.findAll(productSpecification, pageDetails);

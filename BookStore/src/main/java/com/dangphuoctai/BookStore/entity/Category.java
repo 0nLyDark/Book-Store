@@ -2,9 +2,7 @@ package com.dangphuoctai.BookStore.entity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -38,6 +36,8 @@ public class Category {
 
     @Column(nullable = false, unique = true)
     private String slug;
+
+    private String image;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean status;

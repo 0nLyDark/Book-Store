@@ -1,10 +1,10 @@
 package com.dangphuoctai.BookStore.controller;
 
-
 import java.util.Collections;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,8 +19,13 @@ import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
 import com.dangphuoctai.BookStore.security.JWTUtil;
 import com.dangphuoctai.BookStore.service.AuthService;
 import com.dangphuoctai.BookStore.service.EmailService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +44,9 @@ public class AuthController {
 
         @Autowired
         private EmailService emailService;
+
+        @Value("${google.client.id}")
+        private String googleClientId;
 
         @PostMapping("/register")
         public ResponseEntity<Map<String, Object>> registerHandler(@RequestBody UserRegister userRegister)
@@ -77,6 +85,33 @@ public class AuthController {
                 return new ResponseEntity<Map<String, Object>>(
                                 Collections.singletonMap("messages", "Account register succcessful "),
                                 HttpStatus.CREATED);
+        }
+
+        @PostMapping("/auth/google")
+        public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
+                try {
+                        String googleToken = request.get("token");
+                        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                                        new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                                        .setAudience(Collections.singletonList(googleClientId))
+                                        .build();
+                        GoogleIdToken idToken = verifier.verify(googleToken);
+                        if (idToken != null) {
+                                String email = idToken.getPayload().getEmail();
+                                String name = (String) idToken.getPayload().get("name");
+                                String pictureUrl = (String) idToken.getPayload().get("picture");
+                                UserDTO userDTO = new UserDTO();
+                                userDTO.setEmail(email);
+                                userDTO.setFullName(name);
+                                userDTO.setAvatar(pictureUrl);
+                                userDTO = authService.loginGoogle(userDTO);
+                                String token = jwtUtil.generateToken(userDTO);
+                                return ResponseEntity.ok(Collections.singletonMap("jwt-token", token));
+                        }
+                } catch (Exception e) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+                }
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login failed");
         }
 
         @PostMapping("auth/login")

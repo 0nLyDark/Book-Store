@@ -1,11 +1,13 @@
 package com.dangphuoctai.BookStore.service.impl;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,12 +16,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.entity.Publisher;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
 import com.dangphuoctai.BookStore.payloads.response.PublisherResponse;
 import com.dangphuoctai.BookStore.repository.PublisherRepo;
+import com.dangphuoctai.BookStore.service.FileService;
 import com.dangphuoctai.BookStore.service.PublisherService;
 
 @Service
@@ -29,6 +34,12 @@ public class PublisherServiceImpl implements PublisherService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private FileService fileService;
+
+    @Value("${project.image}")
+    private String path;
 
     @Override
     public PublisherDTO getPublisherById(Long publisherId) {
@@ -59,7 +70,7 @@ public class PublisherServiceImpl implements PublisherService {
 
         Page<Publisher> pagePublishers;
         if (status != null) {
-            pagePublishers = publisherRepo.findAllByStatus(status,pageDetails);
+            pagePublishers = publisherRepo.findAllByStatus(status, pageDetails);
         } else {
             pagePublishers = publisherRepo.findAll(pageDetails);
         }
@@ -78,13 +89,16 @@ public class PublisherServiceImpl implements PublisherService {
         return publisherResponse;
     }
 
+    @Transactional
     @Override
-    public PublisherDTO createPublisher(PublisherDTO publisherDTO) {
+    public PublisherDTO createPublisher(PublisherDTO publisherDTO, MultipartFile image) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
         Publisher publisher = new Publisher();
         publisher.setPublisherName(publisherDTO.getPublisherName());
+        String fileName = fileService.uploadImage(path, image);
+        publisher.setImage(fileName);
         publisher.setStatus(false);
 
         publisher.setCreatedBy(userId);
@@ -96,8 +110,9 @@ public class PublisherServiceImpl implements PublisherService {
         return modelMapper.map(publisher, PublisherDTO.class);
     }
 
+    @Transactional
     @Override
-    public PublisherDTO updatePublisher(PublisherDTO publisherDTO) {
+    public PublisherDTO updatePublisher(PublisherDTO publisherDTO, MultipartFile image) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
@@ -105,6 +120,10 @@ public class PublisherServiceImpl implements PublisherService {
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Publisher", "publisherId", publisherDTO.getPublisherId()));
         publisher.setPublisherName(publisherDTO.getPublisherName());
+        if (image != null) {
+            String fileName = fileService.uploadImage(path, image);
+            publisher.setImage(fileName);
+        }
         publisher.setStatus(publisherDTO.getStatus());
 
         publisher.setUpdatedBy(userId);
