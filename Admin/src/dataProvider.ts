@@ -93,6 +93,7 @@ const idFieldMapping: { [key: string]: string } = {
   contacts: "contactId",
   menus: "menuId",
   "import-receipts": "importReceiptId",
+  promotions: "promotionId",
 };
 const dataProvider: DataProvider = {
   getList: async (
@@ -116,9 +117,14 @@ const dataProvider: DataProvider = {
       pageSize: perPage.toString(),
       sortBy: field,
       sortOrder: order,
-      type: "children",
       ...filter,
     };
+    if (resource === "categories") {
+      query.type = "children";
+    }
+    // else if (resource === "promotions") {
+    //   query.type = "children";
+    // }
     const queryString = new URLSearchParams(query).toString();
     const url = `${API_URL}/${baseUrl}/${resource}?${queryString}`;
     const response = await httpClient.get(url);
@@ -246,7 +252,7 @@ const dataProvider: DataProvider = {
 
   create: async (resource, params) => {
     let baseUrl = "staff";
-    if (resource === "menus") {
+    if (resource === "menus" || resource === "promotions") {
       baseUrl = "admin";
     }
     const url = `${API_URL}/${baseUrl}/${resource}`;
@@ -259,7 +265,9 @@ const dataProvider: DataProvider = {
     if (
       resource === "authors" ||
       resource === "banners" ||
-      resource === "products"
+      resource === "products" ||
+      resource === "categories" ||
+      resource === "publishers"
     ) {
       if (data.images && Array.isArray(data.images)) {
         data.images.forEach((img: any) => {
@@ -306,7 +314,7 @@ const dataProvider: DataProvider = {
 
   update: async (resource, params) => {
     let baseUrl = "staff";
-    if (resource === "menus") {
+    if (resource === "menus" || resource === "promotions") {
       baseUrl = "admin";
     }
     const url = `${API_URL}/${baseUrl}/${resource}`;
@@ -324,7 +332,9 @@ const dataProvider: DataProvider = {
     if (
       resource === "authors" ||
       resource === "banners" ||
-      resource === "products"
+      resource === "products" ||
+      resource === "categories" ||
+      resource === "publishers"
     ) {
       if (data.images && Array.isArray(data.images)) {
         data.images.forEach((img: any) => {

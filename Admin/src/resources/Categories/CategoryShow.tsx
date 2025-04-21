@@ -2,6 +2,7 @@ import {
   BooleanField,
   DateField,
   FunctionField,
+  ImageField,
   Show,
   SimpleShowLayout,
   TextField,
@@ -13,11 +14,12 @@ const CategoryShow = () => (
       <TextField source="categoryId" label="Category ID" />
       <TextField source="categoryName" label="Tên danh mục" />
       <TextField source="slug" label="Slug" />
-       <FunctionField
-          label="Trạng thái"
-          render={(record) => (record.status ? "Hiện" : "Ẩn")}
-          sortBy="status"
-        />
+      <ImageField source="image" label="Hình ảnh" />
+      <FunctionField
+        label="Trạng thái"
+        render={(record) => (record.status ? "Hiện" : "Ẩn")}
+        sortBy="status"
+      />
       <TextField source="parent.categoryName" label="Danh mục cha" />
       <TextField source="createdBy" label="ID người tạo" />
       <DateField source="createdAt" label="Ngày tạo" showTime />

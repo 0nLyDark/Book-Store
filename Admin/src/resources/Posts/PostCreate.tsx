@@ -6,6 +6,7 @@ import {
   SimpleForm,
   TextInput,
 } from "react-admin";
+import CustomRichTextInput from "../../components/CustomRichTextInput";
 
 const PostCreate = () => (
   <Create>
@@ -22,7 +23,7 @@ const PostCreate = () => (
           { id: "PAGE", name: "Trang đơn" },
         ]}
       />
-      <TextInput source="content" label="Nội dung" multiline />
+      <CustomRichTextInput source="content" label="Nội dung bài viết" />
     </SimpleForm>
   </Create>
 );

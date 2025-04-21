@@ -91,7 +91,7 @@ const ProductEdit = () => (
       <BooleanInput source="status" label="Trạng thái" />
       <ImageInput
         source="images"
-        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif"] }}
+        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
         placeholder={"Nhấn để tải ảnh lên"}
         multiple
         format={(value) =>

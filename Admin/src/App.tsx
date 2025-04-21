@@ -50,6 +50,10 @@ import MenuShow from "./resources/Menu/MenuShow";
 import MenuEdit from "./resources/Menu/MenuEdit";
 import MenuCreate from "./resources/Menu/MenuCreate";
 import MenuList from "./resources/Menu/MenuList";
+import PromotionList from "./resources/Promotion/PromotionList";
+import PromotionEdit from "./resources/Promotion/PromotionEdit";
+import PromotionShow from "./resources/Promotion/PromotionShow";
+import PromotionCreate from "./resources/Promotion/PromotionCreate";
 
 export const App = () => (
   <Admin
@@ -105,6 +109,14 @@ export const App = () => (
       edit={ProductEdit}
       show={ProductShow}
       options={{ label: "Sản phẩm" }}
+    />
+    <Resource
+      name="promotions"
+      list={PromotionList}
+      create={PromotionCreate}
+      edit={PromotionEdit}
+      show={PromotionShow}
+      options={{ label: "Phiếu giảm giá" }}
     />
     <Resource
       name="carts"

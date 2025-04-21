@@ -8,6 +8,7 @@ import {
   NumberField,
   ReferenceInput,
   SelectInput,
+  ShowButton,
   TextField,
   TextInput,
 } from "react-admin";
@@ -45,7 +46,7 @@ const ImportReceiptList = () => {
           render={(record) => (record.status ? "Tốt" : "Lỗi")}
           sortBy="status"
         />
-        <EditButton />
+        <ShowButton />
         <DeleteButton />
       </Datagrid>
     </List>

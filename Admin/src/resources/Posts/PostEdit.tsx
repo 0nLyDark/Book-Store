@@ -6,6 +6,7 @@ import {
   SimpleForm,
   TextInput,
 } from "react-admin";
+import CustomRichTextInput from "../../components/CustomRichTextInput";
 const PostEdit = () => (
   <Edit>
     <SimpleForm>
@@ -23,7 +24,7 @@ const PostEdit = () => (
         ]}
       />
       <BooleanInput source="status" label="Trạng thái" />
-      <TextInput source="content" label="Nội dung" multiline />
+      <CustomRichTextInput source="content" label="Nội dung bài viết" />
     </SimpleForm>
   </Edit>
 );

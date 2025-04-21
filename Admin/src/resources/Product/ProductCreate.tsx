@@ -75,7 +75,7 @@ const ProductCreate = () => (
       </ReferenceInput>
       <ImageInput
         source="images"
-        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif"] }}
+        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
         multiple
       >
         <ImageField source="src" title="title" />

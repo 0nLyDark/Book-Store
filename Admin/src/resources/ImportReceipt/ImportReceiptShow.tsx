@@ -16,6 +16,7 @@ import {
   useRefresh,
   useUpdate,
 } from "react-admin";
+import ExportPDFButton from "../../components/Receipts/ExportPDFButton";
 const ChangeStatusButton = () => {
   const record = useRecordContext();
   const notify = useNotify();
@@ -50,22 +51,39 @@ const ChangeStatusButton = () => {
   };
 
   return (
-    <Button
-      label="Thay đổi trạng thái"
-      onClick={handleClick}
-      disabled={isLoading}
-    >
-      {record.status === "pending" ? <Check /> : <X />}
-    </Button>
+    <>
+      <Button
+        label="Thay đổi trạng thái"
+        onClick={handleClick}
+        disabled={isLoading}
+      >
+        {record.status === "pending" ? <Check /> : <X />}
+      </Button>
+    </>
   );
 };
 
 const ShowActions = () => (
   <TopToolbar>
+    <CustomPDFButton />
     <ChangeStatusButton />
   </TopToolbar>
 );
-const ProductShow = () => {
+
+const CustomPDFButton = () => {
+  const record = useRecordContext();
+  if (!record) {
+    return <span>Loading ...</span>;
+  }
+
+  if (!record.id) {
+    return <span>No ImportReceipt ID</span>;
+  }
+  console.log("record", record);
+
+  return <ExportPDFButton data={record} />;
+};
+const ImportReceiptShow = () => {
   return (
     <Show actions={<ShowActions />}>
       <SimpleShowLayout sx={{ mb: 4 }}>
@@ -118,4 +136,4 @@ const ProductShow = () => {
     </Show>
   );
 };
-export default ProductShow;
+export default ImportReceiptShow;

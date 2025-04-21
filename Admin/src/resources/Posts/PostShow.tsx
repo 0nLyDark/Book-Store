@@ -14,12 +14,21 @@ const PostShow = () => (
       <TextField source="title" label="Tiêu đề" />
       <TextField source="topic.topicName" label="Chủ đề" />
       <TextField source="type" label="Kiểu bài viết" />
-       <FunctionField
-          label="Trạng thái"
-          render={(record) => (record.status ? "Hiện" : "Ẩn")}
-          sortBy="status"
-        />
-      <TextField source="content" label="Nội dung" />
+      <FunctionField
+        label="Trạng thái"
+        render={(record) => (record.status ? "Hiện" : "Ẩn")}
+        sortBy="status"
+      />
+
+      <FunctionField
+        label="Nội dung"
+        render={(record) => (
+          <div
+            dangerouslySetInnerHTML={{ __html: record.content }}
+            style={{ whiteSpace: "normal" }}
+          />
+        )}
+      />
       <TextField source="description" label="Mô tả" />
       <TextField source="createdBy" label="ID người tạo" />
       <DateField source="createdAt" label="Ngày tạo" showTime />

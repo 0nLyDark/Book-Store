@@ -4,6 +4,7 @@ import {
   DeleteButton,
   EditButton,
   FunctionField,
+  ImageField,
   List,
   TextField,
 } from "react-admin";
@@ -14,7 +15,8 @@ const PublisherList = () => {
       <Datagrid>
         <TextField source="publisherId" label="ID" />
         <TextField source="publisherName" label="Tên nhà sản xuất" />
-         <FunctionField
+        <ImageField source="image" label="Hình ảnh" />
+        <FunctionField
           label="Trạng thái"
           render={(record) => (record.status ? "Hiện" : "Ẩn")}
           sortBy="status"

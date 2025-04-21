@@ -1,6 +1,6 @@
 import { Create, regex, SimpleForm, TextInput } from "react-admin";
 
-const SupplierCreate = () => (
+const PromotionCreate = () => (
   <Create>
     <SimpleForm>
       <TextInput source="supplierName" label="Tên nhà cung cấp" />
@@ -15,4 +15,4 @@ const SupplierCreate = () => (
   </Create>
 );
 
-export default SupplierCreate;
+export default PromotionCreate;

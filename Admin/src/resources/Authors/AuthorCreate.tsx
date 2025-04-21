@@ -13,8 +13,8 @@ const AuthorCreate = () => (
       <ImageInput
         source="image"
         label="Hình ảnh"
-        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif"] }}
-      >
+        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
+        >
         <ImageField source="src" title="title" />
       </ImageInput>
       <TextInput source="description" label="Mô tả" multiline />

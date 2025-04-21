@@ -4,6 +4,7 @@ import {
   DeleteButton,
   EditButton,
   FunctionField,
+  ImageField,
   List,
   TextField,
 } from "react-admin";
@@ -15,7 +16,8 @@ const CategoryList = () => {
         <TextField source="categoryId" label="ID" />
         <TextField source="categoryName" label="Tên danh mục" />
         <TextField source="parent.categoryName" label="Danh mục cha" />
-         <FunctionField
+        <ImageField source="image" label="Hình ảnh" />
+        <FunctionField
           label="Trạng thái"
           render={(record) => (record.status ? "Hiện" : "Ẩn")}
           sortBy="status"

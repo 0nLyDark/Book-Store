@@ -1,13 +1,14 @@
 import {
   BooleanInput,
   Edit,
+  FileInput,
+  ImageInput,
   SelectInput,
   SimpleForm,
   TextInput,
   useGetList,
 } from "react-admin";
 import { useWatch } from "react-hook-form";
-
 
 const ParentCategoryInput = () => {
   const currentId = useWatch({ name: "categoryId" }); // ID của category đang edit
@@ -35,8 +36,13 @@ const CategoryEdit = () => (
       <TextInput source="categoryId" label="Category ID" disabled />
       <TextInput source="categoryName" label="Tên danh mục" />
       <TextInput source="slug" label="Slug" disabled />
-      <BooleanInput source="status" label="Trạng thái" />
+      <ImageInput
+        source="image"
+        label="Hình ảnh"
+        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
+      />
       <ParentCategoryInput />
+      <BooleanInput source="status" label="Trạng thái" />
     </SimpleForm>
   </Edit>
 );

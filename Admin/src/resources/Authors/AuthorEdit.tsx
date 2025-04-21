@@ -15,7 +15,7 @@ const AuthorEdit = () => (
       <ImageInput
         source="image"
         label="Hình ảnh"
-        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif"] }}
+        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
         placeholder={"Nhấn để tải ảnh lên"}
         format={(value) =>
           typeof value === "string"
