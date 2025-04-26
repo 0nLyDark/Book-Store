@@ -26,6 +26,9 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.mail.username}")
     private String sender;
 
+    @Value("${nameEmail}")
+    private String nameEmail;
+
     public String sendSimpleMail(EmailDetails details) {
 
         // Try block to check for exceptions
@@ -35,11 +38,10 @@ public class EmailServiceImpl implements EmailService {
             SimpleMailMessage mailMessage = new SimpleMailMessage();
 
             // Setting up necessary details
-            mailMessage.setFrom(sender);
+            mailMessage.setFrom(nameEmail);
             mailMessage.setTo(details.getRecipient());
             mailMessage.setText(details.getMsgBody());
             mailMessage.setSubject(details.getSubject());
-
             // Sending the mail
             javaMailSender.send(mailMessage);
             return "Mail Sent Successfully..." + mailMessage;
@@ -64,11 +66,10 @@ public class EmailServiceImpl implements EmailService {
             // Setting multipart as true for attachments to
             // be send
             mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
-            mimeMessageHelper.setFrom(sender);
+            mimeMessageHelper.setFrom(nameEmail);
             mimeMessageHelper.setTo(details.getRecipient());
             mimeMessageHelper.setText(details.getMsgBody(), true);
-            mimeMessageHelper.setSubject(
-                    details.getSubject());
+            mimeMessageHelper.setSubject(details.getSubject());
 
             // Adding the attachment
             // FileSystemResource file = new FileSystemResource(

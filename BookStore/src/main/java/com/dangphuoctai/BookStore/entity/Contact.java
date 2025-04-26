@@ -42,6 +42,9 @@ public class Contact {
     private String content;
 
     @Column(nullable = false)
+    private Boolean isRely = false;
+
+    @Column(nullable = false)
     private Boolean isRead = false;
 
     @Column(nullable = false)

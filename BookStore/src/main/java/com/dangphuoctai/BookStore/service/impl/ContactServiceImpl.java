@@ -11,13 +11,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.dangphuoctai.BookStore.entity.Contact;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
+import com.dangphuoctai.BookStore.payloads.EmailDetails;
 import com.dangphuoctai.BookStore.payloads.dto.ContactDTO;
 import com.dangphuoctai.BookStore.payloads.response.ContactResponse;
 import com.dangphuoctai.BookStore.repository.ContactRepo;
 import com.dangphuoctai.BookStore.service.ContactService;
+import com.dangphuoctai.BookStore.service.EmailService;
 
 @Service
 public class ContactServiceImpl implements ContactService {
@@ -27,6 +30,9 @@ public class ContactServiceImpl implements ContactService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public ContactDTO getContactById(Long contactId) {
@@ -95,4 +101,19 @@ public class ContactServiceImpl implements ContactService {
 
         return "Contact with ID: " + contactId + " deleted successfully";
     }
+
+    @Transactional
+    @Override
+    public String sendEmailContact(Long contactId, EmailDetails emailDetails) {
+        Contact contact = contactRepo.findById(contactId)
+                .orElseThrow(() -> new ResourceNotFoundException("Contact", "contactId", contactId));
+        contact.setIsRely(true);
+        contactRepo.save(contact);
+
+        emailDetails.setRecipient(contact.getEmail());
+        String result = emailService.sendMailWithAttachment(emailDetails);
+
+        return result;
+    }
+
 }

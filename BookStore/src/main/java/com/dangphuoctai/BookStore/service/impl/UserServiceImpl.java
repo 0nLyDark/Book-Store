@@ -11,12 +11,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dangphuoctai.BookStore.entity.User;
+import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
+import com.dangphuoctai.BookStore.payloads.UserPassword;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
 import com.dangphuoctai.BookStore.payloads.response.UserResponse;
 import com.dangphuoctai.BookStore.repository.AddressRepo;
@@ -35,6 +38,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public UserDTO getUserInfor() {
@@ -86,5 +92,24 @@ public class UserServiceImpl implements UserService {
         userResponse.setLastPage(pageUsers.isLast());
 
         return userResponse;
+    }
+
+    @Override
+    public String changePassword(UserPassword userPassword) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        Long userId = jwt.getClaim("userId");
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
+        boolean checkPassword = passwordEncoder.matches(userPassword.getCurrentPassword(), user.getPassword());
+        if (!checkPassword) {
+            throw new APIException("Current password is incorrect");
+        }
+        String encodedPass = passwordEncoder.encode(userPassword.getNewPassword());
+        user.setPassword(encodedPass);
+
+        userRepo.save(user);
+
+        return "Password changed successfully";
     }
 }

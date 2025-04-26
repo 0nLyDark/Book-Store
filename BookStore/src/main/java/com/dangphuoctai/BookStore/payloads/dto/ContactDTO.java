@@ -15,7 +15,9 @@ public class ContactDTO {
     private String mobileNumber;
     private String title;
     private String content;
+
+    private Boolean isRely;
     private Boolean isRead;
-    
+
     private LocalDateTime createdAt;
 }

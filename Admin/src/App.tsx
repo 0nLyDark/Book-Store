@@ -1,4 +1,4 @@
-import { Admin, Menu, Resource } from "react-admin";
+import { Admin, mergeTranslations, Resource } from "react-admin";
 import { Layout } from "./Layout";
 import authProvider from "./authProvider";
 import { Dashboard } from "./Dashboard";
@@ -54,120 +54,162 @@ import PromotionList from "./resources/Promotion/PromotionList";
 import PromotionEdit from "./resources/Promotion/PromotionEdit";
 import PromotionShow from "./resources/Promotion/PromotionShow";
 import PromotionCreate from "./resources/Promotion/PromotionCreate";
+import polyglotI18nProvider from "ra-i18n-polyglot";
+import vietnameseMessages from "./i18n/vi";
+import englishMessages from "ra-language-english";
+import { BrowserRouter } from "react-router-dom";
+import ContactShow from "./resources/Contacts/ContactShow";
+import CategoryIcon from "@mui/icons-material/Category";
+import LanguageIcon from "@mui/icons-material/Language";
+import AuthorIcon from "@mui/icons-material/MenuBook";
+import PublisherIcon from "@mui/icons-material/Business";
+import SupplierIcon from "@mui/icons-material/Handshake";
+import ProductIcon from "@mui/icons-material/AutoStories";
+import PromotionIcon from "@mui/icons-material/ConfirmationNumberOutlined";
+import CartIcon from "@mui/icons-material/ShoppingCart";
+import ImportReceiptIcon from "@mui/icons-material/ReceiptLong";
+import MenuIcon from "@mui/icons-material/Menu";
+import TopicIcon from "@mui/icons-material/TopicOutlined";
+import PostIcon from "@mui/icons-material/ArticleOutlined";
+import BannerIcon from "@mui/icons-material/Stars";
+import ContactIcon from "@mui/icons-material/People";
+
+const i18nProvider = polyglotI18nProvider(
+  () => mergeTranslations(englishMessages, vietnameseMessages),
+  "vi",
+);
 
 export const App = () => (
-  <Admin
-    authProvider={authProvider}
-    layout={Layout}
-    dataProvider={dataProvider}
-    dashboard={Dashboard}
-  >
-    <Resource
-      name="categories"
-      list={CategoryList}
-      create={CategoryCreate}
-      edit={CategoryEdit}
-      show={CategoryShow}
-      options={{ label: "Danh mục" }}
-    />
-    <Resource
-      name="languages"
-      list={LanguageList}
-      create={LanguageCreate}
-      edit={LanguageEdit}
-      show={LanguageShow}
-      options={{ label: "Ngôn ngữ" }}
-    />
-    <Resource
-      name="authors"
-      list={AuthorList}
-      create={AuthorCreate}
-      edit={AuthorEdit}
-      show={AuthorShow}
-      options={{ label: "Tác giả" }}
-    />
-    <Resource
-      name="publishers"
-      list={PublisherList}
-      create={PublisherCreate}
-      edit={PublisherEdit}
-      show={PublisherShow}
-      options={{ label: "Nhà sản xuất" }}
-    />
-    <Resource
-      name="suppliers"
-      list={SupplierList}
-      create={SupplierCreate}
-      edit={SupplierEdit}
-      show={SupplierShow}
-      options={{ label: "Nhà cung cấp" }}
-    />
-    <Resource
-      name="products"
-      list={ProductList}
-      create={ProductCreate}
-      edit={ProductEdit}
-      show={ProductShow}
-      options={{ label: "Sản phẩm" }}
-    />
-    <Resource
-      name="promotions"
-      list={PromotionList}
-      create={PromotionCreate}
-      edit={PromotionEdit}
-      show={PromotionShow}
-      options={{ label: "Phiếu giảm giá" }}
-    />
-    <Resource
-      name="carts"
-      list={CartList}
-      show={CartShow}
-      options={{ label: "Giỏ hàng" }}
-    />
-    <Resource
-      name="import-receipts"
-      list={ImportReceiptList}
-      create={ImportReceiptCreate}
-      show={ImportReceiptShow}
-      options={{ label: "Nhập hàng" }}
-    />
-    <Resource
-      name="menus"
-      list={MenuList}
-      create={MenuCreate}
-      edit={MenuEdit}
-      show={MenuShow}
-      options={{ label: "Menu" }}
-    />
-    <Resource
-      name="topics"
-      list={TopicList}
-      create={TopicCreate}
-      edit={TopicEdit}
-      show={TopicShow}
-      options={{ label: "Chủ đề" }}
-    />
-    <Resource
-      name="posts"
-      list={PostList}
-      create={PostCreate}
-      edit={PostEdit}
-      show={PostShow}
-      options={{ label: "Bài viết" }}
-    />
-    <Resource
-      name="banners"
-      list={BannerList}
-      create={BannerCreate}
-      edit={BannerEdit}
-      show={BannerShow}
-      options={{ label: "Banner" }}
-    />
-    <Resource
-      name="contacts"
-      list={ContactList}
-      edit={ContactEdit}
-      options={{ label: "Liên hệ" }}
-    />
-  </Admin>
+  <BrowserRouter basename="/admin">
+    <Admin
+      i18nProvider={i18nProvider}
+      authProvider={authProvider}
+      layout={Layout}
+      dataProvider={dataProvider}
+      dashboard={Dashboard}
+    >
+      <Resource
+        name="categories"
+        list={CategoryList}
+        create={CategoryCreate}
+        edit={CategoryEdit}
+        show={CategoryShow}
+        options={{ label: "Danh mục" }}
+        icon={CategoryIcon}
+      />
+      <Resource
+        name="languages"
+        list={LanguageList}
+        create={LanguageCreate}
+        edit={LanguageEdit}
+        show={LanguageShow}
+        options={{ label: "Ngôn ngữ" }}
+        icon={LanguageIcon}
+      />
+      <Resource
+        name="authors"
+        list={AuthorList}
+        create={AuthorCreate}
+        edit={AuthorEdit}
+        show={AuthorShow}
+        options={{ label: "Tác giả" }}
+        icon={AuthorIcon}
+      />
+      <Resource
+        name="publishers"
+        list={PublisherList}
+        create={PublisherCreate}
+        edit={PublisherEdit}
+        show={PublisherShow}
+        options={{ label: "Nhà sản xuất" }}
+        icon={PublisherIcon}
+      />
+      <Resource
+        name="suppliers"
+        list={SupplierList}
+        create={SupplierCreate}
+        edit={SupplierEdit}
+        show={SupplierShow}
+        options={{ label: "Nhà cung cấp" }}
+        icon={SupplierIcon}
+      />
+      <Resource
+        name="products"
+        list={ProductList}
+        create={ProductCreate}
+        edit={ProductEdit}
+        show={ProductShow}
+        options={{ label: "Sản phẩm" }}
+        icon={ProductIcon}
+      />
+      <Resource
+        name="promotions"
+        list={PromotionList}
+        create={PromotionCreate}
+        edit={PromotionEdit}
+        show={PromotionShow}
+        options={{ label: "Phiếu giảm giá" }}
+        icon={PromotionIcon}
+      />
+      <Resource
+        name="carts"
+        list={CartList}
+        show={CartShow}
+        options={{ label: "Giỏ hàng" }}
+        icon={CartIcon}
+      />
+      <Resource
+        name="import-receipts"
+        list={ImportReceiptList}
+        create={ImportReceiptCreate}
+        show={ImportReceiptShow}
+        options={{ label: "Nhập hàng" }}
+        icon={ImportReceiptIcon}
+      />
+      <Resource
+        name="menus"
+        list={MenuList}
+        create={MenuCreate}
+        edit={MenuEdit}
+        show={MenuShow}
+        options={{ label: "Menu" }}
+        icon={MenuIcon}
+      />
+      <Resource
+        name="topics"
+        list={TopicList}
+        create={TopicCreate}
+        edit={TopicEdit}
+        show={TopicShow}
+        options={{ label: "Chủ đề" }}
+        icon={TopicIcon}
+      />
+      <Resource
+        name="posts"
+        list={PostList}
+        create={PostCreate}
+        edit={PostEdit}
+        show={PostShow}
+        options={{ label: "Bài viết" }}
+        icon={PostIcon}
+      />
+      <Resource
+        name="banners"
+        list={BannerList}
+        create={BannerCreate}
+        edit={BannerEdit}
+        show={BannerShow}
+        options={{ label: "Banner" }}
+        icon={BannerIcon}
+      />
+      <Resource
+        name="contacts"
+        list={ContactList}
+        edit={ContactEdit}
+        show={ContactShow}
+        options={{ label: "Liên hệ" }}
+        icon={ContactIcon}
+      />
+    </Admin>
+  </BrowserRouter>
 );

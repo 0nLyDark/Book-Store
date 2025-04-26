@@ -16,7 +16,8 @@ public interface ProductService {
 
         ProductDTO getProductBySlug(String slug);
 
-        // ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+        // ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String
+        // sortBy, String sortOrder);
 
         ProductResponse getAllProducts(String keyword, String isbn, Double minPrice, Double maxPrice,
                         Boolean isSale, Long categoryId,
@@ -28,7 +29,7 @@ public interface ProductService {
                         List<Long> authorIds, List<Long> languageIds, Long supplierId, Long publisherId)
                         throws IOException;
 
-        ProductDTO updateProduct(ProductDTO productDTO, List<MultipartFile> images, List<Long> removeImage,
+        ProductDTO updateProduct(ProductDTO productDTO, List<Long> oldImages, List<MultipartFile> images,
                         List<Long> categoryIds,
                         List<Long> authorIds, List<Long> languageIds, Long supplierId, Long publisherId)
                         throws IOException;

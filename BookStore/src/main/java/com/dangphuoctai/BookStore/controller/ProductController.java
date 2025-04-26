@@ -99,8 +99,8 @@ public class ProductController {
 
     @PutMapping("/staff/products")
     public ResponseEntity<ProductDTO> updateProduct(
+            @RequestParam(value = "oldImages", required = false) List<Long> oldImages,
             @RequestParam(value = "files", required = false) List<MultipartFile> images,
-            @RequestParam(value = "removefiles", required = false) List<Long> removeImage,
             @RequestParam(value = "categoryIds", required = false) List<Long> categoryIds,
             @RequestParam(value = "authorIds", required = false) List<Long> authorIds,
             @RequestParam(value = "languageIds", required = false) List<Long> languageIds,
@@ -108,7 +108,9 @@ public class ProductController {
             @RequestParam("publisherId") Long publisherId,
             @ModelAttribute ProductDTO productDTO) throws IOException {
 
-        ProductDTO createdProduct = productService.updateProduct(productDTO, images, removeImage, categoryIds,
+        System.out.println("sssssssssssssssss    " + oldImages);
+        ProductDTO createdProduct = productService.updateProduct(productDTO, oldImages, images,
+                categoryIds,
                 authorIds,
                 languageIds, supplierId, publisherId);
 

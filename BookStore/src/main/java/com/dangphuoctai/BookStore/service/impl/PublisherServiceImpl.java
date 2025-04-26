@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.entity.Publisher;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
-import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
+import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO.PublisherDTO;
 import com.dangphuoctai.BookStore.payloads.response.PublisherResponse;
 import com.dangphuoctai.BookStore.repository.PublisherRepo;
 import com.dangphuoctai.BookStore.service.FileService;
@@ -97,8 +97,10 @@ public class PublisherServiceImpl implements PublisherService {
         Long userId = jwt.getClaim("userId");
         Publisher publisher = new Publisher();
         publisher.setPublisherName(publisherDTO.getPublisherName());
-        String fileName = fileService.uploadImage(path, image);
-        publisher.setImage(fileName);
+        if (image != null) {
+            String fileName = fileService.uploadImage(path, image);
+            publisher.setImage(fileName);
+        }
         publisher.setStatus(false);
 
         publisher.setCreatedBy(userId);

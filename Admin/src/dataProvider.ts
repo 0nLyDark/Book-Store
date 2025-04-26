@@ -6,10 +6,10 @@ import {
   RaRecord,
 } from "react-admin";
 
-const API_URL = "http://localhost:8080/api";
+export const API_URL = "http://localhost:8080/api";
 export const API_IMAGE = `${API_URL}/public/file/`;
 
-const httpClient = {
+export const httpClient = {
   get: (url: string) => {
     const token = localStorage.getItem("token");
 
@@ -40,6 +40,7 @@ const httpClient = {
       .then((response) => ({ json: response.data }))
       .catch((error) => {
         console.error("API request failed:", error);
+
         throw error;
       });
   },
@@ -131,9 +132,9 @@ const dataProvider: DataProvider = {
     if (!response) {
       throw new Error("Failed to fetch data from API");
     }
-    console.log("response: ", url);
-    console.log("response: ", queryString);
-    console.log("response: ", response.json);
+    // console.log("response: ", url);
+    // console.log("response: ", queryString);
+    // console.log("response: ", response.json);
     const data = response.json.content.map(
       (item: { [x: string]: any; image: any }) => ({
         id: item[idField],
@@ -179,7 +180,10 @@ const dataProvider: DataProvider = {
       ...response.json,
       image: response.json.image ? API_IMAGE + response.json.image : null,
       images: response.json.images
-        ? response.json.images.map((img: any) => API_IMAGE + img.fileName)
+        ? response.json.images.map((img: any) => {
+            img.fileName = API_IMAGE + img.fileName;
+            return img;
+          })
         : null,
     };
     if (resource === "carts") {
@@ -290,7 +294,12 @@ const dataProvider: DataProvider = {
 
       for (const key in data) {
         if (data[key] !== undefined && data[key] !== null) {
-          formData.append(key, data[key]);
+          formData.append(
+            key,
+            typeof data[key] === "object"
+              ? JSON.stringify(data[key])
+              : data[key],
+          );
           console.log("key:", key);
           console.log("value:", data[key]);
         }
@@ -340,7 +349,10 @@ const dataProvider: DataProvider = {
         data.images.forEach((img: any) => {
           if (img.rawFile) {
             formData.append("files", img.rawFile);
+          } else if (img.fileId) {
+            formData.append("oldImages", img.fileId);
           }
+          console.log("img:", img);
         });
       } else if (data.image?.rawFile) {
         formData.append("file", data.image.rawFile);
@@ -360,7 +372,14 @@ const dataProvider: DataProvider = {
 
       for (const key in data) {
         if (data[key] !== undefined && data[key] !== null) {
-          formData.append(key, data[key]);
+          formData.append(
+            key,
+            typeof data[key] === "object" && !Array.isArray(data[key])
+              ? JSON.stringify(data[key])
+              : data[key],
+          );
+          console.log("key:", key);
+          console.log("value:", data[key]);
         }
       }
       payload = formData;

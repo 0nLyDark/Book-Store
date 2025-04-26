@@ -16,6 +16,10 @@ const ContactList = () => {
         <TextField source="email" label="Email" />
         <TextField source="mobileNumber" label="Sổ điện thoai" />
         <FunctionField
+          label="Phản hồi"
+          render={(record) => (record.isRely ? "Đã trả lời" : "Chưa trả lời")}
+        />
+        <FunctionField
           label="Trạng thái"
           render={(record) => (record.isRead ? "Đã xem" : "Chưa xem")}
           sortBy="isRead"

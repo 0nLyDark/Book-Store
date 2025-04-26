@@ -39,11 +39,6 @@ public class ImportReceiptItem {
     @Column(nullable = false)
     private Double price;
 
-    @Min(0)
-    @Max(100)
-    @Column(nullable = false)
-    private Integer discount;
-
     @Column(nullable = false)
     private Double totalPrice;
 

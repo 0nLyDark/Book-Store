@@ -78,11 +78,9 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
                                         importReceiptItem.setQuantity(importReceiptItemDTO.getQuantity());
                                         importReceiptItem.setImportReceipt(importReceipt);
                                         importReceiptItem.setProduct(product);
-                                        importReceiptItem.setDiscount(importReceiptItemDTO.getDiscount());
                                         importReceiptItem.setPrice(importReceiptItemDTO.getPrice());
                                         Double totalPrice = importReceiptItem.getPrice()
-                                                        * importReceiptItem.getQuantity()
-                                                        * (100 - importReceiptItem.getDiscount()) / 100;
+                                                        * importReceiptItem.getQuantity();
                                         importReceiptItem.setTotalPrice(totalPrice);
                                         // Set and Save new quantity for product
                                         product.setQuantity(product.getQuantity() + importReceiptItem.getQuantity());
@@ -152,7 +150,7 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
                         throw new AccessDeniedException("You are not authorized to update this import receipt");
                 }
                 if (importReceipt.getImportDate().isBefore(LocalDateTime.now().minusDays(3))) {
-                        throw new APIException(
+                        throw new AccessDeniedException(
                                         "Cannot update the status. It has been more than 3 days since the import date.");
                 }
                 if (status != importReceipt.getStatus()) {

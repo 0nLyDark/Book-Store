@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
+import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO.PublisherDTO;
 import com.dangphuoctai.BookStore.payloads.response.PublisherResponse;
 
 public interface PublisherService {

@@ -1,5 +1,6 @@
 import {
   Edit,
+  FunctionField,
   Labeled,
   RadioButtonGroupInput,
   SimpleForm,
@@ -26,6 +27,13 @@ const ContactEdit = () => (
       <Labeled label="Ngày nhận" sx={labeledStyle}>
         <TextField source="createdAt" />
       </Labeled>
+      <Labeled label="Phản hồi" sx={labeledStyle}>
+        <FunctionField
+          label="Phản hồi"
+          render={(record) => (record.isRely ? "Đã trả lời" : "Chưa trả lời")}
+        />
+      </Labeled>
+
       <RadioButtonGroupInput
         source="isRead"
         label="Trạng thái"

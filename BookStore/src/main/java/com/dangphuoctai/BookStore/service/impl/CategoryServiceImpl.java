@@ -127,14 +127,16 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = new Category();
         category.setCategoryName(categoryDTO.getCategoryName());
         category.setSlug(CreateSlug.toSlug(categoryDTO.getCategoryName()));
-        if (categoryDTO.getParent() != null) {
+        if (categoryDTO.getParent() != null && categoryDTO.getParent().getCategoryId() != null) {
             Category parentCategory = categoryRepo.findById(categoryDTO.getParent().getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId",
                             categoryDTO.getParent().getCategoryId()));
             category.setParent(parentCategory);
         }
-        String fileName = fileService.uploadImage(path, image);
-        category.setImage(fileName);
+        if (image != null) {
+            String fileName = fileService.uploadImage(path, image);
+            category.setImage(fileName);
+        }
         category.setStatus(false);
 
         category.setCreatedBy(userId);
@@ -156,7 +158,7 @@ public class CategoryServiceImpl implements CategoryService {
                         () -> new ResourceNotFoundException("Category", "categoryId", categoryDTO.getCategoryId()));
         category.setCategoryName(categoryDTO.getCategoryName());
         category.setSlug(CreateSlug.toSlug(categoryDTO.getCategoryName()));
-        if (categoryDTO.getParent() != null) {
+        if (categoryDTO.getParent() != null && categoryDTO.getParent().getCategoryId() != null) {
             if (categoryDTO.getCategoryId() == categoryDTO.getParent().getCategoryId()) {
                 throw new APIException("Category cannot be its own parent");
             }

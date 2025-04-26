@@ -3,7 +3,7 @@ import { useInput } from "react-admin";
 import { Editor } from "@tinymce/tinymce-react";
 
 // Đảm bảo TinyMCE được tải từ local
-const LoadTinyMCE = () => {
+export const LoadTinyMCE = () => {
   useEffect(() => {
     // Thêm script TinyMCE từ local
     const script = document.createElement("script");

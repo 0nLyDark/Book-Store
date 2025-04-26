@@ -84,6 +84,7 @@ public class MyGlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<APIResponse> myDataIntegrityException(DataIntegrityViolationException e) {
+        String message = "Dữ liệu không hợp lệ hoặc trùng lặp";
         APIResponse res = new APIResponse(e.getMessage(), false);
 
         return new ResponseEntity<APIResponse>(res, HttpStatus.BAD_REQUEST);
@@ -94,6 +95,12 @@ public class MyGlobalExceptionHandler {
         APIResponse res = new APIResponse(e.getMessage(), false);
 
         return new ResponseEntity<APIResponse>(res, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<APIResponse> handleGlobalException(IllegalArgumentException e) {
+        APIResponse res = new APIResponse(e.getMessage(), false);
+        return new ResponseEntity<APIResponse>(res, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)

@@ -13,7 +13,6 @@ public class ImportReceiptItemDTO {
     private ProductDTO product;
     private int quantity;
     private Double price;
-    private Integer discount;
     private Double totalPrice;
 
 }

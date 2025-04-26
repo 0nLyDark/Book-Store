@@ -3,6 +3,7 @@ import {
   Edit,
   FileInput,
   ImageInput,
+  ReferenceInput,
   SelectInput,
   SimpleForm,
   TextInput,
@@ -36,12 +37,19 @@ const CategoryEdit = () => (
       <TextInput source="categoryId" label="Category ID" disabled />
       <TextInput source="categoryName" label="Tên danh mục" />
       <TextInput source="slug" label="Slug" disabled />
+      {/* <ParentCategoryInput /> */}
+      <ReferenceInput source="parent.categoryId" reference="categories">
+        <SelectInput
+          optionText="categoryName"
+          variant="outlined"
+          label="Danh mục cha"
+        />
+      </ReferenceInput>
       <ImageInput
         source="image"
         label="Hình ảnh"
         accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
       />
-      <ParentCategoryInput />
       <BooleanInput source="status" label="Trạng thái" />
     </SimpleForm>
   </Edit>

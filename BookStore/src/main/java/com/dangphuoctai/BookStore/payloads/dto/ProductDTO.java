@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.CategoryDTO;
+import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO.PublisherDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

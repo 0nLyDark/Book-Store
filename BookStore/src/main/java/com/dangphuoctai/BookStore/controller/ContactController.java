@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
+import com.dangphuoctai.BookStore.payloads.EmailDetails;
 import com.dangphuoctai.BookStore.payloads.dto.ContactDTO;
 import com.dangphuoctai.BookStore.payloads.response.ContactResponse;
 import com.dangphuoctai.BookStore.service.ContactService;
@@ -68,6 +69,14 @@ public class ContactController {
     @DeleteMapping("/admin/contacts/{contactId}")
     public ResponseEntity<String> deleteContact(@PathVariable Long contactId) {
         String result = contactService.deleteContact(contactId);
+
+        return new ResponseEntity<String>(result, HttpStatus.OK);
+    }
+
+    @PostMapping("/staff/contacts/{contactId}/mail")
+    public ResponseEntity<String> relyContact(@PathVariable Long contactId,
+            @RequestBody EmailDetails emailDetails) {
+        String result = contactService.sendEmailContact(contactId, emailDetails);
 
         return new ResponseEntity<String>(result, HttpStatus.OK);
     }

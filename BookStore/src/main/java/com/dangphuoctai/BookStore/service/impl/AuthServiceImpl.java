@@ -140,7 +140,9 @@ public class AuthServiceImpl implements AuthService {
         if (user.getEnabled() == false) {
             throw new AccessDeniedException("Account has been locked");
         }
-
+        if (user.getVerified() == false) {
+            throw new AccessDeniedException("Account has not been verified");
+        }
         return modelMapper.map(user, UserDTO.class);
     }
 
@@ -151,7 +153,7 @@ public class AuthServiceImpl implements AuthService {
         if (userOptional.isPresent()) {
             user = userOptional.get();
             if (!user.getEnabled()) {
-                throw new AccessDeniedException("Account has been disabled");
+                throw new AccessDeniedException("Account has been locked");
             }
             return modelMapper.map(user, UserDTO.class);
         }

@@ -48,12 +48,6 @@ const ImportReceiptCreate = () => {
 
               <NumberInput source="quantity" label="Số lượng" min={0} />
               <NumberInput source="price" label="Giá nhập" min={0} />
-              <NumberInput
-                source="discount"
-                label="Giảm giá (%)"
-                min={0}
-                max={100}
-              />
             </SimpleFormIterator>
           </ArrayInput>
         )}

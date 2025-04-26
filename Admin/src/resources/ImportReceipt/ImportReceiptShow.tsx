@@ -38,7 +38,7 @@ const ChangeStatusButton = () => {
           refresh(); // làm mới lại show page
         },
         onError: (error: any) => {
-          if (error.status) {
+          if (error.status == 403) {
             notify(`Bạn không có quyền thay đổi trạng thái đơn hàng`, {
               type: "error",
             });
@@ -119,11 +119,6 @@ const ImportReceiptShow = () => {
               locales="vi-VN"
             />
             <NumberField source="quantity" label="Số lượng nhập" />
-            <FunctionField
-              label="% Chiết khấu"
-              render={(record) => `${record.discount ?? 0} %`}
-              sortBy="discount"
-            />
             <NumberField
               source="totalPrice"
               label="Giá nhập hàng"

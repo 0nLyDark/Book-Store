@@ -111,9 +111,6 @@ const ReceiptPDF = ({ data }: { data: any }) => {
               Đơn giá (VNĐ)
             </Text>
             <Text style={[styles.tableColHeader, styles.tableColCenter]}>
-              Chiết khấu (%)
-            </Text>
-            <Text style={[styles.tableColHeader, styles.tableColCenter]}>
               Thành tiền (VNĐ)
             </Text>
           </View>
@@ -126,9 +123,6 @@ const ReceiptPDF = ({ data }: { data: any }) => {
               </Text>
               <Text style={[styles.tableCol, styles.tableColRight]}>
                 {ir.price.toLocaleString("vi-VN")}
-              </Text>
-              <Text style={[styles.tableCol, styles.tableColCenter]}>
-                {ir.discount} %
               </Text>
               <Text style={[styles.tableCol, styles.tableColRight]}>
                 {ir.totalPrice.toLocaleString("vi-VN")} đ

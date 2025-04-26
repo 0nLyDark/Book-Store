@@ -6,6 +6,12 @@ interface LoginParams {
 }
 interface CheckParamsErr {
   status: number;
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
 }
 // authProvider.ts
 
@@ -90,6 +96,8 @@ const authProvider = {
       return Promise.reject();
     } else if (error.status === 403) {
       throw new Error("Bạn không có quyền truy cập thông tin này");
+    } else if (error.status === 400) {
+      throw new Error("Dữ liệu không hợp lệ hoặc trùng lặp");
     }
     return Promise.resolve();
   },

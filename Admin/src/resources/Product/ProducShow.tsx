@@ -128,9 +128,9 @@ const ProductShow = () => (
           <ArrayField source="images" label="Ảnh">
             <SingleFieldList>
               <FunctionField
-                render={(imageUrl) => (
+                render={(image) => (
                   <img
-                    src={imageUrl}
+                    src={image.fileName}
                     alt="Ảnh"
                     style={{
                       width: 100,

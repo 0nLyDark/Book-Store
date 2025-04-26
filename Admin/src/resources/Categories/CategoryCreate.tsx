@@ -18,12 +18,12 @@ const CategoryCreate = () => (
           variant="outlined"
           label="Danh mục cha"
         />
-        <ImageInput
-          source="image"
-          label="Hình ảnh"
-          accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
-        />
       </ReferenceInput>
+      <ImageInput
+        source="image"
+        label="Hình ảnh"
+        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
+      />
     </SimpleForm>
   </Create>
 );

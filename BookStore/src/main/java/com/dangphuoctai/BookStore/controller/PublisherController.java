@@ -6,8 +6,10 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
-import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
+import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO.JsonToPublisherDTOEditor;
+import com.dangphuoctai.BookStore.payloads.dto.PublisherDTO.PublisherDTO;
 import com.dangphuoctai.BookStore.payloads.response.PublisherResponse;
 import com.dangphuoctai.BookStore.service.PublisherService;
 
@@ -31,6 +34,11 @@ import lombok.RequiredArgsConstructor;
 public class PublisherController {
     @Autowired
     private PublisherService publisherService;
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(PublisherDTO.class, new JsonToPublisherDTOEditor());
+    }
 
     @GetMapping("/public/publishers/{publisherId}")
     public ResponseEntity<PublisherDTO> getPublisherById(@PathVariable Long publisherId) {
@@ -65,7 +73,8 @@ public class PublisherController {
     }
 
     @PostMapping("/staff/publishers")
-    public ResponseEntity<PublisherDTO> createPublisher(@RequestParam("file") MultipartFile image,
+    public ResponseEntity<PublisherDTO> createPublisher(
+            @RequestParam(name = "file", required = false) MultipartFile image,
             @ModelAttribute PublisherDTO publisher) throws IOException {
         PublisherDTO publisherDTO = publisherService.createPublisher(publisher, image);
 
@@ -73,7 +82,8 @@ public class PublisherController {
     }
 
     @PutMapping("/staff/publishers")
-    public ResponseEntity<PublisherDTO> updatePublisher(@RequestParam(name = "file", required = false)  MultipartFile image,
+    public ResponseEntity<PublisherDTO> updatePublisher(
+            @RequestParam(name = "file", required = false) MultipartFile image,
             @ModelAttribute PublisherDTO publisher) throws IOException {
         PublisherDTO publisherDTO = publisherService.updatePublisher(publisher, image);
 

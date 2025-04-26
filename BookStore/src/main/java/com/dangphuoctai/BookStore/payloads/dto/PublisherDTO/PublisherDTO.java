@@ -1,4 +1,4 @@
-package com.dangphuoctai.BookStore.payloads.dto;
+package com.dangphuoctai.BookStore.payloads.dto.PublisherDTO;
 
 import java.time.LocalDateTime;
 

@@ -1,5 +1,6 @@
 package com.dangphuoctai.BookStore.service;
 
+import com.dangphuoctai.BookStore.payloads.UserPassword;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
 import com.dangphuoctai.BookStore.payloads.response.UserResponse;
 
@@ -13,4 +14,5 @@ public interface UserService {
 
     UserResponse getAllUsers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
+    String changePassword(UserPassword userPassword);
 }

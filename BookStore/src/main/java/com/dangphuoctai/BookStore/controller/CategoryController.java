@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.CategoryDTO;
 import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.ChildCategoryDTO;
+import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.JsonToCategoryDTOEditor;
 import com.dangphuoctai.BookStore.payloads.response.CategoryResponse;
 import com.dangphuoctai.BookStore.service.CategoryService;
 
@@ -18,13 +19,14 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
@@ -34,6 +36,11 @@ public class CategoryController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(CategoryDTO.class, new JsonToCategoryDTOEditor());
+    }
 
     @GetMapping("/public/categories/{categoryId}")
     public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long categoryId) {
@@ -75,8 +82,14 @@ public class CategoryController {
     }
 
     @PostMapping("/staff/categories")
-    public ResponseEntity<CategoryDTO> createCategory(@RequestParam("file") MultipartFile image,
-            @ModelAttribute ChildCategoryDTO category) throws IOException {
+    public ResponseEntity<CategoryDTO> createCategory(
+            @RequestParam(name = "file", required = false) MultipartFile image,
+            @ModelAttribute ChildCategoryDTO category)
+            throws IOException {
+        System.out.println("ssssssssssssssss         ");
+
+        System.out.println("ssssssssssssssss         " + category.getParent());
+        // category.setParent(parent);
         CategoryDTO categoryDTO = categoryService.createCategory(category, image);
 
         return new ResponseEntity<CategoryDTO>(categoryDTO, HttpStatus.CREATED);
@@ -86,6 +99,7 @@ public class CategoryController {
     public ResponseEntity<CategoryDTO> updateCategory(
             @RequestParam(name = "file", required = false) MultipartFile image,
             @ModelAttribute ChildCategoryDTO category) throws IOException {
+        System.out.println("ssssssssssssssss         " + category.getParent());
         System.out.println(category.getCategoryId());
         System.out.println(category.getCategoryName());
 

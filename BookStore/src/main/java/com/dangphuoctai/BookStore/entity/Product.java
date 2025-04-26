@@ -76,7 +76,7 @@ public class Product {
     @Size(min = 6, message = "Product description must contain atleast 6 characters")
     private String description;
 
-    @OneToMany(mappedBy = "product", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "product", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<File> images = new ArrayList<>();
 
     @ManyToMany

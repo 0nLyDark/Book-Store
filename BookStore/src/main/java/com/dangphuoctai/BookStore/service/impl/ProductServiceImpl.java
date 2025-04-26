@@ -237,7 +237,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         @Override
-        public ProductDTO updateProduct(ProductDTO productDTO, List<MultipartFile> images, List<Long> removeImage,
+        public ProductDTO updateProduct(ProductDTO productDTO, List<Long> oldImages, List<MultipartFile> images,
                         List<Long> categoryIds,
                         List<Long> authorIds, List<Long> languageIds, Long supplierId, Long publisherId)
                         throws IOException {
@@ -261,11 +261,8 @@ public class ProductServiceImpl implements ProductService {
                 product.setStatus(productDTO.getStatus());
                 product.setUpdatedBy(userId);
                 product.setUpdatedAt(LocalDateTime.now());
-                // remove image
-                Set<Long> safeRemoveImage = removeImage == null ? Set.of() : new HashSet<>(removeImage);
-                List<File> updatedImages = product.getImages().stream()
-                                .filter(file -> !safeRemoveImage.contains(file.getFileId()))
-                                .collect(Collectors.toList());
+                // Filter image
+                product.getImages().removeIf(file -> !oldImages.contains(file.getFileId()));
                 // Set List Image
                 if (images != null) {
                         for (MultipartFile image : images) {
@@ -274,11 +271,10 @@ public class ProductServiceImpl implements ProductService {
                                 file.setFileName(fileName);
                                 file.setType(FileType.IMAGE);
                                 file.setProduct(product);
-                                updatedImages.add(file);
+                                product.getImages().add(file);
                         }
                 }
 
-                product.setImages(updatedImages);
                 // Set Categories
                 product.setCategories(categoryRepo.findAllById(categoryIds));
                 // Set List Author
