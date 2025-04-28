@@ -1,5 +1,6 @@
 package com.dangphuoctai.BookStore.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -161,28 +162,31 @@ public class CartServiceImpl implements CartService {
         Long userId = jwt.getClaim("userId");
         String role = jwt.getClaim("scope");
         boolean isAdmin = role.contains("ADMIN");
-        CartItem cartItem = cartItemRepo.findByCartIdAndProductId(cartId, productId)
-                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "cartId and productId",
-                        cartId + "" + productId));
-        Cart cart = cartItem.getCart();
+        Cart cart = cartRepo.findById(cartId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
         if (cart.getUserId() != userId && !isAdmin) {
             throw new APIException("You are not authorized to add product to this cart");
         }
+        CartItem cartItem = cart.getCartItems().stream()
+                .filter(ct -> ct.getProduct().getProductId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId));
 
-        cartItem.setCart(null);
         cart.getCartItems().remove(cartItem);
 
         Double totalPrice = cart.getCartItems().stream()
                 .mapToDouble(item -> {
                     Product productItem = item.getProduct();
-                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
+                    return productItem.getPrice() * item.getQuantity() * (100 -
+                            productItem.getDiscount()) / 100;
                 }).sum();
 
-        cartItemRepo.save(cartItem);
-        cartRepo.save(cart);
+        cartItemRepo.deleteByCartItemId(cartItem.getCartItemId());
+        cart = cartRepo.save(cart);
 
         CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
         cartDTO.setTotalPrice(totalPrice);
+
         return cartDTO;
     }
 
@@ -198,14 +202,14 @@ public class CartServiceImpl implements CartService {
             throw new APIException("You are not authorized to add product to this cart");
         }
         List<CartItem> cartItems = cart.getCartItems();
-        List<CartItem> cartItemRemove = cartItems.stream()
+        List<Long> cartItemIdsRemove = cartItems.stream()
                 .filter(cartItem -> productIds.contains(cartItem.getProduct().getProductId()))
                 .map(cartItem -> {
-                    cartItem.setCart(null);
-                    return cartItem;
+                    return cartItem.getCartItemId();
                 })
                 .collect(Collectors.toList());
-        cartItems.removeAll(cartItemRemove);
+
+        cartItems.removeIf(ct -> cartItemIdsRemove.contains(ct.getCartItemId()));
 
         Double totalPrice = cartItems.stream()
                 .mapToDouble(item -> {
@@ -213,11 +217,12 @@ public class CartServiceImpl implements CartService {
                     return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
                 }).sum();
 
-        cartItemRepo.deleteAll(cartItemRemove);
+        cartItemRepo.deleteByCartItemIds(cartItemIdsRemove);
         cartRepo.save(cart);
 
         CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
         cartDTO.setTotalPrice(totalPrice);
+
         return cartDTO;
     }
 
@@ -232,11 +237,9 @@ public class CartServiceImpl implements CartService {
         if (cart.getUserId() != userId && !isAdmin) {
             throw new APIException("You are not authorized to add product to this cart");
         }
-        for (CartItem item : cart.getCartItems()) {
-            item.setCart(null); // tách liên kết
-        }
-        cart.getCartItems().clear(); // xóa tất cả các sản phẩm trong giỏ hàng
+        cart.getCartItems().clear();
 
+        cartItemRepo.deleteAllByCartId(cartId);
         cartRepo.save(cart);
 
         return "Clear Cart successfully";
