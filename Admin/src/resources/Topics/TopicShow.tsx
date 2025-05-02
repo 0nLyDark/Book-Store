@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import {
   BooleanField,
   DateField,
@@ -9,21 +10,24 @@ import {
 
 const TopicShow = () => (
   <Show>
-    <SimpleShowLayout>
-      <TextField source="topicId" label="Topic ID" />
-      <TextField source="topicName" label="Tên chủ đề" />
-      <TextField source="slug" label="Slug" />
-       <FunctionField
+    <Box display="flex" flexDirection="row" gap={2} flexWrap="wrap" p={2}>
+      <SimpleShowLayout flex={1} minWidth={250}>
+        <TextField source="topicName" label="Tên chủ đề" />
+        <TextField source="slug" label="Slug" />
+        <FunctionField
           label="Trạng thái"
           render={(record) => (record.status ? "Hiện" : "Ẩn")}
           sortBy="status"
         />
-      <TextField source="description" label="Mô tả" />
-      <TextField source="createdBy" label="ID người tạo" />
-      <DateField source="createdAt" label="Ngày tạo" showTime />
-      <TextField source="updatedBy" label="ID người cập nhật" />
-      <DateField source="updatedAt" label="Ngày cập nhật" showTime />
-    </SimpleShowLayout>
+        <TextField source="description" label="Mô tả" />
+      </SimpleShowLayout>
+      <SimpleShowLayout flex={1} minWidth={250}>
+        <TextField source="createdBy" label="ID người tạo" />
+        <DateField source="createdAt" label="Ngày tạo" showTime />
+        <TextField source="updatedBy" label="ID người cập nhật" />
+        <DateField source="updatedAt" label="Ngày cập nhật" showTime />
+      </SimpleShowLayout>
+    </Box>
   </Show>
 );
 export default TopicShow;

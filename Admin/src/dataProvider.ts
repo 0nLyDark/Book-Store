@@ -5,21 +5,19 @@ import {
   DeleteParams,
   RaRecord,
 } from "react-admin";
+import axiosInstance from "./api";
 
-export const API_URL = "http://localhost:8080/api";
+export const API_URL = import.meta.env.VITE_API_URL;
 export const API_IMAGE = `${API_URL}/public/file/`;
 
 export const httpClient = {
   get: (url: string) => {
-    const token = localStorage.getItem("token");
-
-    return axios
+    return axiosInstance
       .get(url, {
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        // withCredentials: true,
+        withCredentials: true,
       })
       .then((response) => ({ json: response.data }))
       .catch((error) => {
@@ -29,12 +27,8 @@ export const httpClient = {
   },
 
   post: (url: string, data: any) => {
-    const token = localStorage.getItem("token");
-    return axios
+    return axiosInstance
       .post(url, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         withCredentials: true,
       })
       .then((response) => ({ json: response.data }))
@@ -46,12 +40,8 @@ export const httpClient = {
   },
 
   put: (url: string, data: any) => {
-    const token = localStorage.getItem("token");
-    return axios
+    return axiosInstance
       .put(url, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         withCredentials: true,
       })
       .then((response) => ({ json: response.data }))
@@ -62,13 +52,8 @@ export const httpClient = {
   },
 
   delete: (url: string) => {
-    const token = localStorage.getItem("token");
-
-    return axios
+    return axiosInstance
       .delete(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         withCredentials: true,
       })
       .then((response) => ({ data: response.data }))
@@ -123,9 +108,7 @@ const dataProvider: DataProvider = {
     if (resource === "categories") {
       query.type = "children";
     }
-    // else if (resource === "promotions") {
-    //   query.type = "children";
-    // }
+
     const queryString = new URLSearchParams(query).toString();
     const url = `${API_URL}/${baseUrl}/${resource}?${queryString}`;
     const response = await httpClient.get(url);

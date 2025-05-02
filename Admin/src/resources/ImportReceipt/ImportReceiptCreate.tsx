@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import {
   ArrayInput,
@@ -32,22 +33,23 @@ const ImportReceiptCreate = () => {
         {supplierId && (
           <ArrayInput source="importReceiptItems" label="Sản phẩm">
             <SimpleFormIterator>
-              <ReferenceInput
-                source="product.productId"
-                reference="products"
-                label="Sản phẩm"
-                filter={{ supplierId }}
-              >
-                <AutocompleteInput
-                  optionText={(record) =>
-                    `ISBN: ${record.isbn} - Name: ${record.productName}`
-                  }
-                  filterToQuery={(searchText) => ({ isbn: searchText })}
-                />
-              </ReferenceInput>
-
-              <NumberInput source="quantity" label="Số lượng" min={0} />
-              <NumberInput source="price" label="Giá nhập" min={0} />
+              <Box display={"flex"} flexDirection={"row"} gap={2}>
+                <ReferenceInput
+                  source="product.productId"
+                  reference="products"
+                  label="Sản phẩm"
+                  filter={{ supplierId }}
+                >
+                  <AutocompleteInput
+                    optionText={(record) =>
+                      `ISBN: ${record.isbn} - Name: ${record.productName}`
+                    }
+                    filterToQuery={(searchText) => ({ isbn: searchText })}
+                  />
+                </ReferenceInput>
+                <NumberInput source="quantity" label="Số lượng" min={0} />
+                <NumberInput source="price" label="Giá nhập" min={0} />
+              </Box>
             </SimpleFormIterator>
           </ArrayInput>
         )}

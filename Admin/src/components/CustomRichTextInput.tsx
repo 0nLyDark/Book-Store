@@ -29,7 +29,7 @@ const CustomRichTextInput = ({ source, label }: CustomRichTextInputProps) => {
   } = useInput({ source });
 
   return (
-    <div>
+    <div style={{ width: "100%" }}>
       {/* Nạp TinyMCE từ local */}
       <LoadTinyMCE />
 

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { API_URL, httpClient } from "./dataProvider";
 
 interface LoginParams {
   username: string;
@@ -48,7 +49,6 @@ const authProvider = {
       const roleArray = roles.map((role: any) => role.roleName);
       console.log("roles:: ", roleArray);
       localStorage.setItem("role", JSON.stringify(roleArray));
-
       return Promise.resolve();
     } catch (error) {
       return Promise.reject(
@@ -91,6 +91,7 @@ const authProvider = {
   },
   checkError: (error: CheckParamsErr) => {
     if (error.status === 401) {
+      console.error("Error refreshing token:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("role");
       return Promise.reject();

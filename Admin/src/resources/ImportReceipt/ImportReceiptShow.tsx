@@ -87,8 +87,7 @@ const ImportReceiptShow = () => {
   return (
     <Show actions={<ShowActions />}>
       <SimpleShowLayout sx={{ mb: 4 }}>
-        <TextField source="importReceiptId" label="ID" />
-        <TextField source="createdBy" label="User ID" />
+        <TextField source="createdBy" label="ID tài khoản tạo phiếu nhập" />
         <TextField source="supplier.supplierName" label="Nhà cung cấp" />
         <DateField source="importDate" label="Ngày nhập" showTime />
         <NumberField
