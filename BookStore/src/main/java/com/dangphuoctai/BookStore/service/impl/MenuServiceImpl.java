@@ -27,7 +27,6 @@ import com.dangphuoctai.BookStore.service.MenuService;
 
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Transactional
 @Service
 public class MenuServiceImpl implements MenuService {
@@ -44,6 +43,18 @@ public class MenuServiceImpl implements MenuService {
                 .orElseThrow(() -> new ResourceNotFoundException("Menu", "menuId", menuId));
 
         return modelMapper.map(menu, ChildMenuDTO.class);
+    }
+
+    @Override
+    public List<MenuDTO> getManyMenuById(List<Long> menuIds) {
+        List<Menu> menus = menuRepo.findAllById(menuIds);
+        if (menus.size() != menuIds.size()) {
+            throw new ResourceNotFoundException("Menu", "menuIds", menuIds);
+        }
+        List<MenuDTO> menuDTOs = menus.stream().map(menu -> modelMapper.map(menu, MenuDTO.class))
+                .collect(Collectors.toList());
+
+        return menuDTOs;
     }
 
     @Override

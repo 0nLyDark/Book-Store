@@ -39,10 +39,33 @@ public class JWTUtil {
                 .issuer("Auth")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
+                        Instant.now().plus(1, ChronoUnit.MINUTES).toEpochMilli()))
                 .claim("email", userDTO.getEmail())
                 .claim("userId", userDTO.getUserId())
                 .claim("scope", buildScope(userDTO))
+                .build();
+        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
+
+        JWSObject jwsObject = new JWSObject(header, payload);
+
+        try {
+            jwsObject.sign(new MACSigner(jwt_key.getBytes()));
+            return jwsObject.serialize();
+        } catch (JOSEException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String generateRefreshToken(UserDTO userDTO) {
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+                .subject("RefreshToken")
+                .issuer("Auth")
+                .issueTime(new Date())
+                .expirationTime(new Date(
+                        Instant.now().plus(3, ChronoUnit.DAYS).toEpochMilli()))
+                .claim("userId", userDTO.getUserId())
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 

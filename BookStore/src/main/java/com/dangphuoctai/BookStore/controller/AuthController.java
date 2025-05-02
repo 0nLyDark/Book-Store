@@ -1,11 +1,15 @@
 package com.dangphuoctai.BookStore.controller;
 
+import java.text.ParseException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +27,10 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.nimbusds.jose.JOSEException;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.PostMapping;
@@ -106,7 +113,10 @@ public class AuthController {
                                 userDTO.setAvatar(pictureUrl);
                                 userDTO = authService.loginGoogle(userDTO);
                                 String token = jwtUtil.generateToken(userDTO);
-                                return ResponseEntity.ok(Collections.singletonMap("jwt-token", token));
+                                String refreshToken = authService.generateRefreshToken(userDTO.getUserId());
+                                Map<String, Object> tokens = Map.of(
+                                                "jwt-token", token);
+                                new ResponseEntity<Map<String, Object>>(tokens, HttpStatus.OK);
                         }
                 } catch (Exception e) {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
@@ -120,9 +130,48 @@ public class AuthController {
                 UserDTO userDTO = authService.loginUser(requestLogin.getUsername(), requestLogin.getPassword());
 
                 String token = jwtUtil.generateToken(userDTO);
+                String refreshToken = authService.generateRefreshToken(userDTO.getUserId());
+                Map<String, Object> tokens = Map.of(
+                                "jwt-token", token);
+                ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                                .httpOnly(true)
+                                .secure(true)
+                                .path("/")
+                                .maxAge(Duration.ofDays(3))
+                                .sameSite("Strict")
+                                .build();
 
-                return new ResponseEntity<Map<String, Object>>(Collections.singletonMap("jwt-token", token),
-                                HttpStatus.OK);
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                                .body(tokens);
+        }
+
+        @PostMapping("auth/refresh-token")
+        public ResponseEntity<?> refreshToken(HttpServletRequest request) throws JOSEException, ParseException {
+                // 1. Lấy refresh token từ cookie
+                Cookie[] cookies = request.getCookies();
+                if (cookies == null) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No cookies found");
+                }
+                String refreshToken = null;
+                for (Cookie cookie : cookies) {
+                        if ("refreshToken".equals(cookie.getName())) {
+                                refreshToken = cookie.getValue();
+                                break;
+                        }
+                }
+                // 2. Kiểm tra token
+                if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid refresh token");
+                }
+                // 3. Lấy thông tin user từ token
+                UserDTO userDTO = authService.getUserByRefreshToken(refreshToken);
+                // 4. Tạo access token mới
+                String newAccessToken = jwtUtil.generateToken(userDTO);
+                Map<String, Object> token = Map.of(
+                                "jwt-token", newAccessToken);
+                // 5. Trả về access token mới
+                return ResponseEntity.ok(token);
         }
 
         @GetMapping("auth/verify/{code}")

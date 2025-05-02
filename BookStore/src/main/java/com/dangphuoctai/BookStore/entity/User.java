@@ -87,6 +87,9 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @OneToMany(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    private List<RefreshToken> refreshTokens;
+
     @PrePersist
     @PreUpdate
     private void validateSave() {

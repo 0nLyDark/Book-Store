@@ -11,6 +11,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.entity.Address;
 import com.dangphuoctai.BookStore.entity.Cart;
 import com.dangphuoctai.BookStore.entity.OTP;
+import com.dangphuoctai.BookStore.entity.RefreshToken;
 import com.dangphuoctai.BookStore.entity.Role;
 import com.dangphuoctai.BookStore.entity.User;
 import com.dangphuoctai.BookStore.enums.AccountType;
@@ -29,8 +32,10 @@ import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
 import com.dangphuoctai.BookStore.repository.AddressRepo;
 import com.dangphuoctai.BookStore.repository.OTPRepo;
+import com.dangphuoctai.BookStore.repository.RefreshTokenRepo;
 import com.dangphuoctai.BookStore.repository.RoleRepo;
 import com.dangphuoctai.BookStore.repository.UserRepo;
+import com.dangphuoctai.BookStore.security.JWTUtil;
 import com.dangphuoctai.BookStore.service.AuthService;
 import com.dangphuoctai.BookStore.service.FileService;
 import com.dangphuoctai.BookStore.utils.EmailValidator;
@@ -51,6 +56,9 @@ public class AuthServiceImpl implements AuthService {
     private OTPRepo otpRepo;
 
     @Autowired
+    private RefreshTokenRepo refreshTokenRepo;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     @Autowired
@@ -58,6 +66,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    private JWTUtil jwtUtil;
 
     @Value("${project.image}")
     private String path;
@@ -179,6 +190,35 @@ public class AuthServiceImpl implements AuthService {
         userRepo.save(user);
 
         return modelMapper.map(user, UserDTO.class);
+    }
+
+    @Override
+    public UserDTO getUserByRefreshToken(String refreshtoken) {
+        RefreshToken refreshToken = refreshTokenRepo.findByToken(refreshtoken)
+                .orElseThrow(() -> new ResourceNotFoundException("RefreshToken", "token",
+                        refreshtoken));
+        Instant expiryDate = refreshToken.getExpiryDate();
+        if (Instant.now().isAfter(expiryDate)) {
+            throw new BadCredentialsException("Refresh token has expired");
+        }
+
+        return modelMapper.map(refreshToken.getUser(), UserDTO.class);
+    }
+
+    @Transactional
+    @Override
+    public String generateRefreshToken(Long userId) {
+        User user = userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+        RefreshToken refreshToken = new RefreshToken();
+        String token = jwtUtil.generateRefreshToken(userDTO);
+        refreshToken.setToken(token);
+        refreshToken.setUser(user);
+        refreshToken.setExpiryDate(Instant.now().plus(3, ChronoUnit.DAYS));
+        refreshTokenRepo.save(refreshToken);
+
+        return token;
+
     }
 
     @Override

@@ -16,4 +16,8 @@ public interface AuthService {
 
     String generateOTPEmail(String email);
 
+    String generateRefreshToken(Long userId);
+
+    UserDTO getUserByRefreshToken(String refreshtoken);
+
 }

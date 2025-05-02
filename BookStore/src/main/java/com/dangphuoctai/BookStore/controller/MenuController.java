@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,13 @@ public class MenuController {
         MenuDTO menuDTO = menuService.getMenuById(menuId);
 
         return new ResponseEntity<MenuDTO>(menuDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/menus/ids")
+    public ResponseEntity<List<MenuDTO>> getCategoryBySlug(@RequestParam(value = "id") List<Long> menuIds) {
+        List<MenuDTO> menuDTOs = menuService.getManyMenuById(menuIds);
+
+        return new ResponseEntity<List<MenuDTO>>(menuDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/public/menus")
