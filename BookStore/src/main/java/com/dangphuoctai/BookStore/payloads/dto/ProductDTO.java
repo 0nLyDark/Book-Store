@@ -20,6 +20,7 @@ public class ProductDTO {
     private String isbn;
     private String weight;
     private String size;
+    private String format;
     private int year;
     private int quantity;
     private double price;
@@ -42,4 +43,3 @@ public class ProductDTO {
     private LocalDateTime updatedAt;
 
 }
-

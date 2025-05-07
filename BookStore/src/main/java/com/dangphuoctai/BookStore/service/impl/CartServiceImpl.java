@@ -54,24 +54,34 @@ public class CartServiceImpl implements CartService {
         if (cart.getUserId() != userId) {
             throw new APIException("You are not authorized to add product to this cart");
         }
-
-        boolean check = cart.getCartItems().stream()
-                .anyMatch(cartItem -> cartItem.getProduct().getProductId().equals(productId));
-        if (check) {
-            throw new APIException("Product already exists in the cart");
-        }
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
-        CartItem cartItem = new CartItem();
-        cartItem.setProduct(product);
-        cartItem.setQuantity(quantity);
-        cartItem.setCart(cart);
-        cart.getCartItems().add(cartItem);
+        CartItem cartItem = cart.getCartItems().stream()
+                .filter(cItem -> cItem.getProduct().getProductId().equals(productId))
+                .findFirst()
+                .orElse(null);
+        if (cartItem == null) {
+            if (product.getQuantity() < quantity) {
+                throw new APIException("Product quantity is not sufficient to add to the cart");
+            }
+            cartItem = new CartItem();
+            cartItem.setProduct(product);
+            cartItem.setQuantity(quantity);
+            cartItem.setCart(cart);
+            cart.getCartItems().add(cartItem);
+        } else {
+            int newQuantity = cartItem.getQuantity() + quantity;
+            if (product.getQuantity() < newQuantity) {
+                throw new APIException("Product quantity is not sufficient to add to the cart");
+            }
+            cartItem.setQuantity(newQuantity);
+        }
         Double totalPrice = cart.getCartItems().stream()
                 .mapToDouble(item -> {
                     Product productItem = item.getProduct();
                     return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
                 }).sum();
+
         cartItemRepo.save(cartItem);
         cartRepo.save(cart);
 
@@ -94,6 +104,9 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartItem.getCart();
         if (cart.getUserId() != userId) {
             throw new APIException("You are not authorized to add product to this cart");
+        }
+        if (cartItem.getProduct().getQuantity() < quantity) {
+            throw new APIException("Product quantity is not sufficient to add to the cart");
         }
         cartItem.setQuantity(quantity);
 

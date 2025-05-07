@@ -1,4 +1,4 @@
-package com.dangphuoctai.BookStore.payloads.dto;
+package com.dangphuoctai.BookStore.payloads.dto.UserDTO;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;

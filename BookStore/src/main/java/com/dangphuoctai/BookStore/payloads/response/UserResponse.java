@@ -2,7 +2,7 @@ package com.dangphuoctai.BookStore.payloads.response;
 
 import java.util.List;
 
-import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

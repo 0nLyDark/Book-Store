@@ -16,13 +16,15 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dangphuoctai.BookStore.entity.RefreshToken;
 import com.dangphuoctai.BookStore.entity.User;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
-import com.dangphuoctai.BookStore.payloads.UserPassword;
-import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserDTO;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserPassword;
 import com.dangphuoctai.BookStore.payloads.response.UserResponse;
 import com.dangphuoctai.BookStore.repository.AddressRepo;
+import com.dangphuoctai.BookStore.repository.RefreshTokenRepo;
 import com.dangphuoctai.BookStore.repository.UserRepo;
 import com.dangphuoctai.BookStore.service.UserService;
 
@@ -32,6 +34,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepo userRepo;
+
+    @Autowired
+    private RefreshTokenRepo refreshTokenRepo;
 
     @Autowired
     private AddressRepo addressRepo;
@@ -95,21 +100,46 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String changePassword(UserPassword userPassword) {
+    public String changePassword(String currentPassword, String newPassword) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
-        boolean checkPassword = passwordEncoder.matches(userPassword.getCurrentPassword(), user.getPassword());
+        boolean checkPassword = passwordEncoder.matches(currentPassword, user.getPassword());
         if (!checkPassword) {
             throw new APIException("Current password is incorrect");
         }
-        String encodedPass = passwordEncoder.encode(userPassword.getNewPassword());
+        String encodedPass = passwordEncoder.encode(newPassword);
         user.setPassword(encodedPass);
 
         userRepo.save(user);
 
         return "Password changed successfully";
+    }
+
+    @Override
+    public String changeAccountStatus(Long userId, Boolean status) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
+        user.setEnabled(status);
+        if (!status) {
+            refreshTokenRepo.deleteByUserId(user.getUserId());
+        }
+        userRepo.save(user);
+
+        return "Account status updated successfully";
+    }
+
+    @Override
+    public String resetPassword(Long userId, String newPassword) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
+        String encodedPass = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedPass);
+
+        userRepo.save(user);
+
+        return "Password reset successfully";
     }
 }

@@ -13,7 +13,7 @@ import org.springframework.util.CollectionUtils;
 
 import com.dangphuoctai.BookStore.config.UserInfoConfig;
 import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
-import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserDTO;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -39,7 +39,7 @@ public class JWTUtil {
                 .issuer("Auth")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(1, ChronoUnit.MINUTES).toEpochMilli()))
+                        Instant.now().plus(15, ChronoUnit.MINUTES).toEpochMilli()))
                 .claim("email", userDTO.getEmail())
                 .claim("userId", userDTO.getUserId())
                 .claim("scope", buildScope(userDTO))

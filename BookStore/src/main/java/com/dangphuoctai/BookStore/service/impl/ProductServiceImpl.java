@@ -109,39 +109,10 @@ public class ProductServiceImpl implements ProductService {
                 return productDTOs;
         }
 
-        // @Override
-        // public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize,
-        // String sortBy, String sortOrder) {
-        // Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ?
-        // Sort.by(sortBy).ascending()
-        // : Sort.by(sortBy).descending();
-        // Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-        // Page<Product> pageProducts = productRepo.findAll(pageDetails);
-        // List<ProductDTO> productDTOs = pageProducts.getContent().stream()
-        // .map(product -> modelMapper.map(product, ProductDTO.class))
-        // .collect(Collectors.toList());
-        // ProductResponse productResponse = new ProductResponse();
-        // productResponse.setContent(productDTOs);
-        // productResponse.setPageNumber(pageProducts.getNumber());
-        // productResponse.setPageSize(pageProducts.getSize());
-        // productResponse.setTotalElements(pageProducts.getTotalElements());
-        // productResponse.setTotalPages(pageProducts.getTotalPages());
-        // productResponse.setLastPage(pageProducts.isLast());
-        // return productResponse;
-        // }
-
         private void getListCategoryIds(Category category, List<Long> ids) {
                 ids.add(category.getCategoryId());
                 category.getChildrens().forEach(c -> getListCategoryIds(c, ids));
         }
-
-        // private List<Long> getListCategoryIds(Category category) {
-        // List<Long> list = new ArrayList<>();
-        // list.add(category.getCategoryId());
-        // category.getChildrens().forEach(c -> list.addAll(getListCategoryIds(c)));
-
-        // return list;
-        // }
 
         @Transactional
         @Override
@@ -193,6 +164,7 @@ public class ProductServiceImpl implements ProductService {
                 product.setIsbn(productDTO.getIsbn());
                 product.setWeight(productDTO.getWeight());
                 product.setSize(productDTO.getSize());
+                product.setFormat(productDTO.getFormat());
                 product.setYear(productDTO.getYear());
                 product.setQuantity(productDTO.getQuantity());
                 product.setPrice(productDTO.getPrice());
@@ -252,6 +224,7 @@ public class ProductServiceImpl implements ProductService {
                 product.setIsbn(productDTO.getIsbn());
                 product.setWeight(productDTO.getWeight());
                 product.setSize(productDTO.getSize());
+                product.setFormat(productDTO.getFormat());
                 product.setYear(productDTO.getYear());
                 product.setQuantity(productDTO.getQuantity());
                 product.setPrice(productDTO.getPrice());

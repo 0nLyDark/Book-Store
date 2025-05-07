@@ -53,6 +53,11 @@ public class Product {
 
     private String size;
 
+    @Min(1)
+    private int pageNumber;
+
+    private String format;
+
     @Min(2000)
     private int year;
 
@@ -61,8 +66,6 @@ public class Product {
 
     @Column(nullable = false)
     private int quantity;
-    @Min(1)
-    private int pageNumber;
 
     @Min(0)
     @Max(100)
@@ -75,6 +78,11 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     @Size(min = 6, message = "Product description must contain atleast 6 characters")
     private String description;
+
+    // @NotBlank
+    // @Column(columnDefinition = "TEXT")
+    // @Size(min = 6, message = "Product detail must contain atleast 6 characters")
+    // private String detail;
 
     @OneToMany(mappedBy = "product", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<File> images = new ArrayList<>();

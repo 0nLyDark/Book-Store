@@ -42,9 +42,10 @@ public class AppConstants {
             "/api/public/categories/**",
             "/api/public/products/**",
             "/api/public/file/**",
-            "api/public/payment/create_payment/**" };
+            "api/public/orders/customer",
+            "api/public/payment/**" };
     public static final String[] USER_URLS = { "/api/public/**" };
-    public static final String[] ADMIN_URLS = { "/api/admin/**" };
     public static final String[] STAFF_URLS = { "/api/staff/**" };
+    public static final String[] ADMIN_URLS = { "/api/admin/**" };
 
 }

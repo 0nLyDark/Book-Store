@@ -1,10 +1,14 @@
-package com.dangphuoctai.BookStore.payloads.dto;
+package com.dangphuoctai.BookStore.payloads.dto.Order;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.dangphuoctai.BookStore.entity.Payment;
+
+import com.dangphuoctai.BookStore.enums.OrderStatus;
+import com.dangphuoctai.BookStore.enums.OrderType;
+import com.dangphuoctai.BookStore.payloads.dto.AddressDTO;
+import com.dangphuoctai.BookStore.payloads.dto.PromotionDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,7 +27,7 @@ public class OrderDTO {
 
     private String deliveryPhone;
 
-    private List<OrderItemDTO> orderItems = new ArrayList<>();
+    private List<OrderItemDTO> orderItems;
 
     private AddressDTO address;
 
@@ -31,7 +35,14 @@ public class OrderDTO {
 
     private Payment payment;
 
+    private PromotionDTO coupon;
+
+    private PromotionDTO freeship;
+
     private double totalAmount;
 
-    private String orderStatus;
+    private OrderStatus orderStatus;
+
+    private OrderType orderType;
+
 }

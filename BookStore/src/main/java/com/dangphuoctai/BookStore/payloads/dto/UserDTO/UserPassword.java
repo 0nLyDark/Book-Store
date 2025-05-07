@@ -1,5 +1,6 @@
-package com.dangphuoctai.BookStore.payloads;
+package com.dangphuoctai.BookStore.payloads.dto.UserDTO;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,8 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserPassword {
-    private String currentPassword;
 
+    @NotBlank
+    private String currentPassword;
+    @NotBlank
     private String newPassword;
 
 }

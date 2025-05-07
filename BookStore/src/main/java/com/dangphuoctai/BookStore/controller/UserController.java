@@ -13,12 +13,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
-import com.dangphuoctai.BookStore.payloads.dto.UserDTO;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserDTO;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserPassword;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserPasswordReset;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserStatus;
 import com.dangphuoctai.BookStore.payloads.response.UserResponse;
 import com.dangphuoctai.BookStore.service.UserService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api")
@@ -78,4 +84,27 @@ public class UserController {
         return new ResponseEntity<UserResponse>(userResponse, HttpStatus.OK);
     }
 
+    @PostMapping("/public/users/password")
+    public ResponseEntity<String> changePassword(@Valid @RequestBody UserPassword userPassword) {
+
+        String messages = userService.changePassword(userPassword.getCurrentPassword(), userPassword.getNewPassword());
+
+        return new ResponseEntity<String>(messages, HttpStatus.OK);
+    }
+
+    @PostMapping("/admin/users/status")
+    public ResponseEntity<String> changeAccountStatus(@Valid @RequestBody UserStatus userStatus) {
+
+        String messages = userService.changeAccountStatus(userStatus.getUserId(), userStatus.getStatus());
+
+        return new ResponseEntity<String>(messages, HttpStatus.OK);
+    }
+
+    @PostMapping("/admin/users/password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody UserPasswordReset userPasswordReset) {
+
+        String messages = userService.resetPassword(userPasswordReset.getUserId(), userPasswordReset.getNewPassword());
+
+        return new ResponseEntity<String>(messages, HttpStatus.OK);
+    }
 }

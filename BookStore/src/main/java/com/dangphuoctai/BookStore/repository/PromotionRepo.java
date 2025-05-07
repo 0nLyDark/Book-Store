@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -12,5 +14,7 @@ import com.dangphuoctai.BookStore.entity.Promotion;
 public interface PromotionRepo extends JpaRepository<Promotion, Long> {
 
     Page<Promotion> findAll(Specification<Promotion> promotionSpecification, Pageable pageDetails);
+
+    Optional<Promotion> findByPromotionCode(String promotionCode);
 
 }
