@@ -23,6 +23,7 @@ import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserRegister;
 import com.dangphuoctai.BookStore.security.JWTUtil;
 import com.dangphuoctai.BookStore.service.AuthService;
 import com.dangphuoctai.BookStore.service.EmailService;
+import com.dangphuoctai.BookStore.utils.Email;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -55,35 +56,22 @@ public class AuthController {
         @Value("${google.client.id}")
         private String googleClientId;
 
+        @Value("${fontend.urlVerify}")
+        private String urlVerify;
+
         @PostMapping("/register")
         public ResponseEntity<Map<String, Object>> registerHandler(@RequestBody UserRegister userRegister)
                         throws UserNotFoundException {
 
                 UserDTO userDTO = authService.registerUser(userRegister);
 
-                String otd = authService.generateOTPEmail(userDTO.getEmail());
-                String verifyUrl = "http://localhost:8080/api/auth/verify/"
-                                + jwtUtil.generateCodeOTP(userRegister.getEmail(), otd);
-                String htmlContent = "<html><body>"
-                                + "<h2>Chào " + userRegister.getEmail() + ",</h2>"
-                                + "<p>Bấm vào nút bên dưới để kích hoạt tài khoản của bạn:</p>"
-                                + "<table role='presentation' border='0' cellpadding='0' cellspacing='0'>"
-                                + "  <tr>"
-                                + "    <td align='center'>"
-                                + "      <a href='" + verifyUrl + "' "
-                                + "         style='display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; "
-                                + "         text-decoration: none; font-size: 16px; border-radius: 5px;'>"
-                                + "        Xác nhận tài khoản"
-                                + "      </a>"
-                                + "    </td>"
-                                + "  </tr>"
-                                + "</table>"
-                                + "<p>Nếu bạn không đăng ký, hãy bỏ qua email này.</p>"
-                                + "</body></html>";
+                String otp = authService.generateOTPEmail(userDTO.getEmail());
+                String verifyUrl = urlVerify + jwtUtil.generateCodeOTP(userRegister.getEmail(), otp);
+                String htmlContent = Email.getFormOTPVerifyAccountSendEmail(verifyUrl, userDTO.getFullName());
                 EmailDetails emailDetails = new EmailDetails();
                 emailDetails.setRecipient(userDTO.getEmail());
                 emailDetails.setMsgBody(htmlContent);
-                emailDetails.setSubject("Book Store Xác thực tài khoản");
+                emailDetails.setSubject("Cửa hàng sách BookStore - Xác thực tài khoản");
                 String resultSendEmail = emailService.sendMailWithAttachment(emailDetails);
                 System.out.println(resultSendEmail);
 
@@ -116,10 +104,20 @@ public class AuthController {
                                 String refreshToken = authService.generateRefreshToken(userDTO.getUserId());
                                 Map<String, Object> tokens = Map.of(
                                                 "jwt-token", token);
-                                new ResponseEntity<Map<String, Object>>(tokens, HttpStatus.OK);
+                                ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                                                .httpOnly(true)
+                                                .secure(true)
+                                                .path("/")
+                                                .maxAge(Duration.ofDays(3))
+                                                .sameSite("Strict")
+                                                .build();
+
+                                return ResponseEntity.ok()
+                                                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                                                .body(tokens);
                         }
                 } catch (Exception e) {
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token - " + e.getMessage());
                 }
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login failed");
         }

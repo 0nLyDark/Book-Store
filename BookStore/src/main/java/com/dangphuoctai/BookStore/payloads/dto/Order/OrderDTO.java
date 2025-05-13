@@ -33,11 +33,15 @@ public class OrderDTO {
 
     private LocalDateTime orderDateTime;
 
-    private Payment payment;
+    private PaymentDTO payment;
 
     private PromotionDTO coupon;
 
     private PromotionDTO freeship;
+
+    private double subTotal;
+
+    private double priceShip;
 
     private double totalAmount;
 

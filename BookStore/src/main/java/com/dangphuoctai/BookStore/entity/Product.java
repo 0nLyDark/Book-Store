@@ -48,8 +48,8 @@ public class Product {
 
     @Column(nullable = false, unique = true)
     private String isbn;
-
-    private String weight;
+    @Column(nullable = false)
+    private int weight;
 
     private String size;
 

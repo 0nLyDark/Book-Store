@@ -18,9 +18,9 @@ public class ProductDTO {
     private String productName;
     private String slug;
     private String isbn;
-    private String weight;
     private String size;
     private String format;
+    private int weight;
     private int year;
     private int quantity;
     private double price;

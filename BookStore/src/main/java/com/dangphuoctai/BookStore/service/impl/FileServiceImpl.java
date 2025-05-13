@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,8 +55,18 @@ public class FileServiceImpl implements FileService {
     @Override
     public String downloadImageFromUrl(String imageUrl, String folderPath) {
         try {
-            // Lấy phần mở rộng từ URL nếu có
-            String extension = imageUrl.contains(".") ? imageUrl.substring(imageUrl.lastIndexOf('.')) : ".png";
+            // Mở kết nối và lấy Content-Type
+            URL url = new URL(imageUrl);
+            URLConnection connection = url.openConnection();
+            String contentType = connection.getContentType(); // ví dụ: "image/jpeg"
+
+            // Lấy phần mở rộng từ Content-Type, mặc định ".jpg"
+            String extension = ".jpg"; // Fallback nếu không có phần mở rộng
+            if (contentType != null && contentType.startsWith("image/")) {
+                extension = "." + contentType.substring("image/".length()); // ví dụ: ".jpeg"
+            }
+
+            // Tạo tên file ngẫu nhiên với phần mở rộng
             String fileName = UUID.randomUUID() + extension;
             Path targetPath = Paths.get(folderPath).resolve(fileName);
 
@@ -65,14 +76,14 @@ public class FileServiceImpl implements FileService {
                 folder.mkdirs(); // Đảm bảo thư mục tồn tại
             }
 
-            // Tải ảnh và lưu vào folder
-            try (InputStream in = new URL(imageUrl).openStream()) {
+            // Tải ảnh và lưu vào thư mục
+            try (InputStream in = connection.getInputStream()) {
                 Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
             }
 
             return fileName;
         } catch (IOException e) {
-            throw new APIException("Lỗi khi tải ảnh từ URL: " + imageUrl + "detail: " + e.getMessage());
+            throw new APIException("Lỗi khi tải ảnh từ URL: " + imageUrl + " detail: " + e.getMessage());
         } catch (Exception e) {
             throw new APIException("Đã xảy ra lỗi không mong muốn: " + e.getMessage());
         }

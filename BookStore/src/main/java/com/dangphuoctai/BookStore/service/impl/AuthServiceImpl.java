@@ -25,6 +25,7 @@ import com.dangphuoctai.BookStore.entity.RefreshToken;
 import com.dangphuoctai.BookStore.entity.Role;
 import com.dangphuoctai.BookStore.entity.User;
 import com.dangphuoctai.BookStore.enums.AccountType;
+import com.dangphuoctai.BookStore.enums.OTPType;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
@@ -38,7 +39,7 @@ import com.dangphuoctai.BookStore.repository.UserRepo;
 import com.dangphuoctai.BookStore.security.JWTUtil;
 import com.dangphuoctai.BookStore.service.AuthService;
 import com.dangphuoctai.BookStore.service.FileService;
-import com.dangphuoctai.BookStore.utils.EmailValidator;
+import com.dangphuoctai.BookStore.utils.Email;
 
 @Service
 @Transactional
@@ -75,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
 
     public UserDTO registerUser(UserRegister userRegister) {
         try {
-            if (EmailValidator.isValidEmail(userRegister.getUsername())) {
+            if (Email.isValidEmail(userRegister.getUsername())) {
                 throw new APIException("Invalid username");
             }
             if (userRegister.getPassword() == null || userRegister.getPassword().isBlank()) {
@@ -119,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
                 address = new Address(country, district, city, pincode, ward, buildingName);
                 address = addressRepo.save(address);
             }
-            user.setAddresses(Set.of(address));
+            user.setAddress(address);
             user.setCreatedAt(LocalDateTime.now());
             User registeredUser = userRepo.save(user);
 
@@ -136,7 +137,7 @@ public class AuthServiceImpl implements AuthService {
             throw new APIException("Password is not Valid");
         }
         User user;
-        if (EmailValidator.isValidEmail(username)) {
+        if (Email.isValidEmail(username)) {
             user = userRepo.findByEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("user", "email", username));
         } else {
@@ -223,16 +224,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String generateOTPEmail(String email) {
-        Optional<OTP> optionalOtp = otpRepo.findByEmail(email);
+        Optional<OTP> optionalOtp = otpRepo.findByEmailAndType(email, OTPType.ACCOUNT_VERIFICATION);
         OTP otp;
         if (optionalOtp.isPresent()) {
             otp = optionalOtp.get();
         } else {
             otp = new OTP();
             otp.setEmail(email);
+            otp.setType(OTPType.ACCOUNT_VERIFICATION);
         }
         SecureRandom secureRandom = new SecureRandom();
-        int code = secureRandom.nextInt(90000) + 10000;
+        int code = secureRandom.nextInt(900000) + 100000;
         String strOTP = String.valueOf(code);
         otp.setCode(strOTP);
         otp.setExpiryDate(Instant.now().plus(5, ChronoUnit.MINUTES));
@@ -244,8 +246,9 @@ public class AuthServiceImpl implements AuthService {
     public Boolean verityOTPEmail(OtpDTO otpDTO) {
         User user = userRepo.findByEmail(otpDTO.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", otpDTO.getEmail()));
-        OTP otp = otpRepo.findByEmail(otpDTO.getEmail())
+        OTP otp = otpRepo.findByEmailAndType(otpDTO.getEmail(), OTPType.ACCOUNT_VERIFICATION)
                 .orElseThrow(() -> new ResourceNotFoundException("OTP", "email", otpDTO.getEmail()));
+
         if (!otp.getCode().equals(otpDTO.getCode())) {
             return false;
         }
@@ -254,6 +257,7 @@ public class AuthServiceImpl implements AuthService {
         }
         user.setVerified(true);
         otpRepo.delete(otp);
+
         return true;
     }
 }

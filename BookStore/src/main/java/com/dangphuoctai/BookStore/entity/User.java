@@ -20,6 +20,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
@@ -43,9 +44,9 @@ public class User {
     private Long userId;
 
     @Size(min = 5, max = 50, message = "Full Name must be between 5 and 50 characters long")
-    @Pattern(regexp = "^[a-zA-Z]*$", message = "Full Name must not contain numbers or special characters")
     private String fullName;
 
+    @Column(unique = true)
     @Size(min = 10, max = 10, message = "Mobile Number must be exactly 10 digits long")
     @Pattern(regexp = "^\\d{10}$", message = "Mobile Number must contain only Numbers")
     private String mobileNumber;
@@ -62,9 +63,9 @@ public class User {
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-    @JoinTable(name = "user_address", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "address_id"))
-    private Set<Address> addresses = new HashSet<>();
+    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinColumn(name = "address_id")
+    private Address address;
 
     @OneToOne(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     private Cart cart;

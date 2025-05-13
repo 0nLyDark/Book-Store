@@ -12,7 +12,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,14 +49,16 @@ public class Promotion {
     @Column(nullable = false)
     private LocalDateTime endDate;
 
+    @Min(0)
     @Column(nullable = false)
     private Double value;
 
+    @Min(0)
     @Column(nullable = false, columnDefinition = "double DEFAULT 0")
     private Double valueApply;
 
     @Column(nullable = false)
-    private Boolean valueType;
+    private Boolean valueType; // true == % ,false == number
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -70,4 +75,15 @@ public class Promotion {
     private LocalDateTime createdAt;
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    private void validateSave() {
+        if (valueType) {
+            if (value > 100) {
+                throw new IllegalArgumentException("Value cannot be greater than 100 when valueType is %");
+            }
+        }
+    }
+
 }

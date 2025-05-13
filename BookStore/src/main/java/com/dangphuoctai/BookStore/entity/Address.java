@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,17 +26,18 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long addressId;
     @NotBlank
-    @Size(min = 5, message = "Ward name must contain atleast 5 characters")
-    private String ward;
-    @NotBlank
-    @Size(min = 5, message = "Building name must contain atleast 5 characters")
-    private String buildingName;
     @NotBlank
     @Size(min = 4, message = "City name must contain atleast 4 characters")
     private String city;
     @NotBlank
     @Size(min = 2, message = "District name must contain atleast 2 characters")
     private String district;
+
+    @Size(min = 5, message = "Ward name must contain atleast 5 characters")
+    private String ward;
+    @NotBlank
+    @Size(min = 5, message = "Building name must contain atleast 5 characters")
+    private String buildingName;
     @NotBlank
     @Size(min = 2, message = "Country name must contain atleast 2 characters")
     private String country;

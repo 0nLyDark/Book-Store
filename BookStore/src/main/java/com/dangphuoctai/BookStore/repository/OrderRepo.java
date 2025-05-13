@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,5 +15,7 @@ public interface OrderRepo extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE o.user.userId = :userId")
     Page<Order> findAllByUserId(Long userId, Pageable pageDetails);
+
+    Optional<Order> findByEmail(String email);
 
 }
