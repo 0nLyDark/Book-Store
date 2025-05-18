@@ -2,6 +2,7 @@ package com.dangphuoctai.BookStore.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -22,10 +23,13 @@ import com.dangphuoctai.BookStore.entity.PromotionSnapshot;
 import com.dangphuoctai.BookStore.enums.PromotionType;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.PromotionSpecification;
+import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
 import com.dangphuoctai.BookStore.payloads.dto.PromotionDTO;
+import com.dangphuoctai.BookStore.payloads.response.ProductResponse;
 import com.dangphuoctai.BookStore.payloads.response.PromotionResponse;
 import com.dangphuoctai.BookStore.repository.PromotionRepo;
 import com.dangphuoctai.BookStore.repository.PromotionSnapshotRepo;
+import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.PromotionService;
 import com.dangphuoctai.BookStore.utils.HashUtil;
 
@@ -42,18 +46,77 @@ public class PromotionServiceImpl implements PromotionService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private BaseRedisService<String, String, PromotionDTO> promotionRedisService;
+
+    @Autowired
+    private BaseRedisService<String, String, PromotionResponse> promotionResponseRedisService;
+
+    private static final String PROMOTION_CACHE_KEY = "promotion";
+    private static final String PROMOTION_PAGE_CACHE_KEY = "promotion:pages";
+
     @Override
     public PromotionDTO getPromotionById(Long promotionId) {
+        // Check in Redis cache
+        String field = "id:" + promotionId;
+        PromotionDTO cached = (PromotionDTO) promotionRedisService.hashGet(PROMOTION_CACHE_KEY, field);
+        if (cached != null) {
+            return cached;
+        }
         Promotion promotion = promotionRepo.findById(promotionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Promotion", "promotionId", promotionId));
 
-        return modelMapper.map(promotion, PromotionDTO.class);
+        PromotionDTO promotionDTO = modelMapper.map(promotion, PromotionDTO.class);
+        // Save cache product to redis
+        promotionRedisService.hashSet(PROMOTION_CACHE_KEY, field, promotionDTO);
+        promotionRedisService.setTimeToLiveOnce(PROMOTION_CACHE_KEY, 30, TimeUnit.MINUTES);
+
+        return promotionDTO;
+    }
+
+    @Override
+    public PromotionDTO getPromotionByCode(String code) {
+        // Check in Redis cache
+        String field = "code:" + code;
+        PromotionDTO cached = (PromotionDTO) promotionRedisService.hashGet(PROMOTION_CACHE_KEY, field);
+        if (cached != null) {
+            return cached;
+        }
+        Promotion promotion = promotionRepo.findByPromotionCode(code)
+                .orElseThrow(() -> new ResourceNotFoundException("Promotion", "promotionCode", code));
+
+        PromotionDTO promotionDTO = modelMapper.map(promotion, PromotionDTO.class);
+        // Save cache product to redis
+        promotionRedisService.hashSet(PROMOTION_CACHE_KEY, field, promotionDTO);
+        promotionRedisService.setTimeToLiveOnce(PROMOTION_CACHE_KEY, 30, TimeUnit.MINUTES);
+
+        return promotionDTO;
+    }
+
+    @Override
+    public List<PromotionDTO> getAllPromotionByIds(List<Long> promotionIds) {
+        List<Promotion> promotions = promotionRepo.findAllById(promotionIds);
+        if (promotions.size() != promotionIds.size()) {
+            throw new ResourceNotFoundException("Promotion", "promotionIds", promotionIds);
+        }
+        List<PromotionDTO> promotionDTOs = promotions.stream()
+                .map(promotion -> modelMapper.map(promotion, PromotionDTO.class)).collect(Collectors.toList());
+
+        return promotionDTOs;
     }
 
     @Override
     public PromotionResponse getAllPromotion(Boolean status, PromotionType type, Integer pageNumber, Integer pageSize,
             String sortBy,
             String sortOrder) {
+        // Check in Redis cache
+        String field = String.format("status:%s|type:%s|pageNumber:%d|pageSize:%d|sortBy:%s|sortOrder:%s",
+                status, type, pageNumber, pageSize, sortBy, sortOrder);
+        PromotionResponse cached = (PromotionResponse) promotionResponseRedisService.hashGet(PROMOTION_PAGE_CACHE_KEY,
+                field);
+        if (cached != null) {
+            return cached;
+        }
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
@@ -74,6 +137,10 @@ public class PromotionServiceImpl implements PromotionService {
         promotionResponse.setTotalElements(pagePromotions.getTotalElements());
         promotionResponse.setTotalPages(pagePromotions.getTotalPages());
         promotionResponse.setLastPage(pagePromotions.isLast());
+
+        // Save cache promotion to redis
+        promotionResponseRedisService.hashSet(PROMOTION_PAGE_CACHE_KEY, field, promotionResponse);
+        promotionResponseRedisService.setTimeToLiveOnce(PROMOTION_PAGE_CACHE_KEY, 30, TimeUnit.MINUTES);
 
         return promotionResponse;
 
@@ -100,8 +167,16 @@ public class PromotionServiceImpl implements PromotionService {
         promotion.setUpdatedBy(userId);
 
         promotionRepo.save(promotion);
+        PromotionDTO promotionRes = modelMapper.map(promotion, PromotionDTO.class);
+        // Save cache product to redis
+        String field = "id:" + promotion.getPromotionId();
+        String fieldCode = "code:" + promotion.getPromotionCode();
+        promotionRedisService.hashSet(PROMOTION_CACHE_KEY, field, promotionRes);
+        promotionRedisService.hashSet(PROMOTION_CACHE_KEY, fieldCode, promotionRes);
+        promotionRedisService.setTimeToLiveOnce(PROMOTION_CACHE_KEY, 30, TimeUnit.MINUTES);
+        promotionResponseRedisService.delete(PROMOTION_PAGE_CACHE_KEY);
 
-        return modelMapper.map(promotion, PromotionDTO.class);
+        return promotionRes;
     }
 
     @Override
@@ -124,15 +199,30 @@ public class PromotionServiceImpl implements PromotionService {
         promotion.setStatus(promotionDTO.getStatus());
         promotion.setUpdatedAt(LocalDateTime.now());
         promotion.setUpdatedBy(userId);
+        promotionRepo.save(promotion);
 
-        return modelMapper.map(promotion, PromotionDTO.class);
+        PromotionDTO promotionRes = modelMapper.map(promotion, PromotionDTO.class);
+        // Save cache product to redis
+        String field = "id:" + promotion.getPromotionId();
+        String fieldCode = "code:" + promotion.getPromotionCode();
+        promotionRedisService.hashSet(PROMOTION_CACHE_KEY, field, promotionRes);
+        promotionRedisService.hashSet(PROMOTION_CACHE_KEY, fieldCode, promotionRes);
+        promotionRedisService.setTimeToLiveOnce(PROMOTION_CACHE_KEY, 30, TimeUnit.MINUTES);
+        promotionResponseRedisService.delete(PROMOTION_PAGE_CACHE_KEY);
+
+        return promotionRes;
     }
 
     public String deletePromotion(Long promotionId) {
         Promotion promotion = promotionRepo.findById(promotionId).orElseThrow(
                 () -> new ResourceNotFoundException("Promotion", "promotionId", promotionId));
-
+        String field = "id:" + promotion.getPromotionId();
+        String fieldCode = "code:" + promotion.getPromotionCode();
         promotionRepo.delete(promotion);
+        // Delete cache product from redis
+        promotionRedisService.delete(PROMOTION_CACHE_KEY, field);
+        promotionRedisService.delete(PROMOTION_CACHE_KEY, fieldCode);
+        promotionResponseRedisService.delete(PROMOTION_PAGE_CACHE_KEY);
 
         return "Promotion with ID " + promotionId + " has been deleted successfully.";
     }

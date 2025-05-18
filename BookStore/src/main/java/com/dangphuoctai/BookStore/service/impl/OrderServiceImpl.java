@@ -4,8 +4,11 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -22,8 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dangphuoctai.BookStore.entity.Address;
-import com.dangphuoctai.BookStore.entity.Cart;
-import com.dangphuoctai.BookStore.entity.CartItem;
 import com.dangphuoctai.BookStore.entity.OTP;
 import com.dangphuoctai.BookStore.entity.Order;
 import com.dangphuoctai.BookStore.entity.OrderItem;
@@ -40,12 +41,14 @@ import com.dangphuoctai.BookStore.enums.PromotionType;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.EmailDetails;
+import com.dangphuoctai.BookStore.payloads.dto.CartItemDTO;
 import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
+import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.ProductQuantity;
 import com.dangphuoctai.BookStore.payloads.response.OrderResponse;
+import com.dangphuoctai.BookStore.payloads.response.PromotionResponse;
 import com.dangphuoctai.BookStore.repository.AddressRepo;
-import com.dangphuoctai.BookStore.repository.CartRepo;
 import com.dangphuoctai.BookStore.repository.OTPRepo;
 import com.dangphuoctai.BookStore.repository.OrderItemRepo;
 import com.dangphuoctai.BookStore.repository.OrderRepo;
@@ -54,12 +57,16 @@ import com.dangphuoctai.BookStore.repository.ProductRepo;
 import com.dangphuoctai.BookStore.repository.PromotionRepo;
 import com.dangphuoctai.BookStore.repository.PromotionSnapshotRepo;
 import com.dangphuoctai.BookStore.repository.UserRepo;
+import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.EmailService;
 import com.dangphuoctai.BookStore.service.GHNService;
 import com.dangphuoctai.BookStore.service.OrderService;
 import com.dangphuoctai.BookStore.utils.Email;
 import com.dangphuoctai.BookStore.utils.HashUtil;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @Transactional
 public class OrderServiceImpl implements OrderService {
@@ -83,9 +90,6 @@ public class OrderServiceImpl implements OrderService {
     private PaymentRepo paymentRepo;
 
     @Autowired
-    private CartRepo cartRepo;
-
-    @Autowired
     private UserRepo userRepo;
 
     @Autowired
@@ -103,6 +107,14 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private BaseRedisService<String, Long, Integer> cartRedisService;
+
+    @Autowired
+    private BaseRedisService<String, String, String> optRedisService;
+
+    private static final String OTP_ORDER_CACHE_KEY = "otp:order:";
+
     @Override
     public OrderDTO getOrderById(Long orderId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -111,7 +123,7 @@ public class OrderServiceImpl implements OrderService {
         String roles = jwt.getClaim("scope");
         Order order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "orderId", orderId));
-        if (userId != order.getUserId() && !"STAFF".contains(roles)) {
+        if (userId != order.getUserId() && !roles.contains("STAFF") && !roles.contains("ADMIN")) {
             throw new AccessDeniedException("You do not have permission to access this order.");
         }
 
@@ -125,7 +137,7 @@ public class OrderServiceImpl implements OrderService {
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long Id = jwt.getClaim("userId");
         String roles = jwt.getClaim("scope");
-        if (Id != userId && !"STAFF".contains(roles)) {
+        if (Id != userId && !roles.contains("STAFF") && !roles.contains("ADMIN")) {
             throw new AccessDeniedException("You do not have permission to access this order.");
         }
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
@@ -166,7 +178,6 @@ public class OrderServiceImpl implements OrderService {
         return orderResponse;
     }
 
-    @Transactional
     @Override
     public OrderDTO createCustomerOrder(OrderDTO orderDTO, List<ProductQuantity> productQuantities) {
         Order order = new Order();
@@ -183,8 +194,11 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderStatus(OrderStatus.PENDING);
         // Set OrderItem
         double total = productQuantities.stream().mapToDouble(p -> {
-            Product product = productRepo.findById(p.getProductId())
+            Product product = productRepo.findByIdForUpdate(p.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", p.getProductId()));
+            if (!product.getStatus()) {
+                throw new APIException("Sản phẩm không còn tồn tại");
+            }
             OrderItem orderItem = new OrderItem();
             orderItem.setProduct(product);
             orderItem.setQuantity(p.getQuantity());
@@ -271,9 +285,8 @@ public class OrderServiceImpl implements OrderService {
         return modelMapper.map(order, OrderDTO.class);
     }
 
-    @Transactional
     @Override
-    public OrderDTO createOrder(OrderDTO orderDTO, List<Long> productId) {
+    public OrderDTO createOrder(OrderDTO orderDTO, List<Long> productIds) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
@@ -297,31 +310,39 @@ public class OrderServiceImpl implements OrderService {
             order.setOrderStatus(OrderStatus.PENDING);
         }
         // Get cart
-        Cart cart = user.getCart();
-        List<CartItem> cartItems = cart.getCartItems().stream()
-                .filter(cI -> productId.contains(cI.getProduct().getProductId()))
-                .collect(Collectors.toList());
-        if (cartItems.size() != productId.size()) {
-            throw new APIException("Sản phẩm không có trong giỏ hàng");
+        String key = "cart:user:" + userId;
+        Map<Long, Integer> cartItems = cartRedisService.getField(key).entrySet().stream()
+                .map(entry -> new AbstractMap.SimpleEntry<>(((Number) entry.getKey()).longValue(), entry.getValue()))
+                .filter(entry -> productIds.contains(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (cartItems.size() != productIds.size()) {
+            throw new APIException("Giỏ hàng không tồn tại sản phẩm trong danh sách sản phẩm đặt hàng.");
         }
         // Set OrderItem
-        double total = cartItems.stream().mapToDouble(ci -> {
-            Product product = ci.getProduct();
-            OrderItem orderItem = new OrderItem();
-            orderItem.setProduct(product);
-            orderItem.setQuantity(ci.getQuantity());
-            orderItem.setPrice(product.getPrice());
-            orderItem.setDiscount(product.getDiscount());
-            int newQuantity = product.getQuantity() - ci.getQuantity();
-            if (newQuantity < 0) {
-                throw new APIException("Số lượng tồn kho sản phẩm :" + product.getProductName() + " không đủ");
-            }
-            product.setQuantity(newQuantity);
-            orderItem.setOrder(order);
-            order.getOrderItems().add(orderItem);
-            return orderItem.getPrice() * orderItem.getQuantity() * (100 - orderItem.getDiscount()) / 100;
-        }).sum();
-        cart.getCartItems().removeAll(cartItems);
+        double total = cartItems.entrySet().stream()
+                .mapToDouble(entry -> {
+                    Long productIdKey = ((Number) entry.getKey()).longValue();
+                    Integer quantityValue = entry.getValue();
+                    Product product = productRepo.findById(productIdKey)
+                            .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productIdKey));
+                    if (!product.getStatus()) {
+                        throw new APIException("Sản phẩm không còn tồn tại");
+                    }
+                    OrderItem orderItem = new OrderItem();
+                    orderItem.setProduct(product);
+                    orderItem.setQuantity(quantityValue);
+                    orderItem.setPrice(product.getPrice());
+                    orderItem.setDiscount(product.getDiscount());
+                    int newQuantity = product.getQuantity() - quantityValue;
+                    if (newQuantity < 0) {
+                        throw new APIException("Số lượng tồn kho sản phẩm :" + product.getProductName() + " không đủ");
+                    }
+                    product.setQuantity(newQuantity);
+                    orderItem.setOrder(order);
+                    order.getOrderItems().add(orderItem);
+                    return orderItem.getPrice() * orderItem.getQuantity() * (100 - orderItem.getDiscount()) / 100;
+                }).sum();
+        // Set sub Total
         order.setSubTotal(total);
         double totalAmount = total;
         // Set Price ship
@@ -393,13 +414,18 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
     public OrderDTO createOrderOffline(OrderDTO orderDTO, List<ProductQuantity> productQuantities) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        Long userId = jwt.getClaim("userId");
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
         Order order = new Order();
+        order.setUser(user);
         order.setDeliveryName(orderDTO.getDeliveryName());
         order.setDeliveryPhone(orderDTO.getDeliveryPhone());
         order.setEmail(orderDTO.getEmail());
-        order.setOrderType(OrderType.ONLINE);
+        order.setOrderType(OrderType.OFFLINE);
         // Set payment method
         Payment payment = new Payment();
         payment.setPaymentMethod(orderDTO.getPayment().getPaymentMethod());
@@ -412,8 +438,11 @@ public class OrderServiceImpl implements OrderService {
         }
         // Set OrderItem
         double total = productQuantities.stream().mapToDouble(p -> {
-            Product product = productRepo.findById(p.getProductId())
+            Product product = productRepo.findByIdForUpdate(p.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", p.getProductId()));
+            if (!product.getStatus()) {
+                throw new APIException("Sản phẩm không còn hoạt động");
+            }
             OrderItem orderItem = new OrderItem();
             orderItem.setProduct(product);
             orderItem.setQuantity(p.getQuantity());
@@ -458,7 +487,10 @@ public class OrderServiceImpl implements OrderService {
         // Save order
         orderRepo.save(order);
 
-        return modelMapper.map(order, OrderDTO.class);
+        OrderDTO orderResult = modelMapper.map(order, OrderDTO.class);
+        orderResult.setUserId(userId);
+
+        return orderResult;
     }
 
     @Override
@@ -470,7 +502,7 @@ public class OrderServiceImpl implements OrderService {
             throw new APIException(
                     "Đơn hàng không hợp lệ. Đơn hàng phải ở trạng thái đang chờ xử lý và sử dụng phương thức thanh toán COD.");
         }
-        String otp = generateOTPOrder(order);
+        String otp = generateOTPOrder(orderId);
         String htmlContent = Email.getFormOTPVerifyOrderSendEmail(otp, String.valueOf(orderId),
                 order.getDeliveryName());
         EmailDetails emailDetails = new EmailDetails(order.getEmail(), htmlContent, "BookStore - Xác thực đơn hàng",
@@ -481,22 +513,16 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public String generateOTPOrder(Order order) {
-        Optional<OTP> optionalOtp = otpRepo.findByOrderOrderIdAndType(order.getOrderId(), OTPType.ORDER_VERIFICATION);
-        OTP otp;
-        if (optionalOtp.isPresent()) {
-            otp = optionalOtp.get();
-        } else {
-            otp = new OTP();
-            otp.setOrder(order);
-            otp.setType(OTPType.ORDER_VERIFICATION);
-        }
+    public String generateOTPOrder(Long orderId) {
+
+        // Generate a 6-digit OTP
         SecureRandom secureRandom = new SecureRandom();
         int code = secureRandom.nextInt(900000) + 100000;
         String strOTP = String.valueOf(code);
-        otp.setCode(strOTP);
-        otp.setExpiryDate(Instant.now().plus(5, ChronoUnit.MINUTES));
-        otpRepo.save(otp);
+        // Save OTP to redis
+        String key = OTP_ORDER_CACHE_KEY + orderId;
+        optRedisService.set(key, strOTP);
+        optRedisService.setTimeToLive(key, 5, TimeUnit.MINUTES);
 
         return strOTP;
     }
@@ -510,18 +536,15 @@ public class OrderServiceImpl implements OrderService {
                 || order.getPayment().getPaymentMethod() != PaymentMethod.COD) {
             throw new APIException("Đơn hàng không hợp lệ");
         }
-        OTP otp = otpRepo.findByOrderOrderIdAndType(orderId, OTPType.ORDER_VERIFICATION)
-                .orElseThrow(() -> new ResourceNotFoundException("OTP", "orderId", orderId));
-
-        if (!otp.getCode().equals(otpDTO.getCode())) {
-            return false;
-        }
-        if (Instant.now().isAfter(otp.getExpiryDate())) {
+        String key = OTP_ORDER_CACHE_KEY + orderId;
+        String otpCode = optRedisService.get(key);
+        if (otpCode == null) {
             return false;
         }
         order.setOrderStatus(OrderStatus.PAID);
         orderRepo.save(order);
-        otpRepo.delete(otp);
+        // Delete OTP from redis
+        optRedisService.delete(key);
 
         return true;
     }
@@ -534,7 +557,8 @@ public class OrderServiceImpl implements OrderService {
         if (!checkType || !checkDate || !checkValue || !promotion.getStatus()) {
             throw new APIException(
                     "Mã giảm giá " + (type.equals(PromotionType.VOUCHER) ? "đơn hàng" : "vận chuyển")
-                            + " không hợp lệ");
+                            + " không hợp lệ" + checkType + "" + checkDate + "" + checkValue + ""
+                            + promotion.getStatus());
         }
     }
 }

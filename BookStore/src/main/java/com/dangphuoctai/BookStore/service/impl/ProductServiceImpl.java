@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -39,8 +40,10 @@ import com.dangphuoctai.BookStore.repository.LanguageRepo;
 import com.dangphuoctai.BookStore.repository.ProductRepo;
 import com.dangphuoctai.BookStore.repository.PublisherRepo;
 import com.dangphuoctai.BookStore.repository.SupplierRepo;
+import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.FileService;
 import com.dangphuoctai.BookStore.service.ProductService;
+import com.dangphuoctai.BookStore.utils.CacheKeyGenerator;
 import com.dangphuoctai.BookStore.utils.CreateSlug;
 
 import lombok.extern.slf4j.Slf4j;
@@ -82,20 +85,50 @@ public class ProductServiceImpl implements ProductService {
         @Value("${project.image}")
         private String path;
 
+        @Autowired
+        private BaseRedisService<String, String, ProductDTO> productRedisService;
+
+        @Autowired
+        private BaseRedisService<String, String, ProductResponse> productResponseRedisService;
+
+        private static final String PRODUCT_CACHE_KEY = "product";
+        private static final String PRODUCT_PAGE_CACHE_KEY = "product:pages";
+
         @Override
         public ProductDTO getProductById(Long productId) {
+                // Check in Redis cache
+                String field = "id:" + productId;
+                ProductDTO cached = (ProductDTO) productRedisService.hashGet(PRODUCT_CACHE_KEY, field);
+                if (cached != null) {
+                        return cached;
+                }
                 Product product = productRepo.findById(productId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+                ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
+                // Save cache product to redis
+                productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productDTO);
+                productRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30, TimeUnit.MINUTES);
 
-                return modelMapper.map(product, ProductDTO.class);
+                return productDTO;
         }
 
         @Override
         public ProductDTO getProductBySlug(String slug) {
+                // Check in Redis cache
+                String field = "slug:" + slug;
+                ProductDTO cached = (ProductDTO) productRedisService.hashGet(PRODUCT_CACHE_KEY, field);
+                if (cached != null) {
+                        return cached;
+                }
                 Product product = productRepo.findBySlug(slug)
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "slug", slug));
 
-                return modelMapper.map(product, ProductDTO.class);
+                ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
+                // Save cache product to redis
+                productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productDTO);
+                productRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30, TimeUnit.MINUTES);
+
+                return productDTO;
         }
 
         public List<ProductDTO> getManyProductById(List<Long> productIds) {
@@ -121,6 +154,18 @@ public class ProductServiceImpl implements ProductService {
                         List<Long> authorIds, List<Long> languageIds,
                         Long supplierId, Long publisherId, Boolean status,
                         Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+                // Check in Redis cache
+                String field = CacheKeyGenerator.generateProductCacheKey(
+                                keyword, isbn, minPrice, maxPrice,
+                                isSale, categoryId, authorIds, languageIds,
+                                supplierId, publisherId, status,
+                                pageNumber, pageSize, sortBy, sortOrder);
+                ProductResponse cached = (ProductResponse) productResponseRedisService.hashGet(PRODUCT_PAGE_CACHE_KEY,
+                                field);
+                if (cached != null) {
+                        return cached;
+                }
+                // Select products from database
                 Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                                 : Sort.by(sortBy).descending();
                 Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
@@ -147,6 +192,10 @@ public class ProductServiceImpl implements ProductService {
                 productResponse.setTotalElements(pageProducts.getTotalElements());
                 productResponse.setTotalPages(pageProducts.getTotalPages());
                 productResponse.setLastPage(pageProducts.isLast());
+
+                // Save cache category to redis
+                productResponseRedisService.hashSet(PRODUCT_PAGE_CACHE_KEY, field, productResponse);
+                productResponseRedisService.setTimeToLiveOnce(PRODUCT_PAGE_CACHE_KEY, 30, TimeUnit.MINUTES);
 
                 return productResponse;
         }
@@ -204,6 +253,14 @@ public class ProductServiceImpl implements ProductService {
 
                 // Save Product
                 productRepo.save(product);
+                ProductDTO productRes = modelMapper.map(product, ProductDTO.class);
+                // Save cache product to redis
+                String field = "id:" + productRes.getProductId();
+                String fieldSlug = "slug:" + productRes.getSlug();
+                productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productRes);
+                productRedisService.hashSet(PRODUCT_CACHE_KEY, fieldSlug, productRes);
+                productResponseRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30, TimeUnit.MINUTES);
+                productResponseRedisService.delete(PRODUCT_PAGE_CACHE_KEY);
 
                 return modelMapper.map(product, ProductDTO.class);
         }
@@ -267,6 +324,14 @@ public class ProductServiceImpl implements ProductService {
 
                 // Save Product
                 productRepo.save(product);
+                ProductDTO productRes = modelMapper.map(product, ProductDTO.class);
+                // Save cache product to redis
+                String field = "id:" + productRes.getProductId();
+                String fieldSlug = "slug:" + productRes.getSlug();
+                productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productRes);
+                productRedisService.hashSet(PRODUCT_CACHE_KEY, fieldSlug, productRes);
+                productResponseRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30, TimeUnit.MINUTES);
+                productResponseRedisService.delete(PRODUCT_PAGE_CACHE_KEY);
 
                 return modelMapper.map(product, ProductDTO.class);
         }
@@ -275,7 +340,11 @@ public class ProductServiceImpl implements ProductService {
                 Product product = productRepo.findById(productId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "productId",
                                                 productId));
+                String field = "id:" + product.getProductId();
+                String fieldSlug = "slug:" + product.getSlug();
                 productRepo.delete(product);
+                productRedisService.delete(PRODUCT_CACHE_KEY, List.of(field, fieldSlug));
+                productResponseRedisService.delete(PRODUCT_PAGE_CACHE_KEY);
 
                 return "Product with ID: " + productId + " deleted successfully";
         }

@@ -47,13 +47,14 @@ public class MenuController {
 
     @GetMapping("/public/menus")
     public ResponseEntity<MenuResponse> getAllMenus(
+            @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "type", defaultValue = "parent", required = false) String type,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_MENUS_BY, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
 
-        MenuResponse menuResponse = menuService.getAllMenus(type,
+        MenuResponse menuResponse = menuService.getAllMenus(status, type,
                 pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "menuId" : sortBy,

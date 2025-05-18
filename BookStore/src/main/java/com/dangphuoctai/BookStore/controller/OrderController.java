@@ -1,20 +1,17 @@
 package com.dangphuoctai.BookStore.controller;
 
-import java.util.List;
-
-import org.checkerframework.checker.units.qual.A;
-import org.checkerframework.checker.units.qual.t;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderRequest;
-import com.dangphuoctai.BookStore.payloads.dto.Order.ProductQuantity;
+import com.dangphuoctai.BookStore.payloads.response.OrderResponse;
 import com.dangphuoctai.BookStore.service.EmailService;
 import com.dangphuoctai.BookStore.service.OrderService;
 import com.dangphuoctai.BookStore.utils.Email;
@@ -36,6 +33,46 @@ public class OrderController {
 
     @Autowired
     private EmailService emailService;
+
+    @GetMapping("/public/orders/{orderId}")
+    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long orderId) {
+
+        OrderDTO order = orderService.getOrderById(orderId);
+
+        return new ResponseEntity<OrderDTO>(order, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/orders/user/{userId}")
+    public ResponseEntity<OrderResponse> getOrdersByUserId(@PathVariable Long userId,
+            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+            @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+            @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_ORDERS_BY, required = false) String sortBy,
+            @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
+
+        OrderResponse orderResponse = orderService.getAllOrderByUserId(userId,
+                pageNumber == 0 ? pageNumber : pageNumber - 1,
+                pageSize,
+                "id".equals(sortBy) ? "orderId" : sortBy,
+                sortOrder);
+
+        return new ResponseEntity<OrderResponse>(orderResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/staff/orders")
+    public ResponseEntity<OrderResponse> getAllOrder(
+            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+            @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+            @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_ORDERS_BY, required = false) String sortBy,
+            @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
+
+        OrderResponse orderResponse = orderService.getAllOrder(
+                pageNumber == 0 ? pageNumber : pageNumber - 1,
+                pageSize,
+                "id".equals(sortBy) ? "orderId" : sortBy,
+                sortOrder);
+
+        return new ResponseEntity<OrderResponse>(orderResponse, HttpStatus.OK);
+    }
 
     @PostMapping("/public/orders/customer")
     public ResponseEntity<OrderDTO> createCustomerOrder(@RequestBody OrderRequest orderRequest) {
@@ -61,10 +98,10 @@ public class OrderController {
         return new ResponseEntity<OrderDTO>(order, HttpStatus.CREATED);
     }
 
-    @GetMapping("/public/orders/otp")
-    public ResponseEntity<String> createOrderWithOTP(@RequestBody OtpDTO otpDTO) {
+    @GetMapping("/public/orders/{orderId}/otp")
+    public ResponseEntity<String> createOrderWithOTP(@PathVariable Long orderId) {
 
-        String message = orderService.SendVerifyOrderEmail(otpDTO.getOrderId());
+        String message = orderService.SendVerifyOrderEmail(orderId);
 
         return new ResponseEntity<String>(message, HttpStatus.OK);
     }

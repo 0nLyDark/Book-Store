@@ -109,9 +109,6 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     private List<Review> reviews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "product", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER)
-    private List<CartItem> cartItems = new ArrayList<>();
-
     @Column(nullable = false)
     private Long createdBy;
     @Column(nullable = false)

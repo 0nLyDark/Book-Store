@@ -1,30 +1,24 @@
 package com.dangphuoctai.BookStore.service.impl;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
-import com.dangphuoctai.BookStore.entity.Cart;
-import com.dangphuoctai.BookStore.entity.CartItem;
 import com.dangphuoctai.BookStore.entity.Product;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.dto.CartDTO;
-import com.dangphuoctai.BookStore.payloads.response.CartResponse;
-import com.dangphuoctai.BookStore.repository.CartItemRepo;
-import com.dangphuoctai.BookStore.repository.CartRepo;
+import com.dangphuoctai.BookStore.payloads.dto.CartItemDTO;
+import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
 import com.dangphuoctai.BookStore.repository.ProductRepo;
+import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.CartService;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -34,228 +28,160 @@ import org.springframework.transaction.annotation.Transactional;
 public class CartServiceImpl implements CartService {
 
     @Autowired
-    private CartRepo cartRepo;
-
-    @Autowired
-    private CartItemRepo cartItemRepo;
-
-    @Autowired
     private ProductRepo productRepo;
 
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private BaseRedisService<String, Long, Integer> cartRedisService;
+
+    private static final String CART_CACHE_KEY = "cart";
+
     @Override
-    public CartDTO addProductToCart(Long cartId, Long productId, Integer quantity) {
+    public CartDTO addProductToCart(Long userId, Long productId, Integer quantity) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
-        Long userId = jwt.getClaim("userId");
-        Cart cart = cartRepo.findById(cartId).orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
-        if (cart.getUserId() != userId) {
+        Long id = jwt.getClaim("userId");
+        String key = CART_CACHE_KEY + ":user:" + userId;
+        if (id != userId) {
             throw new APIException("You are not authorized to add product to this cart");
         }
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
-        CartItem cartItem = cart.getCartItems().stream()
-                .filter(cItem -> cItem.getProduct().getProductId().equals(productId))
-                .findFirst()
-                .orElse(null);
-        if (cartItem == null) {
-            if (product.getQuantity() < quantity) {
-                throw new APIException("Product quantity is not sufficient to add to the cart");
-            }
-            cartItem = new CartItem();
-            cartItem.setProduct(product);
-            cartItem.setQuantity(quantity);
-            cartItem.setCart(cart);
-            cart.getCartItems().add(cartItem);
-        } else {
-            int newQuantity = cartItem.getQuantity() + quantity;
-            if (product.getQuantity() < newQuantity) {
-                throw new APIException("Product quantity is not sufficient to add to the cart");
-            }
-            cartItem.setQuantity(newQuantity);
+        Integer quantityInCart = cartRedisService.hashGet(key, productId);
+        if (quantityInCart != null) {
+            quantity += quantityInCart;
         }
-        Double totalPrice = cart.getCartItems().stream()
-                .mapToDouble(item -> {
-                    Product productItem = item.getProduct();
-                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
-                }).sum();
+        if (product.getQuantity() < quantity) {
+            throw new APIException("Product quantity is not sufficient to add to the cart");
+        }
+        // Save cart to redis
+        cartRedisService.hashSet(key, productId, quantity);
+        cartRedisService.setTimeToLive(key, 30, TimeUnit.DAYS);
+        CartDTO cartDTO = mapToCartDTO(key);
 
-        cartItemRepo.save(cartItem);
-        cartRepo.save(cart);
-
-        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-        cartDTO.setTotalPrice(totalPrice);
         return cartDTO;
     }
 
     @Override
-    public CartDTO updateCartQuantityProduct(Long cartId, Long productId, Integer quantity) {
+    public CartDTO updateCartQuantityProduct(Long userId, Long productId, Integer quantity) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
-        Long userId = jwt.getClaim("userId");
+        Long id = jwt.getClaim("userId");
+        String key = CART_CACHE_KEY + ":user:" + userId;
+        if (id != userId) {
+            throw new APIException("You are not authorized to add product to this cart");
+        }
         if (quantity <= 0) {
             throw new APIException("Quantity must be greater than 0");
         }
-        CartItem cartItem = cartItemRepo.findByCartIdAndProductId(cartId, productId)
-                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "cartId and productId",
-                        cartId + "" + productId));
-        Cart cart = cartItem.getCart();
-        if (cart.getUserId() != userId) {
-            throw new APIException("You are not authorized to add product to this cart");
-        }
-        if (cartItem.getProduct().getQuantity() < quantity) {
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        if (product.getQuantity() < quantity) {
             throw new APIException("Product quantity is not sufficient to add to the cart");
         }
-        cartItem.setQuantity(quantity);
+        // Update cart in redis
+        cartRedisService.hashSet(key, productId, quantity);
+        cartRedisService.setTimeToLive(key, 30, TimeUnit.DAYS);
 
-        Double totalPrice = cart.getCartItems().stream()
-                .mapToDouble(item -> {
-                    Product productItem = item.getProduct();
-                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
-                }).sum();
-
-        cartItemRepo.save(cartItem);
-        cartRepo.save(cart);
-
-        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-        cartDTO.setTotalPrice(totalPrice);
-        return cartDTO;
-    }
-
-    @Override
-    public CartDTO getCartById(Long cartId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        Long userId = jwt.getClaim("userId");
-        String role = jwt.getClaim("scope");
-        boolean isAdmin = role.contains("ADMIN");
-        Cart cart = cartRepo.findById(cartId).orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
-        if (cart.getUserId() != userId && !isAdmin) {
-            throw new APIException("You are not authorized to add product to this cart");
-        }
-        Double totalPrice = cart.getCartItems().stream()
-                .mapToDouble(item -> {
-                    Product productItem = item.getProduct();
-
-                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
-                }).sum();
-
-        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-        cartDTO.setTotalPrice(totalPrice);
-        return cartDTO;
-    }
-
-    @Override
-    public CartResponse getAllCarts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-
-        Page<Cart> pageCarts = cartRepo.findAll(pageDetails);
-        List<CartDTO> cartDTOs = pageCarts.getContent().stream()
-                .map(cart -> modelMapper.map(cart, CartDTO.class)).toList();
-
-        CartResponse cartResponse = new CartResponse();
-        cartResponse.setContent(cartDTOs);
-        cartResponse.setPageNumber(pageCarts.getNumber());
-        cartResponse.setPageSize(pageCarts.getSize());
-        cartResponse.setTotalElements(pageCarts.getTotalElements());
-        cartResponse.setTotalPages(pageCarts.getTotalPages());
-        cartResponse.setLastPage(pageCarts.isLast());
-
-        return cartResponse;
-    }
-
-    @Override
-    public CartDTO deleteProductFromCart(Long cartId, Long productId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        Long userId = jwt.getClaim("userId");
-        String role = jwt.getClaim("scope");
-        boolean isAdmin = role.contains("ADMIN");
-        Cart cart = cartRepo.findById(cartId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
-        if (cart.getUserId() != userId && !isAdmin) {
-            throw new APIException("You are not authorized to add product to this cart");
-        }
-        CartItem cartItem = cart.getCartItems().stream()
-                .filter(ct -> ct.getProduct().getProductId().equals(productId))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId));
-
-        cart.getCartItems().remove(cartItem);
-
-        Double totalPrice = cart.getCartItems().stream()
-                .mapToDouble(item -> {
-                    Product productItem = item.getProduct();
-                    return productItem.getPrice() * item.getQuantity() * (100 -
-                            productItem.getDiscount()) / 100;
-                }).sum();
-
-        cartItemRepo.deleteByCartItemId(cartItem.getCartItemId());
-        cart = cartRepo.save(cart);
-
-        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-        cartDTO.setTotalPrice(totalPrice);
+        CartDTO cartDTO = mapToCartDTO(key);
 
         return cartDTO;
     }
 
     @Override
-    public CartDTO deleteProductFromCartAll(Long cartId, List<Long> productIds) {
+    public CartDTO getCartByUserId(Long userId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
-        Long userId = jwt.getClaim("userId");
+        Long id = jwt.getClaim("userId");
         String role = jwt.getClaim("scope");
         boolean isAdmin = role.contains("ADMIN");
-        Cart cart = cartRepo.findById(cartId).orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
-        if (cart.getUserId() != userId && !isAdmin) {
+        String key = CART_CACHE_KEY + ":user:" + userId;
+        if (id != userId && !isAdmin) {
             throw new APIException("You are not authorized to add product to this cart");
         }
-        List<CartItem> cartItems = cart.getCartItems();
-        List<Long> cartItemIdsRemove = cartItems.stream()
-                .filter(cartItem -> productIds.contains(cartItem.getProduct().getProductId()))
-                .map(cartItem -> {
-                    return cartItem.getCartItemId();
-                })
-                .collect(Collectors.toList());
 
-        cartItems.removeIf(ct -> cartItemIdsRemove.contains(ct.getCartItemId()));
-
-        Double totalPrice = cartItems.stream()
-                .mapToDouble(item -> {
-                    Product productItem = item.getProduct();
-                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
-                }).sum();
-
-        cartItemRepo.deleteByCartItemIds(cartItemIdsRemove);
-        cartRepo.save(cart);
-
-        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-        cartDTO.setTotalPrice(totalPrice);
+        CartDTO cartDTO = mapToCartDTO(key);
 
         return cartDTO;
     }
 
     @Override
-    public String clearCart(Long cartId) {
+    public CartDTO deleteProductFromCart(Long userId, Long productId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
-        Long userId = jwt.getClaim("userId");
+        Long id = jwt.getClaim("userId");
         String role = jwt.getClaim("scope");
         boolean isAdmin = role.contains("ADMIN");
-        Cart cart = cartRepo.findById(cartId).orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
-        if (cart.getUserId() != userId && !isAdmin) {
+        String key = CART_CACHE_KEY + ":user:" + userId;
+        if (id != userId && !isAdmin) {
             throw new APIException("You are not authorized to add product to this cart");
         }
-        cart.getCartItems().clear();
+        cartRedisService.delete(key, productId);
+        cartRedisService.setTimeToLive(key, 30, TimeUnit.DAYS);
+        CartDTO cartDTO = mapToCartDTO(key);
 
-        cartItemRepo.deleteAllByCartId(cartId);
-        cartRepo.save(cart);
+        return cartDTO;
+    }
+
+    @Override
+    public CartDTO deleteProductFromCartAll(Long userId, List<Long> productIds) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        Long id = jwt.getClaim("userId");
+        String role = jwt.getClaim("scope");
+        boolean isAdmin = role.contains("ADMIN");
+        String key = CART_CACHE_KEY + ":user:" + userId;
+        if (id != userId && !isAdmin) {
+            throw new APIException("You are not authorized to add product to this cart");
+        }
+        cartRedisService.delete(key, productIds);
+        cartRedisService.setTimeToLive(key, 30, TimeUnit.DAYS);
+        CartDTO cartDTO = mapToCartDTO(key);
+
+        return cartDTO;
+    }
+
+    @Override
+    public String clearCart(Long userId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        Long id = jwt.getClaim("userId");
+        String role = jwt.getClaim("scope");
+        boolean isAdmin = role.contains("ADMIN");
+        String key = CART_CACHE_KEY + ":user:" + userId;
+        if (id != userId && !isAdmin) {
+            throw new APIException("You are not authorized to add product to this cart");
+        }
+        cartRedisService.delete(key);
 
         return "Clear Cart successfully";
+    }
 
+    private CartDTO mapToCartDTO(String key) {
+        CartDTO cartDTO = new CartDTO();
+        Map<Long, Integer> cartItems = cartRedisService.getField(key);
+        List<CartItemDTO> cartItemList = cartItems.entrySet().stream()
+                .map(entry -> {
+                    Long productIdKey = ((Number) entry.getKey()).longValue();
+                    Integer quantityValue = entry.getValue();
+                    Product productItem = productRepo.findById(productIdKey)
+                            .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productIdKey));
+                    ProductDTO productDTO = modelMapper.map(productItem, ProductDTO.class);
+                    CartItemDTO cartItem = new CartItemDTO();
+                    cartItem.setProduct(productDTO);
+                    cartItem.setQuantity(quantityValue);
+                    return cartItem;
+                }).collect(Collectors.toList());
+        Double totalPrice = cartItemList.stream()
+                .mapToDouble(item -> {
+                    ProductDTO productItem = item.getProduct();
+                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
+                }).sum();
+        cartDTO.setCartItems(cartItemList);
+        cartDTO.setTotalPrice(totalPrice);
+
+        return cartDTO;
     }
 }

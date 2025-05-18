@@ -7,17 +7,15 @@ import com.dangphuoctai.BookStore.payloads.response.CartResponse;
 
 public interface CartService {
 
-    CartDTO addProductToCart(Long cartId, Long productId, Integer quantity);
+    CartDTO addProductToCart(Long userId, Long productId, Integer quantity);
 
     CartDTO updateCartQuantityProduct(Long cartId, Long productId, Integer quantity);
 
-    CartDTO getCartById(Long cartId);
+    CartDTO getCartByUserId(Long userId);
 
-    CartResponse getAllCarts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    CartDTO deleteProductFromCart(Long userId, Long productId);
 
-    CartDTO deleteProductFromCart(Long cartId, Long productId);
+    CartDTO deleteProductFromCartAll(Long userId, List<Long> productIds);
 
-    CartDTO deleteProductFromCartAll(Long cartId, List<Long> productIds);
-
-    String clearCart(Long cartId);
+    String clearCart(Long userId);
 }

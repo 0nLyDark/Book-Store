@@ -67,9 +67,6 @@ public class User {
     @JoinColumn(name = "address_id")
     private Address address;
 
-    @OneToOne(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-    private Cart cart;
-
     @OneToMany(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     private List<Order> orders = new ArrayList<>();
 

@@ -46,12 +46,13 @@ public class LanguageController {
 
     @GetMapping("/public/languages")
     public ResponseEntity<LanguageResponse> getAllLanguages(
+            @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_LANGUAGES_BY, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
 
-        LanguageResponse languageResponse = languageService.getAllLanguages(
+        LanguageResponse languageResponse = languageService.getAllLanguages(status,
                 pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "languageId" : sortBy,

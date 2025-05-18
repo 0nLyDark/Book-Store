@@ -3,8 +3,10 @@ package com.dangphuoctai.BookStore.service.impl;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.checkerframework.checker.units.qual.A;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +27,7 @@ import com.dangphuoctai.BookStore.payloads.dto.AuthorDTO;
 import com.dangphuoctai.BookStore.payloads.response.AuthorResponse;
 import com.dangphuoctai.BookStore.repository.AuthorRepo;
 import com.dangphuoctai.BookStore.service.AuthorService;
+import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.FileService;
 
 @Service
@@ -42,12 +45,30 @@ public class AuthorServiceImpl implements AuthorService {
     @Value("${project.image}")
     private String path;
 
+    @Autowired
+    private BaseRedisService<String, String, AuthorDTO> authorRedisService;
+
+    @Autowired
+    private BaseRedisService<String, String, AuthorResponse> authorResponseRedisService;
+
+    private static final String AUTHOR_CACHE_KEY = "author";
+    private static final String AUTHOR_PAGE_CACHE_KEY = "author:pages";
+
     @Override
     public AuthorDTO getAuthorById(Long authorId) {
+        String field = "id:" + authorId;
+        AuthorDTO cached = (AuthorDTO) authorRedisService.hashGet(AUTHOR_CACHE_KEY, field);
+        if (cached != null) {
+            return cached;
+        }
         Author author = authorRepo.findById(authorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Author", "authorId", authorId));
+        AuthorDTO authorDTO = modelMapper.map(author, AuthorDTO.class);
+        // Save cache author to redis
+        authorRedisService.hashSet(AUTHOR_CACHE_KEY, field, authorDTO);
+        authorRedisService.setTimeToLiveOnce(AUTHOR_CACHE_KEY, 3, TimeUnit.HOURS);
 
-        return modelMapper.map(author, AuthorDTO.class);
+        return authorDTO;
     }
 
     @Override
@@ -65,6 +86,12 @@ public class AuthorServiceImpl implements AuthorService {
     @Override
     public AuthorResponse getAllAuthors(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
             String sortOrder) {
+        String field = String.format("status:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
+                status, pageNumber, pageSize, sortBy, sortOrder);
+        AuthorResponse cached = (AuthorResponse) authorResponseRedisService.hashGet(AUTHOR_PAGE_CACHE_KEY, field);
+        if (cached != null) {
+            return cached;
+        }
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
@@ -72,7 +99,7 @@ public class AuthorServiceImpl implements AuthorService {
         if (status == null) {
             pageAuthors = authorRepo.findAll(pageDetails);
         } else {
-            pageAuthors = authorRepo.findAllByStatus(status,pageDetails);
+            pageAuthors = authorRepo.findAllByStatus(status, pageDetails);
         }
 
         List<AuthorDTO> authorDTOs = pageAuthors.getContent().stream()
@@ -86,6 +113,10 @@ public class AuthorServiceImpl implements AuthorService {
         authorResponse.setTotalElements(pageAuthors.getTotalElements());
         authorResponse.setTotalPages(pageAuthors.getTotalPages());
         authorResponse.setLastPage(pageAuthors.isLast());
+
+        // Save cache author to redis
+        authorResponseRedisService.hashSet(AUTHOR_PAGE_CACHE_KEY, field, authorResponse);
+        authorResponseRedisService.setTimeToLive(AUTHOR_PAGE_CACHE_KEY, 3, TimeUnit.HOURS);
 
         return authorResponse;
     }
@@ -110,10 +141,15 @@ public class AuthorServiceImpl implements AuthorService {
         author.setUpdatedBy(userId);
         author.setCreatedAt(LocalDateTime.now());
         author.setUpdatedAt(LocalDateTime.now());
-
         authorRepo.save(author);
+        AuthorDTO authorRes = modelMapper.map(author, AuthorDTO.class);
+        // Save cache author to redis
+        String field = "id:" + authorRes.getAuthorId();
+        authorRedisService.hashSet(AUTHOR_CACHE_KEY, field, authorRes);
+        authorRedisService.setTimeToLive(AUTHOR_CACHE_KEY, 3, TimeUnit.HOURS);
+        authorResponseRedisService.delete(AUTHOR_PAGE_CACHE_KEY);
 
-        return modelMapper.map(author, AuthorDTO.class);
+        return authorRes;
     }
 
     @Transactional
@@ -136,8 +172,14 @@ public class AuthorServiceImpl implements AuthorService {
         author.setUpdatedBy(userId);
         author.setUpdatedAt(LocalDateTime.now());
         authorRepo.save(author);
+        AuthorDTO authorRes = modelMapper.map(author, AuthorDTO.class);
+        // Save cache author to redis
+        String field = "id:" + authorRes.getAuthorId();
+        authorRedisService.hashSet(AUTHOR_CACHE_KEY, field, authorRes);
+        authorRedisService.setTimeToLive(AUTHOR_CACHE_KEY, 3, TimeUnit.HOURS);
+        authorResponseRedisService.delete(AUTHOR_PAGE_CACHE_KEY);
 
-        return modelMapper.map(author, AuthorDTO.class);
+        return authorRes;
     }
 
     @Override
@@ -145,6 +187,10 @@ public class AuthorServiceImpl implements AuthorService {
         Author author = authorRepo.findById(authorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Author", "authorId", authorId));
         authorRepo.delete(author);
+        // Save cache author to redis
+        String field = "id:" + authorId;
+        authorRedisService.delete(AUTHOR_CACHE_KEY, field);
+        authorResponseRedisService.delete(AUTHOR_PAGE_CACHE_KEY);
 
         return "Author with ID: " + authorId + " deleted successfully";
     }

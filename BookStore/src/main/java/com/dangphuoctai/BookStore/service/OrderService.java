@@ -25,7 +25,7 @@ public interface OrderService {
 
     String SendVerifyOrderEmail(Long orderId);
 
-    String generateOTPOrder(Order order);
+    String generateOTPOrder(Long orderId);
 
     Boolean verityOTPEmail(OtpDTO otpDTO);
 

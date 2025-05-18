@@ -3,6 +3,7 @@ package com.dangphuoctai.BookStore.service.impl;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -22,9 +23,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.dangphuoctai.BookStore.entity.Banner;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.dto.BannerDTO;
+import com.dangphuoctai.BookStore.payloads.response.AuthorResponse;
 import com.dangphuoctai.BookStore.payloads.response.BannerResponse;
 import com.dangphuoctai.BookStore.repository.BannerRepo;
 import com.dangphuoctai.BookStore.service.BannerService;
+import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.FileService;
 
 @Service
@@ -42,6 +45,11 @@ public class BannerServiceImpl implements BannerService {
     @Value("${project.image}")
     private String path;
 
+    @Autowired
+    private BaseRedisService<String, String, BannerResponse> bannerResponseRedisService;
+
+    private static final String BANNER_PAGE_CACHE_KEY = "banner:pages";
+
     @Override
     public BannerDTO getBannerById(Long bannerId) {
         Banner banner = bannerRepo.findById(bannerId)
@@ -53,6 +61,12 @@ public class BannerServiceImpl implements BannerService {
     @Override
     public BannerResponse getAllBanners(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
             String sortOrder) {
+        String field = String.format("status:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
+                status, pageNumber, pageSize, sortBy, sortOrder);
+        BannerResponse cached = (BannerResponse) bannerResponseRedisService.hashGet(BANNER_PAGE_CACHE_KEY, field);
+        if (cached != null) {
+            return cached;
+        }
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
@@ -74,6 +88,9 @@ public class BannerServiceImpl implements BannerService {
         bannerResponse.setTotalElements(pageBanners.getTotalElements());
         bannerResponse.setTotalPages(pageBanners.getTotalPages());
         bannerResponse.setLastPage(pageBanners.isLast());
+        // Save cache banner to redis
+        bannerResponseRedisService.hashSet(BANNER_PAGE_CACHE_KEY, field, bannerResponse);
+        bannerResponseRedisService.setTimeToLiveOnce(BANNER_PAGE_CACHE_KEY, 3, TimeUnit.HOURS);
 
         return bannerResponse;
     }
@@ -98,6 +115,8 @@ public class BannerServiceImpl implements BannerService {
         banner.setUpdatedAt(LocalDateTime.now());
 
         bannerRepo.save(banner);
+        // Save cache banner to redis
+        bannerResponseRedisService.delete(BANNER_PAGE_CACHE_KEY);
 
         return modelMapper.map(banner, BannerDTO.class);
     }
@@ -122,6 +141,9 @@ public class BannerServiceImpl implements BannerService {
         banner.setUpdatedAt(LocalDateTime.now());
         bannerRepo.save(banner);
 
+        // Save cache banner to redis
+        bannerResponseRedisService.delete(BANNER_PAGE_CACHE_KEY);
+
         return modelMapper.map(banner, BannerDTO.class);
     }
 
@@ -130,6 +152,8 @@ public class BannerServiceImpl implements BannerService {
         Banner banner = bannerRepo.findById(bannerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banner", "bannerId", bannerId));
         bannerRepo.delete(banner);
+        // Save cache banner to redis
+        bannerResponseRedisService.delete(BANNER_PAGE_CACHE_KEY);
 
         return "Banner with ID: " + bannerId + " deleted successfully";
     }

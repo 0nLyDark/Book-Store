@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.entity.Address;
-import com.dangphuoctai.BookStore.entity.Cart;
 import com.dangphuoctai.BookStore.entity.OTP;
 import com.dangphuoctai.BookStore.entity.RefreshToken;
 import com.dangphuoctai.BookStore.entity.Role;
@@ -92,14 +91,11 @@ public class AuthServiceImpl implements AuthService {
             }
             String encodedPass = passwordEncoder.encode(userRegister.getPassword());
             Role role = roleRepo.findById(AppConstants.USER_ID).get();
-            Cart cart = new Cart();
             user = user != null ? user : new User();
             user.setUsername(userRegister.getUsername());
             user.setEmail(userRegister.getEmail());
             user.setPassword(encodedPass);
             user.setRoles(Set.of(role));
-            cart.setUser(user);
-            user.setCart(cart);
             user.setFullName(userRegister.getFullName());
             user.setMobileNumber(userRegister.getMobileNumber());
             user.setAvatar("default.png");
@@ -171,11 +167,8 @@ public class AuthServiceImpl implements AuthService {
         }
         user = new User();
         Role role = roleRepo.findById(AppConstants.USER_ID).get();
-        Cart cart = new Cart();
         user.setEmail(userDTO.getEmail());
         user.setRoles(Set.of(role));
-        cart.setUser(user);
-        user.setCart(cart);
         user.setFullName(userDTO.getFullName());
         if (!userDTO.getAvatar().isBlank()) {
             String avatarFileName = fileService.downloadImageFromUrl(userDTO.getAvatar(), path);

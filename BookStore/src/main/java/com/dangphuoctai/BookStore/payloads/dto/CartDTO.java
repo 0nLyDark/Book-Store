@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CartDTO {
 
-    private Long cartId;
 
     private UserDTO user;
 

@@ -10,6 +10,10 @@ import com.dangphuoctai.BookStore.entity.Menu;
 @Repository
 public interface MenuRepo extends JpaRepository<Menu, Long> {
 
-    Page<Menu> findByParentIsNull(Pageable pageDetails);
+    Page<Menu> findAllByParentIsNull(Pageable pageDetails);
+
+    Page<Menu> findAllByParentIsNullAndStatus(Boolean status, Pageable pageDetails);
+
+    Page<Menu> findAllByStatus(Boolean status, Pageable pageDetails);
 
 }

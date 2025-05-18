@@ -2,6 +2,7 @@ package com.dangphuoctai.BookStore.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -18,8 +19,10 @@ import org.springframework.stereotype.Service;
 import com.dangphuoctai.BookStore.entity.Language;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.dto.LanguageDTO;
+import com.dangphuoctai.BookStore.payloads.response.BannerResponse;
 import com.dangphuoctai.BookStore.payloads.response.LanguageResponse;
 import com.dangphuoctai.BookStore.repository.LanguageRepo;
+import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.LanguageService;
 
 @Service
@@ -30,6 +33,11 @@ public class LanguageServiceImpl implements LanguageService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private BaseRedisService<String, String, LanguageResponse> languegeResponseRedisService;
+
+    private static final String LANGUAGE_PAGE_CACHE_KEY = "languege:pages";
 
     @Override
     public LanguageDTO getLanguageById(Long languageId) {
@@ -52,12 +60,25 @@ public class LanguageServiceImpl implements LanguageService {
     }
 
     @Override
-    public LanguageResponse getAllLanguages(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+    public LanguageResponse getAllLanguages(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+            String sortOrder) {
+        String field = String.format("status:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
+                status, pageNumber, pageSize, sortBy, sortOrder);
+        LanguageResponse cached = (LanguageResponse) languegeResponseRedisService.hashGet(LANGUAGE_PAGE_CACHE_KEY,
+                field);
+        if (cached != null) {
+            return cached;
+        }
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
 
-        Page<Language> pageLanguages = languageRepo.findAll(pageDetails);
+        Page<Language> pageLanguages;
+        if (status != null) {
+            pageLanguages = languageRepo.findAllByStatus(status, pageDetails);
+        } else {
+            pageLanguages = languageRepo.findAll(pageDetails);
+        }
         List<LanguageDTO> languageDTOs = pageLanguages.getContent().stream()
                 .map(language -> modelMapper.map(language, LanguageDTO.class))
                 .collect(Collectors.toList());
@@ -69,6 +90,10 @@ public class LanguageServiceImpl implements LanguageService {
         languageResponse.setTotalElements(pageLanguages.getTotalElements());
         languageResponse.setTotalPages(pageLanguages.getTotalPages());
         languageResponse.setLastPage(pageLanguages.isLast());
+
+        // Save cache banner to redis
+        languegeResponseRedisService.hashSet(LANGUAGE_PAGE_CACHE_KEY, field, languageResponse);
+        languegeResponseRedisService.setTimeToLiveOnce(LANGUAGE_PAGE_CACHE_KEY, 3, TimeUnit.HOURS);
 
         return languageResponse;
     }
@@ -88,6 +113,9 @@ public class LanguageServiceImpl implements LanguageService {
         language.setUpdatedAt(LocalDateTime.now());
         languageRepo.save(language);
 
+        // Save cache banner to redis
+        languegeResponseRedisService.delete(LANGUAGE_PAGE_CACHE_KEY);
+
         return modelMapper.map(language, LanguageDTO.class);
     }
 
@@ -105,6 +133,8 @@ public class LanguageServiceImpl implements LanguageService {
         language.setUpdatedBy(userId);
         language.setUpdatedAt(LocalDateTime.now());
         languageRepo.save(language);
+        // Save cache banner to redis
+        languegeResponseRedisService.delete(LANGUAGE_PAGE_CACHE_KEY);
 
         return modelMapper.map(language, LanguageDTO.class);
     }
@@ -114,6 +144,9 @@ public class LanguageServiceImpl implements LanguageService {
         Language language = languageRepo.findById(languageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Language", "languageId", languageId));
         languageRepo.delete(language);
+
+        // Save cache banner to redis
+        languegeResponseRedisService.delete(LANGUAGE_PAGE_CACHE_KEY);
 
         return "Language with ID: " + languageId + " deleted successfully";
     }

@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,14 @@ public class PromotionController {
         PromotionDTO promotionDTO = promotionService.getPromotionById(promotionId);
 
         return new ResponseEntity<PromotionDTO>(promotionDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/promotions/ids")
+    public ResponseEntity<List<PromotionDTO>> getManyAuthorByIds(@RequestParam(value = "id") List<Long> promotionIds) {
+
+        List<PromotionDTO> promotionDTOs = promotionService.getAllPromotionByIds(promotionIds);
+
+        return new ResponseEntity<List<PromotionDTO>>(promotionDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/public/promotions")
