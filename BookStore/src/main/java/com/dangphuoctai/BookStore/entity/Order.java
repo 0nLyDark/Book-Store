@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.Index;
+import org.hibernate.annotations.NaturalId;
+
 import com.dangphuoctai.BookStore.enums.OrderStatus;
 import com.dangphuoctai.BookStore.enums.OrderType;
 
@@ -24,7 +27,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -32,7 +34,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", indexes = {
+        @Index(name = "idx_order_code", columnList = "orderCode")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -40,6 +44,10 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
+
+    @NaturalId
+    @Column(nullable = false, unique = true)
+    private String orderCode;
 
     @Column(name = "user_id", insertable = false, updatable = false)
     private Long userId;
@@ -57,7 +65,7 @@ public class Order {
     @Size(min = 10, max = 10, message = "Delivery phone must be exactly 10 characters")
     private String deliveryPhone;
 
-    @OneToMany(mappedBy = "order", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = { CascadeType.ALL }, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
@@ -84,7 +92,7 @@ public class Order {
     @JoinColumn(name = "freeship_id")
     private PromotionSnapshot freeship;
 
-    @OneToOne
+    @OneToOne(cascade = { CascadeType.ALL })
     @JoinColumn(name = "payment_id")
     private Payment payment;
 

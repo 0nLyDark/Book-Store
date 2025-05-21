@@ -1,6 +1,7 @@
 package com.dangphuoctai.BookStore.entity;
 
 import com.dangphuoctai.BookStore.enums.FileType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,6 +34,7 @@ public class File {
     @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'IMAGE'")
     private FileType type;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;

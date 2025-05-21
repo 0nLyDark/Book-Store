@@ -15,6 +15,8 @@ public interface BaseRedisService<K, F, V> {
 
     void setTimeToLiveOnce(K key, long timeout, TimeUnit unit);
 
+    boolean tryLock(String lockKey, long timeout, TimeUnit unit);
+
     void hashSet(K key, F field, V value);
 
     boolean hashExists(K key, F field);
@@ -36,4 +38,6 @@ public interface BaseRedisService<K, F, V> {
     void delete(K key, F field);
 
     void delete(K key, List<F> fields);
+
+    String generateOrderCodeWithRedis();
 }

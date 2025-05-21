@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
+import com.dangphuoctai.BookStore.config.VNPayConfig;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderDTO;
@@ -14,8 +15,8 @@ import com.dangphuoctai.BookStore.payloads.dto.Order.OrderRequest;
 import com.dangphuoctai.BookStore.payloads.response.OrderResponse;
 import com.dangphuoctai.BookStore.service.EmailService;
 import com.dangphuoctai.BookStore.service.OrderService;
-import com.dangphuoctai.BookStore.utils.Email;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -75,33 +76,35 @@ public class OrderController {
     }
 
     @PostMapping("/public/orders/customer")
-    public ResponseEntity<OrderDTO> createCustomerOrder(@RequestBody OrderRequest orderRequest) {
+    public ResponseEntity<?> createCustomerOrder(@RequestBody OrderRequest orderRequest, HttpServletRequest req) {
+        String ip = VNPayConfig.getIpAddress(req);
+        Object order = orderService.createCustomerOrder(orderRequest.getOrder(), orderRequest.getProductQuantities(),
+                ip);
 
-        OrderDTO order = orderService.createCustomerOrder(orderRequest.getOrder(), orderRequest.getProductQuantities());
-
-        return new ResponseEntity<OrderDTO>(order, HttpStatus.CREATED);
+        return new ResponseEntity<Object>(order, HttpStatus.CREATED);
     }
 
     @PostMapping("/public/orders")
-    public ResponseEntity<OrderDTO> createOrder(@RequestBody OrderRequest orderRequest) {
+    public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, HttpServletRequest req) {
+        String ip = VNPayConfig.getIpAddress(req);
+        Object order = orderService.createOrder(orderRequest.getOrder(), orderRequest.getProductIds(), ip);
 
-        OrderDTO order = orderService.createOrder(orderRequest.getOrder(), orderRequest.getProductIds());
-
-        return new ResponseEntity<OrderDTO>(order, HttpStatus.CREATED);
+        return new ResponseEntity<Object>(order, HttpStatus.CREATED);
     }
 
     @PostMapping("/staff/orders")
-    public ResponseEntity<OrderDTO> createOrderOffline(@RequestBody OrderRequest orderRequest) {
-
-        OrderDTO order = orderService.createOrderOffline(orderRequest.getOrder(), orderRequest.getProductQuantities());
+    public ResponseEntity<OrderDTO> createOrderOffline(@RequestBody OrderRequest orderRequest, HttpServletRequest req) {
+        String ip = VNPayConfig.getIpAddress(req);
+        OrderDTO order = orderService.createOrderOffline(orderRequest.getOrder(), orderRequest.getProductQuantities(),
+                ip);
 
         return new ResponseEntity<OrderDTO>(order, HttpStatus.CREATED);
     }
 
-    @GetMapping("/public/orders/{orderId}/otp")
-    public ResponseEntity<String> createOrderWithOTP(@PathVariable Long orderId) {
+    @GetMapping("/public/orders/code/{orderCode}/otp")
+    public ResponseEntity<String> createOrderWithOTP(@PathVariable String orderCode) {
 
-        String message = orderService.SendVerifyOrderEmail(orderId);
+        String message = orderService.SendVerifyOrderEmail(orderCode);
 
         return new ResponseEntity<String>(message, HttpStatus.OK);
     }

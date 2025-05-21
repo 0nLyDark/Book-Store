@@ -21,6 +21,8 @@ public class OrderDTO {
 
     private Long orderId;
 
+    private String orderCode;
+
     private Long userId;
 
     private String email;

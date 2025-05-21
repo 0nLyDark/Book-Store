@@ -15,5 +15,6 @@ public class OtpDTO {
     private String code;
     private String phoneNumber;
     private Long orderId;
+    private String orderCode;
     private OTPType type;
 }

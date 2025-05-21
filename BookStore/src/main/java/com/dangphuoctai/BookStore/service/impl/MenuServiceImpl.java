@@ -130,7 +130,7 @@ public class MenuServiceImpl implements MenuService {
         menu.setPosition(menuDTO.getPosition());
         menu.setSortOrder(menuDTO.getSortOrder());
 
-        if (menuDTO.getParent() != null) {
+        if (menuDTO.getParent() != null && menuDTO.getParent().getMenuId() != null) {
             Menu parentMenu = menuRepo.findById(menuDTO.getParent().getMenuId())
                     .orElseThrow(() -> new ResourceNotFoundException("Menu", "menuId",
                             menuDTO.getParent().getMenuId()));

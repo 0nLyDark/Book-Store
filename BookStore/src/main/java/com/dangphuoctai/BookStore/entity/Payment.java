@@ -1,6 +1,7 @@
 package com.dangphuoctai.BookStore.entity;
 
 import com.dangphuoctai.BookStore.enums.PaymentMethod;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -11,9 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -35,6 +34,8 @@ public class Payment {
     @NotNull(message = "Payment method is required")
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
+
+    private String bankCode;
 
     private String paymentCode;
 }

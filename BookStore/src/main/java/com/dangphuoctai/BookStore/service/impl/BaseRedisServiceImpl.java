@@ -10,6 +10,9 @@ import com.dangphuoctai.BookStore.service.BaseRedisService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,12 +42,21 @@ public class BaseRedisServiceImpl<K, F, V> implements BaseRedisService<K, F, V> 
         redisTemplate.expire(key, timeout, timeUnit);
     }
 
+    @Override
     public void setTimeToLiveOnce(K key, long timeout, TimeUnit unit) {
         String markerKey = key.toString() + ":ttl_marker";
         Boolean markerSet = stringRedisTemplate.opsForValue().setIfAbsent(markerKey, "1", timeout, unit);
         if (Boolean.TRUE.equals(markerSet)) {
             redisTemplate.expire(key, timeout, unit);
         }
+    }
+
+    @Override
+    public boolean tryLock(String lockKey, long timeout, TimeUnit unit) {
+        Duration duration = Duration.ofMillis(unit.toMillis(timeout));
+        Boolean success = stringRedisTemplate.opsForValue()
+                .setIfAbsent(lockKey, "1", duration);
+        return Boolean.TRUE.equals(success);
     }
 
     @Override
@@ -109,5 +121,22 @@ public class BaseRedisServiceImpl<K, F, V> implements BaseRedisService<K, F, V> 
         for (F field : fields) {
             hashOps.delete(key, field);
         }
+    }
+
+    @Override
+    public String generateOrderCodeWithRedis() {
+        String prefix = "ORD";
+        // Thêm giờ phút giây vào để mã ngắn gọn và chính xác hơn
+        String dateTime = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        String redisKey = "order_seq:" + new SimpleDateFormat("yyyyMMdd").format(new Date());
+
+        Long sequence = stringRedisTemplate.opsForValue().increment(redisKey, 1);
+
+        if (sequence == 1) {
+            stringRedisTemplate.expire(redisKey, Duration.ofMinutes(10));
+        }
+
+        // Mã đơn hàng: ORD + yyyyMMddHHmmss + sequence 3 chữ số
+        return prefix + dateTime + String.format("%03d", sequence);
     }
 }

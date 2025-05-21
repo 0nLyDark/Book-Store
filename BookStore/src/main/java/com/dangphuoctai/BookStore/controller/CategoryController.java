@@ -86,10 +86,7 @@ public class CategoryController {
             @RequestParam(name = "file", required = false) MultipartFile image,
             @ModelAttribute ChildCategoryDTO category)
             throws IOException {
-        System.out.println("ssssssssssssssss         ");
 
-        System.out.println("ssssssssssssssss         " + category.getParent());
-        // category.setParent(parent);
         CategoryDTO categoryDTO = categoryService.createCategory(category, image);
 
         return new ResponseEntity<CategoryDTO>(categoryDTO, HttpStatus.CREATED);
@@ -99,9 +96,6 @@ public class CategoryController {
     public ResponseEntity<CategoryDTO> updateCategory(
             @RequestParam(name = "file", required = false) MultipartFile image,
             @ModelAttribute ChildCategoryDTO category) throws IOException {
-        System.out.println("ssssssssssssssss         " + category.getParent());
-        System.out.println(category.getCategoryId());
-        System.out.println(category.getCategoryName());
 
         CategoryDTO categoryDTO = categoryService.updateCategory(category, image);
 

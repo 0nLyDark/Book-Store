@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.dangphuoctai.BookStore.enums.PromotionType;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -61,9 +62,11 @@ public class PromotionSnapshot {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "coupon")
     private List<Order> orderCoupons = new ArrayList<>();
 
+    @JsonBackReference
     @OneToMany(mappedBy = "freeship")
     private List<Order> orderFreeships = new ArrayList<>();
 

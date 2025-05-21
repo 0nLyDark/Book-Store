@@ -1,10 +1,13 @@
 package com.dangphuoctai.BookStore.service.impl;
 
 import java.security.SecureRandom;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.AbstractMap;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.jaxb.SpringDataJaxb.OrderDto;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dangphuoctai.BookStore.entity.Address;
-import com.dangphuoctai.BookStore.entity.OTP;
 import com.dangphuoctai.BookStore.entity.Order;
 import com.dangphuoctai.BookStore.entity.OrderItem;
 import com.dangphuoctai.BookStore.entity.Payment;
@@ -33,7 +37,6 @@ import com.dangphuoctai.BookStore.entity.Product;
 import com.dangphuoctai.BookStore.entity.Promotion;
 import com.dangphuoctai.BookStore.entity.PromotionSnapshot;
 import com.dangphuoctai.BookStore.entity.User;
-import com.dangphuoctai.BookStore.enums.OTPType;
 import com.dangphuoctai.BookStore.enums.OrderStatus;
 import com.dangphuoctai.BookStore.enums.OrderType;
 import com.dangphuoctai.BookStore.enums.PaymentMethod;
@@ -41,15 +44,14 @@ import com.dangphuoctai.BookStore.enums.PromotionType;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.EmailDetails;
-import com.dangphuoctai.BookStore.payloads.dto.CartItemDTO;
+import com.dangphuoctai.BookStore.payloads.dto.AddressDTO;
 import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
-import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderDTO;
+import com.dangphuoctai.BookStore.payloads.dto.Order.OrderItemDTO;
+import com.dangphuoctai.BookStore.payloads.dto.Order.PaymentDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.ProductQuantity;
 import com.dangphuoctai.BookStore.payloads.response.OrderResponse;
-import com.dangphuoctai.BookStore.payloads.response.PromotionResponse;
 import com.dangphuoctai.BookStore.repository.AddressRepo;
-import com.dangphuoctai.BookStore.repository.OTPRepo;
 import com.dangphuoctai.BookStore.repository.OrderItemRepo;
 import com.dangphuoctai.BookStore.repository.OrderRepo;
 import com.dangphuoctai.BookStore.repository.PaymentRepo;
@@ -61,6 +63,7 @@ import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.EmailService;
 import com.dangphuoctai.BookStore.service.GHNService;
 import com.dangphuoctai.BookStore.service.OrderService;
+import com.dangphuoctai.BookStore.service.PaymentService;
 import com.dangphuoctai.BookStore.utils.Email;
 import com.dangphuoctai.BookStore.utils.HashUtil;
 
@@ -96,9 +99,6 @@ public class OrderServiceImpl implements OrderService {
     private AddressRepo addressRepo;
 
     @Autowired
-    private OTPRepo otpRepo;
-
-    @Autowired
     private ModelMapper modelMapper;
 
     @Autowired
@@ -108,12 +108,23 @@ public class OrderServiceImpl implements OrderService {
     private EmailService emailService;
 
     @Autowired
+    private PaymentService paymentService;
+
+    @Autowired
     private BaseRedisService<String, Long, Integer> cartRedisService;
 
     @Autowired
     private BaseRedisService<String, String, String> optRedisService;
 
+    @Autowired
+    private BaseRedisService<String, String, OrderDTO> orderRedisService;
+
+    @Autowired
+    private BaseRedisService<String, String, List<OrderItemDTO>> orderRestoreRedisService;
+
     private static final String OTP_ORDER_CACHE_KEY = "otp:order:";
+    private static final String ORDER_CACHE_KEY = "order:code:";
+    private static final String ORDER_RESTORE_CACHE_KEY = "order_restore:code:";
 
     @Override
     public OrderDTO getOrderById(Long orderId) {
@@ -179,18 +190,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderDTO createCustomerOrder(OrderDTO orderDTO, List<ProductQuantity> productQuantities) {
-        Order order = new Order();
-        order.setDeliveryName(orderDTO.getDeliveryName());
-        order.setDeliveryPhone(orderDTO.getDeliveryPhone());
-        order.setEmail(orderDTO.getEmail());
+    public Object createCustomerOrder(OrderDTO orderDTO, List<ProductQuantity> productQuantities, String vnp_IpAddr) {
+        Order order = convertToOrder(orderDTO);
         order.setOrderType(OrderType.ONLINE);
-        // Set payment method
-        Payment payment = new Payment();
-        payment.setPaymentMethod(orderDTO.getPayment().getPaymentMethod());
-        paymentRepo.save(payment);
-        order.setPayment(payment);
-
         order.setOrderStatus(OrderStatus.PENDING);
         // Set OrderItem
         double total = productQuantities.stream().mapToDouble(p -> {
@@ -226,14 +228,7 @@ public class OrderServiceImpl implements OrderService {
             Promotion voucher = promotionRepo.findByPromotionCode(code)
                     .orElseThrow(() -> new ResourceNotFoundException("Promotion", "promotionCode", code));
             checkPromotion(voucher, PromotionType.VOUCHER, total);
-            String hash = HashUtil.generatePromotionHash(voucher);
-            PromotionSnapshot voucherSnapshot = promotionSnapshotRepo.findByHash(hash);
-            if (voucherSnapshot == null) {
-                voucherSnapshot = modelMapper.map(voucher, PromotionSnapshot.class);
-                voucherSnapshot.setPromotionId(null);
-                voucherSnapshot.setHash(hash);
-                promotionSnapshotRepo.save(voucherSnapshot);
-            }
+            PromotionSnapshot voucherSnapshot = convertToPromotionSnapshot(voucher);
             order.setCoupon(voucherSnapshot);
             totalAmount = !voucher.getValueType() ? totalAmount - voucher.getValue()
                     : totalAmount * (100 - voucher.getValue()) / 100;
@@ -244,14 +239,7 @@ public class OrderServiceImpl implements OrderService {
             Promotion freeShip = promotionRepo.findByPromotionCode(code)
                     .orElseThrow(() -> new ResourceNotFoundException("Promotion", "promotionCode", code));
             checkPromotion(freeShip, PromotionType.FREESHIP, total);
-            String hash = HashUtil.generatePromotionHash(freeShip);
-            PromotionSnapshot freeShipSnapshot = promotionSnapshotRepo.findByHash(hash);
-            if (freeShipSnapshot == null) {
-                freeShipSnapshot = modelMapper.map(freeShip, PromotionSnapshot.class);
-                freeShipSnapshot.setPromotionId(null);
-                freeShipSnapshot.setHash(hash);
-                promotionSnapshotRepo.save(freeShipSnapshot);
-            }
+            PromotionSnapshot freeShipSnapshot = convertToPromotionSnapshot(freeShip);
             order.setFreeship(freeShipSnapshot);
             priceShip = !freeShip.getValueType() ? priceShip - freeShip.getValue()
                     : priceShip * (100 - freeShip.getValue()) / 100;
@@ -261,50 +249,40 @@ public class OrderServiceImpl implements OrderService {
         order.setPriceShip(priceShip);
         order.setTotalAmount(totalAmount + priceShip);
         // Set address
-        String country = orderDTO.getAddress().getCountry();
-        String district = orderDTO.getAddress().getDistrict();
-        String city = orderDTO.getAddress().getCity();
-        String pincode = orderDTO.getAddress().getPincode();
-        String ward = orderDTO.getAddress().getWard();
-        String buildingName = orderDTO.getAddress().getBuildingName();
-        Address address = addressRepo
-                .findByCountryAndDistrictAndCityAndPincodeAndWardAndBuildingName(
-                        country, district,
-                        city, pincode, ward, buildingName);
-        if (address == null) {
-            address = new Address(country, district, city, pincode, ward, buildingName);
-            address = addressRepo.save(address);
-        }
+        Address address = convertToAddress(orderDTO.getAddress());
         order.setAddress(address);
         // Set time
         order.setOrderDateTime(LocalDateTime.now());
-        // Save order
+        // Set order code
+        String orderCode = orderRedisService.generateOrderCodeWithRedis();
+        order.setOrderCode(orderCode);
+        // Save order to from database
         orderRepo.save(order);
-        SendVerifyOrderEmail(order.getOrderId());
+        OrderDTO orderRes = modelMapper.map(order, OrderDTO.class);
+        String bankCode = orderRes.getPayment().getBankCode();
+        PaymentMethod paymentMethod = orderRes.getPayment().getPaymentMethod();
+        if (PaymentMethod.COD.equals(paymentMethod)) {
+            SendVerifyOrderEmail(orderCode);
+        } else if (PaymentMethod.VNPAY.equals(paymentMethod)) {
+            return paymentService.createPaymentVNPAY(vnp_IpAddr, bankCode, orderCode, (long) order.getTotalAmount());
+        }
 
-        return modelMapper.map(order, OrderDTO.class);
+        return orderRes;
     }
 
     @Override
-    public OrderDTO createOrder(OrderDTO orderDTO, List<Long> productIds) {
+    public Object createOrder(OrderDTO orderDTO, List<Long> productIds, String vnp_IpAddr) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
-
-        Order order = new Order();
+        Order order = convertToOrder(orderDTO);
         order.setUser(user);
-        order.setDeliveryName(orderDTO.getDeliveryName());
-        order.setDeliveryPhone(orderDTO.getDeliveryPhone());
-        order.setEmail(orderDTO.getEmail());
         order.setOrderType(OrderType.ONLINE);
         // Set payment method
-        Payment payment = new Payment();
-        payment.setPaymentMethod(orderDTO.getPayment().getPaymentMethod());
-        paymentRepo.save(payment);
-        order.setPayment(payment);
-        if (payment.getPaymentMethod().equals(PaymentMethod.COD)) {
+        PaymentMethod paymentMethod = order.getPayment().getPaymentMethod();
+        if (PaymentMethod.COD.equals(paymentMethod)) {
             order.setOrderStatus(OrderStatus.PAID);
         } else {
             order.setOrderStatus(OrderStatus.PENDING);
@@ -355,14 +333,7 @@ public class OrderServiceImpl implements OrderService {
             Promotion voucher = promotionRepo.findByPromotionCode(code)
                     .orElseThrow(() -> new ResourceNotFoundException("Promotion", "promotionCode", code));
             checkPromotion(voucher, PromotionType.VOUCHER, total);
-            String hash = HashUtil.generatePromotionHash(voucher);
-            PromotionSnapshot voucherSnapshot = promotionSnapshotRepo.findByHash(hash);
-            if (voucherSnapshot == null) {
-                voucherSnapshot = modelMapper.map(voucher, PromotionSnapshot.class);
-                voucherSnapshot.setPromotionId(null);
-                voucherSnapshot.setHash(hash);
-                promotionSnapshotRepo.save(voucherSnapshot);
-            }
+            PromotionSnapshot voucherSnapshot = convertToPromotionSnapshot(voucher);
             order.setCoupon(voucherSnapshot);
             totalAmount = !voucher.getValueType() ? totalAmount - voucher.getValue()
                     : totalAmount * (100 - voucher.getValue()) / 100;
@@ -373,14 +344,7 @@ public class OrderServiceImpl implements OrderService {
             Promotion freeShip = promotionRepo.findByPromotionCode(code)
                     .orElseThrow(() -> new ResourceNotFoundException("Promotion", "promotionCode", code));
             checkPromotion(freeShip, PromotionType.FREESHIP, total);
-            String hash = HashUtil.generatePromotionHash(freeShip);
-            PromotionSnapshot freeShipSnapshot = promotionSnapshotRepo.findByHash(hash);
-            if (freeShipSnapshot == null) {
-                freeShipSnapshot = modelMapper.map(freeShip, PromotionSnapshot.class);
-                freeShipSnapshot.setPromotionId(null);
-                freeShipSnapshot.setHash(hash);
-                promotionSnapshotRepo.save(freeShipSnapshot);
-            }
+            PromotionSnapshot freeShipSnapshot = convertToPromotionSnapshot(freeShip);
             order.setFreeship(freeShipSnapshot);
             priceShip = !freeShip.getValueType() ? priceShip - freeShip.getValue()
                     : priceShip * (100 - freeShip.getValue()) / 100;
@@ -390,31 +354,25 @@ public class OrderServiceImpl implements OrderService {
         order.setPriceShip(priceShip);
         order.setTotalAmount(totalAmount + priceShip);
         // Set address
-        String country = orderDTO.getAddress().getCountry();
-        String district = orderDTO.getAddress().getDistrict();
-        String city = orderDTO.getAddress().getCity();
-        String pincode = orderDTO.getAddress().getPincode();
-        String ward = orderDTO.getAddress().getWard();
-        String buildingName = orderDTO.getAddress().getBuildingName();
-        Address address = addressRepo
-                .findByCountryAndDistrictAndCityAndPincodeAndWardAndBuildingName(
-                        country, district,
-                        city, pincode, ward, buildingName);
-        if (address == null) {
-            address = new Address(country, district, city, pincode, ward, buildingName);
-            address = addressRepo.save(address);
-        }
+        Address address = convertToAddress(orderDTO.getAddress());
         order.setAddress(address);
         // Set time
         order.setOrderDateTime(LocalDateTime.now());
-        // Save order
+        // Set order code
+        String orderCode = orderRedisService.generateOrderCodeWithRedis();
+        order.setOrderCode(orderCode);
+        // Save order to from database
         orderRepo.save(order);
+        String bankCode = order.getPayment().getBankCode();
+        if (PaymentMethod.VNPAY.equals(paymentMethod)) {
+            return paymentService.createPaymentVNPAY(vnp_IpAddr, bankCode, orderCode, (long) order.getTotalAmount());
+        }
 
         return modelMapper.map(order, OrderDTO.class);
     }
 
     @Override
-    public OrderDTO createOrderOffline(OrderDTO orderDTO, List<ProductQuantity> productQuantities) {
+    public OrderDTO createOrderOffline(OrderDTO orderDTO, List<ProductQuantity> productQuantities, String vnp_IpAddr) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
@@ -429,7 +387,7 @@ public class OrderServiceImpl implements OrderService {
         // Set payment method
         Payment payment = new Payment();
         payment.setPaymentMethod(orderDTO.getPayment().getPaymentMethod());
-        paymentRepo.save(payment);
+        payment.setBankCode(orderDTO.getPayment().getBankCode());
         order.setPayment(payment);
         if (payment.getPaymentMethod().equals(PaymentMethod.COD)) {
             order.setOrderStatus(OrderStatus.PAID);
@@ -465,14 +423,7 @@ public class OrderServiceImpl implements OrderService {
             Promotion voucher = promotionRepo.findByPromotionCode(code)
                     .orElseThrow(() -> new ResourceNotFoundException("Promotion", "promotionCode", code));
             checkPromotion(voucher, PromotionType.VOUCHER, total);
-            String hash = HashUtil.generatePromotionHash(voucher);
-            PromotionSnapshot voucherSnapshot = promotionSnapshotRepo.findByHash(hash);
-            if (voucherSnapshot == null) {
-                voucherSnapshot = modelMapper.map(voucher, PromotionSnapshot.class);
-                voucherSnapshot.setPromotionId(null);
-                voucherSnapshot.setHash(hash);
-                promotionSnapshotRepo.save(voucherSnapshot);
-            }
+            PromotionSnapshot voucherSnapshot = convertToPromotionSnapshot(voucher);
             order.setCoupon(voucherSnapshot);
             totalAmount = !voucher.getValueType() ? totalAmount - voucher.getValue()
                     : totalAmount * (100 - voucher.getValue()) / 100;
@@ -484,6 +435,9 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalAmount(totalAmount);
         // Set time
         order.setOrderDateTime(LocalDateTime.now());
+        // Set order code
+        String orderCode = orderRedisService.generateOrderCodeWithRedis();
+        order.setOrderCode(orderCode);
         // Save order
         orderRepo.save(order);
 
@@ -494,17 +448,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public String SendVerifyOrderEmail(Long orderId) {
-        Order order = orderRepo.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderId", orderId));
-        if (!order.getPayment().getPaymentMethod().equals(PaymentMethod.COD)
-                || !order.getOrderStatus().equals(OrderStatus.PENDING)) {
-            throw new APIException(
-                    "Đơn hàng không hợp lệ. Đơn hàng phải ở trạng thái đang chờ xử lý và sử dụng phương thức thanh toán COD.");
+    public String SendVerifyOrderEmail(String orderCode) {
+        Order order = orderRepo.findByOrderCode(orderCode)
+                .orElseThrow(() -> new APIException("Đơn hàng không tồn tại"));
+        if (!order.getPayment().getPaymentMethod().equals(PaymentMethod.COD)) {
+            throw new APIException("Đơn hàng không hợp lệ. Đơn hàng phải sử dụng phương thức thanh toán COD.");
         }
-        String otp = generateOTPOrder(orderId);
-        String htmlContent = Email.getFormOTPVerifyOrderSendEmail(otp, String.valueOf(orderId),
-                order.getDeliveryName());
+        String otp = generateOTPOrder(orderCode);
+        String htmlContent = Email.getFormOTPVerifyOrderSendEmail(otp, orderCode, order.getDeliveryName());
         EmailDetails emailDetails = new EmailDetails(order.getEmail(), htmlContent, "BookStore - Xác thực đơn hàng",
                 null);
         emailService.sendMailWithAttachment(emailDetails);
@@ -513,42 +464,65 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public String generateOTPOrder(Long orderId) {
+    public String generateOTPOrder(String orderCode) {
+        String key = OTP_ORDER_CACHE_KEY + orderCode;
 
         // Generate a 6-digit OTP
         SecureRandom secureRandom = new SecureRandom();
         int code = secureRandom.nextInt(900000) + 100000;
         String strOTP = String.valueOf(code);
         // Save OTP to redis
-        String key = OTP_ORDER_CACHE_KEY + orderId;
         optRedisService.set(key, strOTP);
         optRedisService.setTimeToLive(key, 5, TimeUnit.MINUTES);
 
         return strOTP;
     }
 
+    @Transactional
     @Override
     public Boolean verityOTPEmail(OtpDTO otpDTO) {
-        Long orderId = otpDTO.getOrderId();
-        Order order = orderRepo.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderId", orderId));
-        if (order.getOrderStatus() != OrderStatus.PENDING
+        String orderCode = otpDTO.getOrderCode();
+        String key = OTP_ORDER_CACHE_KEY + orderCode;
+        String otpCode = optRedisService.get(key);
+        Order order = orderRepo.findByOrderCode(orderCode)
+                .orElseThrow(() -> new APIException("Đơn hàng không tồn tại"));
+        if (!order.getOrderStatus().equals(OrderStatus.PENDING)
                 || order.getPayment().getPaymentMethod() != PaymentMethod.COD) {
             throw new APIException("Đơn hàng không hợp lệ");
         }
-        String key = OTP_ORDER_CACHE_KEY + orderId;
-        String otpCode = optRedisService.get(key);
-        if (otpCode == null) {
+        if (otpCode == null || !otpCode.equals(otpDTO.getCode())) {
             return false;
         }
         order.setOrderStatus(OrderStatus.PAID);
+
+        // Save order to database
         orderRepo.save(order);
-        // Delete OTP from redis
+        // Delete OTP and Order from redis
         optRedisService.delete(key);
+        return true;
+    }
+
+    @Override
+    public Boolean verifyVNPay(String txnRef, String transactionDate, String bankCode, String BankTranNo) {
+        Order order = orderRepo.findByOrderCode(txnRef)
+                .orElseThrow(() -> new APIException("Đơn hàng không tồn tại"));
+        if (!order.getOrderStatus().equals(OrderStatus.PENDING)) {
+            throw new APIException("Đơn hàng không ở trạng thái chờ xử lý");
+        }
+        long totalAmount = (long) order.getTotalAmount();
+        boolean result = paymentService.checkTransaction(totalAmount, txnRef, transactionDate);
+        if (!result) {
+            throw new APIException("Lỗi giao dịch, xác thực thất bại");
+        }
+        order.setOrderStatus(OrderStatus.PAID);
+        order.getPayment().setBankCode(bankCode);
+        order.getPayment().setPaymentCode(BankTranNo);
+        orderRepo.save(order);
 
         return true;
     }
 
+    // Check Promotion
     private void checkPromotion(Promotion promotion, PromotionType type, double subTotal) {
         boolean checkType = promotion.getPromotionType().equals(type);
         LocalDateTime now = LocalDateTime.now();
@@ -561,4 +535,104 @@ public class OrderServiceImpl implements OrderService {
                             + promotion.getStatus());
         }
     }
+
+    // Hàm chuyển đổi OrderDTO -> Order
+    private Order convertToOrder(OrderDTO orderDTO) {
+        if (orderDTO == null) {
+            return null;
+        }
+        Order order = new Order();
+
+        order.setEmail(orderDTO.getEmail());
+        order.setDeliveryName(orderDTO.getDeliveryName());
+        order.setDeliveryPhone(orderDTO.getDeliveryPhone());
+
+        // Map AddressDTO -> Address (cần tự tạo hàm chuyển đổi tương tự)
+        if (orderDTO.getAddress() != null) {
+            order.setAddress(convertToAddress(orderDTO.getAddress()));
+        }
+        // Map PaymentDTO -> Payment
+        if (orderDTO.getPayment() != null) {
+            order.setPayment(convertToPayment(orderDTO.getPayment()));
+        }
+
+        return order;
+    }
+
+    // Hàm chuyển đổi AddressDTO -> Address
+    private Address convertToAddress(AddressDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        String country = dto.getCountry();
+        String district = dto.getDistrict();
+        String city = dto.getCity();
+        String pincode = dto.getPincode();
+        String ward = dto.getWard();
+        String buildingName = dto.getBuildingName();
+        Address address = addressRepo
+                .findByCountryAndDistrictAndCityAndPincodeAndWardAndBuildingName(
+                        country, district,
+                        city, pincode, ward, buildingName);
+        if (address == null) {
+            address = new Address(country, district, city, pincode, ward, buildingName);
+            address = addressRepo.save(address);
+        }
+        return address;
+    }
+
+    // Hàm chuyển đổi PaymentDTO -> Payment
+    private Payment convertToPayment(PaymentDTO dto) {
+        if (dto == null)
+            return null;
+        Payment payment = new Payment();
+        payment.setPaymentMethod(dto.getPaymentMethod());
+        payment.setBankCode(dto.getBankCode());
+        payment.setPaymentCode(dto.getPaymentCode());
+        return payment;
+    }
+
+    // Hàm chuyển đổi PromotionDTO -> PromotionSnapshot
+    private PromotionSnapshot convertToPromotionSnapshot(Promotion dto) {
+        if (dto == null)
+            return null;
+        String hash = HashUtil.generatePromotionHash(dto);
+        PromotionSnapshot promotionSnapshot = promotionSnapshotRepo.findByHash(hash);
+        if (promotionSnapshot == null) {
+            promotionSnapshot = modelMapper.map(dto, PromotionSnapshot.class);
+            promotionSnapshot.setPromotionId(null);
+            promotionSnapshot.setHash(hash);
+            promotionSnapshotRepo.save(promotionSnapshot);
+        }
+        return promotionSnapshot;
+    }
+
+    @Transactional
+    public void restoreProductQuantityFromOrder(String orderCode) {
+        String lockKey = "lock:order_restore:" + orderCode;
+        Boolean locked = orderRestoreRedisService.tryLock(lockKey, 10, TimeUnit.SECONDS);
+        if (Boolean.TRUE.equals(locked)) {
+            try {
+                String keyOrderRestore = ORDER_RESTORE_CACHE_KEY + orderCode;
+                List<OrderItemDTO> orderItemDTOs = (List<OrderItemDTO>) orderRestoreRedisService.get(keyOrderRestore);
+                log.info("orrr " + orderItemDTOs);
+                for (OrderItemDTO item : orderItemDTOs) {
+                    Long productId = item.getProduct().getProductId();
+                    Product product = productRepo.findByIdForUpdate(productId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+                    Integer newQuantity = product.getQuantity() + item.getQuantity();
+                    product.setQuantity(newQuantity);
+                    productRepo.save(product);
+                }
+                orderRestoreRedisService.delete(keyOrderRestore);
+                orderRestoreRedisService.delete(lockKey);
+            } finally {
+                orderRestoreRedisService.delete(lockKey);
+            }
+        } else {
+            log.info("Restore order skipped because lock not acquired for orderCode: " + orderCode);
+        }
+
+    }
+
 }

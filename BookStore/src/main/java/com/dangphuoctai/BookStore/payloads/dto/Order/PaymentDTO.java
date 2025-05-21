@@ -14,5 +14,7 @@ public class PaymentDTO {
 
     private PaymentMethod paymentMethod;
 
+    private String bankCode;
+
     private String paymentCode;
 }

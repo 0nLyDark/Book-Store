@@ -2,7 +2,6 @@ package com.dangphuoctai.BookStore.service;
 
 import java.util.List;
 
-import com.dangphuoctai.BookStore.entity.Order;
 import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.ProductQuantity;
@@ -17,16 +16,17 @@ public interface OrderService {
 
     OrderResponse getAllOrder(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
-    OrderDTO createOrder(OrderDTO orderDTO, List<Long> productId);
+    Object createOrder(OrderDTO orderDTO, List<Long> productId, String vnp_IpAddr);
 
-    OrderDTO createCustomerOrder(OrderDTO orderDTO, List<ProductQuantity> productQuantities);
+    Object createCustomerOrder(OrderDTO orderDTO, List<ProductQuantity> productQuantities, String vnp_IpAddr);
 
-    OrderDTO createOrderOffline(OrderDTO orderDTO, List<ProductQuantity> productQuantities);
+    OrderDTO createOrderOffline(OrderDTO orderDTO, List<ProductQuantity> productQuantities, String vnp_IpAddr);
 
-    String SendVerifyOrderEmail(Long orderId);
+    String SendVerifyOrderEmail(String orderCode);
 
-    String generateOTPOrder(Long orderId);
+    String generateOTPOrder(String orderCode);
 
     Boolean verityOTPEmail(OtpDTO otpDTO);
 
+    Boolean verifyVNPay(String txnRef, String transactionDate, String bankCode, String BankTranNo);
 }

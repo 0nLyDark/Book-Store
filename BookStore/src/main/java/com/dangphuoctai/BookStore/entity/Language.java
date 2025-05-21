@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,7 +32,7 @@ public class Language {
 
     @Column(nullable = false)
     private Boolean status;
-
+    
     @ManyToMany(mappedBy = "languages")
     private List<Product> products = new ArrayList<>();
 
