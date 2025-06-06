@@ -1,4 +1,4 @@
-package com.dangphuoctai.BookStore.payloads;
+package com.dangphuoctai.BookStore.payloads.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +22,8 @@ public class ProductSpecification {
             String slugCategory,
             List<Long> authorIds,
             List<Long> languageIds,
-            Long supplierId,
-            Long publisherId) {
+            List<Long> supplierIds,
+            List<Long> publisherIds) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -67,12 +67,12 @@ public class ProductSpecification {
                 predicates.add(root.join("languages").get("languageId").in(languageIds));
 
             // Lọc theo supplier
-            if (supplierId != null)
-                predicates.add(cb.equal(root.get("supplier").get("supplierId"), supplierId));
+            if (supplierIds != null && !supplierIds.isEmpty())
+                predicates.add(root.get("supplier").get("supplierId").in(supplierIds));
 
             // Lọc theo publisher
-            if (publisherId != null)
-                predicates.add(cb.equal(root.get("publisher").get("publisherId"), publisherId));
+            if (publisherIds != null && !publisherIds.isEmpty())
+                predicates.add(root.get("publisher").get("publisherId").in(publisherIds));
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };

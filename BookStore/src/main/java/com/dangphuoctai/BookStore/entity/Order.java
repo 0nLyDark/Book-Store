@@ -68,7 +68,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = { CascadeType.ALL }, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @ManyToOne
     @JoinColumn(name = "address_id")
     private Address address;
 

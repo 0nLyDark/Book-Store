@@ -1,4 +1,4 @@
-package com.dangphuoctai.BookStore.payloads;
+package com.dangphuoctai.BookStore.payloads.Specification;
 
 import java.util.ArrayList;
 import java.util.List;

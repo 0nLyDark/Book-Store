@@ -12,6 +12,7 @@ import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderRequest;
+import com.dangphuoctai.BookStore.payloads.dto.Order.OrderStatusDTO;
 import com.dangphuoctai.BookStore.payloads.response.OrderResponse;
 import com.dangphuoctai.BookStore.service.EmailService;
 import com.dangphuoctai.BookStore.service.OrderService;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api")
@@ -39,6 +41,14 @@ public class OrderController {
     public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long orderId) {
 
         OrderDTO order = orderService.getOrderById(orderId);
+
+        return new ResponseEntity<OrderDTO>(order, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/orders/code/{orderCode}")
+    public ResponseEntity<OrderDTO> getOrderByOrderCode(@PathVariable String orderCode) {
+
+        OrderDTO order = orderService.getOrderByOrderCode(orderCode);
 
         return new ResponseEntity<OrderDTO>(order, HttpStatus.OK);
     }
@@ -93,12 +103,12 @@ public class OrderController {
     }
 
     @PostMapping("/staff/orders")
-    public ResponseEntity<OrderDTO> createOrderOffline(@RequestBody OrderRequest orderRequest, HttpServletRequest req) {
+    public ResponseEntity<?> createOrderOffline(@RequestBody OrderRequest orderRequest, HttpServletRequest req) {
         String ip = VNPayConfig.getIpAddress(req);
-        OrderDTO order = orderService.createOrderOffline(orderRequest.getOrder(), orderRequest.getProductQuantities(),
+        Object order = orderService.createOrderOffline(orderRequest.getOrder(), orderRequest.getProductQuantities(),
                 ip);
 
-        return new ResponseEntity<OrderDTO>(order, HttpStatus.CREATED);
+        return new ResponseEntity<Object>(order, HttpStatus.CREATED);
     }
 
     @GetMapping("/public/orders/code/{orderCode}/otp")
@@ -118,5 +128,13 @@ public class OrderController {
         }
 
         return new ResponseEntity<String>("Xác thực đơn hàng thành công", HttpStatus.OK);
+    }
+
+    @PutMapping("/staff/orders/status")
+    public ResponseEntity<OrderDTO> changeOrderStatus(@RequestBody OrderStatusDTO orderStatusDTO) {
+
+        OrderDTO orderDTO = orderService.changeOrderStatus(orderStatusDTO);
+
+        return new ResponseEntity<OrderDTO>(orderDTO, HttpStatus.OK);
     }
 }

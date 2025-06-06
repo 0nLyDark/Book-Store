@@ -22,7 +22,7 @@ import com.dangphuoctai.BookStore.entity.Promotion;
 import com.dangphuoctai.BookStore.entity.PromotionSnapshot;
 import com.dangphuoctai.BookStore.enums.PromotionType;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
-import com.dangphuoctai.BookStore.payloads.PromotionSpecification;
+import com.dangphuoctai.BookStore.payloads.Specification.PromotionSpecification;
 import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
 import com.dangphuoctai.BookStore.payloads.dto.PromotionDTO;
 import com.dangphuoctai.BookStore.payloads.response.ProductResponse;

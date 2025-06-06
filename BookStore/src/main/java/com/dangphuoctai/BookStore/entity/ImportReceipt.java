@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,13 +37,9 @@ public class ImportReceipt {
 
     @Column(nullable = false)
     private Double totalAmount;
-    
+
     @Column(columnDefinition = "TEXT")
     private String note;
-
-    // @Enumerated(EnumType.STRING)
-    // @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'PENDING'")
-    // private ImportReceiptType importReceiptType;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private Boolean status = true;

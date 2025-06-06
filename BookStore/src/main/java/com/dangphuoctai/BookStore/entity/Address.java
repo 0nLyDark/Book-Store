@@ -40,19 +40,20 @@ public class Address {
     @NotBlank
     @Size(min = 2, message = "Country name must contain atleast 2 characters")
     private String country;
-    @NotBlank
-    @Size(min = 6, message = "Pincode must contain atleast 6 characters")
-    private String pincode;
+    // @NotBlank
+    // @Size(min = 6, message = "Pincode must contain atleast 6 characters")
+    // private String pincode;
 
     @OneToMany(mappedBy = "address")
     private List<Order> orders = new ArrayList<>();
 
-    public Address(String country, String district, String city, String pincode, String ward, String buildingName) {
+    public Address(String country, String district, String city, String ward, String buildingName) {
         this.country = country;
         this.district = district;
         this.city = city;
         this.ward = ward;
-        this.pincode = pincode;
         this.buildingName = buildingName;
+        // this.pincode = pincode;
+
     }
 }

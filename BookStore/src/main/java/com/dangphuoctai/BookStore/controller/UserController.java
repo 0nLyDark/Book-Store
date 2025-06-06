@@ -1,5 +1,7 @@
 package com.dangphuoctai.BookStore.controller;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,11 +13,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserDTO;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserPassword;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserPasswordReset;
+import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserRole;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserStatus;
 import com.dangphuoctai.BookStore.payloads.response.UserResponse;
 import com.dangphuoctai.BookStore.service.UserService;
@@ -25,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api")
@@ -82,6 +87,31 @@ public class UserController {
                 "id".equals(sortBy) ? "userId" : sortBy,
                 sortOrder);
         return new ResponseEntity<UserResponse>(userResponse, HttpStatus.OK);
+    }
+
+    @PutMapping("/public/users")
+    public ResponseEntity<UserDTO> updateUser(@RequestBody @Valid UserDTO user) {
+
+        UserDTO userDTO = userService.updateUser(user);
+
+        return new ResponseEntity<UserDTO>(userDTO, HttpStatus.OK);
+    }
+
+    @PutMapping("/public/users/{userId}/avatar")
+    public ResponseEntity<UserDTO> updateUserAvatar(@PathVariable Long userId,
+            @RequestParam("file") MultipartFile image) throws IOException {
+
+        UserDTO userDTO = userService.updateUserAvatar(userId, image);
+
+        return new ResponseEntity<UserDTO>(userDTO, HttpStatus.OK);
+    }
+
+    @PutMapping("/admin/users/role")
+    public ResponseEntity<String> changeUserRole(@RequestBody @Valid UserRole userRole) {
+
+        String message = userService.changeRole(userRole);
+
+        return new ResponseEntity<String>(message, HttpStatus.OK);
     }
 
     @PostMapping("/public/users/password")

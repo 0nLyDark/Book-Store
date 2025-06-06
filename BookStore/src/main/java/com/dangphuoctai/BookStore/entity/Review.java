@@ -53,8 +53,8 @@ public class Review {
     private String comment;
 
     @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order;
+    @JoinColumn(name = "order_item_id")
+    private OrderItem orderItem;
 
     private LocalDateTime createdAt;
 }

@@ -30,7 +30,7 @@ import com.dangphuoctai.BookStore.entity.Publisher;
 import com.dangphuoctai.BookStore.entity.Supplier;
 import com.dangphuoctai.BookStore.enums.FileType;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
-import com.dangphuoctai.BookStore.payloads.ProductSpecification;
+import com.dangphuoctai.BookStore.payloads.Specification.ProductSpecification;
 import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
 import com.dangphuoctai.BookStore.payloads.response.ProductResponse;
 import com.dangphuoctai.BookStore.repository.AuthorRepo;
@@ -152,13 +152,13 @@ public class ProductServiceImpl implements ProductService {
         public ProductResponse getAllProducts(String keyword, String isbn, Double minPrice, Double maxPrice,
                         Boolean isSale, Long categoryId,
                         List<Long> authorIds, List<Long> languageIds,
-                        Long supplierId, Long publisherId, Boolean status,
+                        List<Long> supplierIds, List<Long> publisherIds, Boolean status,
                         Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
                 // Check in Redis cache
                 String field = CacheKeyGenerator.generateProductCacheKey(
                                 keyword, isbn, minPrice, maxPrice,
                                 isSale, categoryId, authorIds, languageIds,
-                                supplierId, publisherId, status,
+                                supplierIds, publisherIds, status,
                                 pageNumber, pageSize, sortBy, sortOrder);
                 ProductResponse cached = (ProductResponse) productResponseRedisService.hashGet(PRODUCT_PAGE_CACHE_KEY,
                                 field);
@@ -178,7 +178,7 @@ public class ProductServiceImpl implements ProductService {
                 }
                 Specification<Product> productSpecification = ProductSpecification.filter(keyword, isbn,
                                 minPrice, maxPrice, isSale, status, categoryIds, null,
-                                authorIds, languageIds, supplierId, publisherId);
+                                authorIds, languageIds, supplierIds, publisherIds);
 
                 Page<Product> pageProducts = productRepo.findAll(productSpecification, pageDetails);
                 List<ProductDTO> productDTOs = pageProducts.getContent().stream()

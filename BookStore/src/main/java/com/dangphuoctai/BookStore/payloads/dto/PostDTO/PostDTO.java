@@ -1,8 +1,9 @@
-package com.dangphuoctai.BookStore.payloads.dto;
+package com.dangphuoctai.BookStore.payloads.dto.PostDTO;
 
 import java.time.LocalDateTime;
 
 import com.dangphuoctai.BookStore.enums.PostType;
+import com.dangphuoctai.BookStore.payloads.dto.TopicDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,6 +16,8 @@ public class PostDTO {
     private Long postId;
     private String title;
     private String slug;
+    private String image;
+
     private String content;
     private PostType type;
     private Boolean status;

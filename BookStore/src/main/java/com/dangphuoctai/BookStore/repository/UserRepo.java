@@ -20,4 +20,8 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
     User findByEmailAndVerified(String email, boolean verified);
 
+    boolean existsByUsername(String string);
+
+    long countByEnabled(boolean b);
+
 }

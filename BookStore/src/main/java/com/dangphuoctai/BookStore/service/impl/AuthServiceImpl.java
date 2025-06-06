@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.entity.Address;
-import com.dangphuoctai.BookStore.entity.OTP;
 import com.dangphuoctai.BookStore.entity.RefreshToken;
 import com.dangphuoctai.BookStore.entity.Role;
 import com.dangphuoctai.BookStore.entity.User;
@@ -31,12 +31,12 @@ import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserDTO;
 import com.dangphuoctai.BookStore.payloads.dto.UserDTO.UserRegister;
 import com.dangphuoctai.BookStore.repository.AddressRepo;
-import com.dangphuoctai.BookStore.repository.OTPRepo;
 import com.dangphuoctai.BookStore.repository.RefreshTokenRepo;
 import com.dangphuoctai.BookStore.repository.RoleRepo;
 import com.dangphuoctai.BookStore.repository.UserRepo;
 import com.dangphuoctai.BookStore.security.JWTUtil;
 import com.dangphuoctai.BookStore.service.AuthService;
+import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.FileService;
 import com.dangphuoctai.BookStore.utils.Email;
 
@@ -51,9 +51,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private AddressRepo addressRepo;
-
-    @Autowired
-    private OTPRepo otpRepo;
 
     @Autowired
     private RefreshTokenRepo refreshTokenRepo;
@@ -72,6 +69,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Value("${project.image}")
     private String path;
+
+    @Autowired
+    private BaseRedisService<String, String, String> otpRedisService;
+
+    private static final String OTP_USER_CACHE_KEY = "otp:user:";
 
     public UserDTO registerUser(UserRegister userRegister) {
         try {
@@ -101,22 +103,22 @@ public class AuthServiceImpl implements AuthService {
             user.setAvatar("default.png");
             user.setVerified(false);
             user.setAccountType(AccountType.USER);
-
-            String country = userRegister.getAddress().getCountry();
-            String district = userRegister.getAddress().getDistrict();
-            String city = userRegister.getAddress().getCity();
-            String pincode = userRegister.getAddress().getPincode();
-            String ward = userRegister.getAddress().getWard();
-            String buildingName = userRegister.getAddress().getBuildingName();
-            Address address = addressRepo
-                    .findByCountryAndDistrictAndCityAndPincodeAndWardAndBuildingName(
-                            country, district,
-                            city, pincode, ward, buildingName);
-            if (address == null) {
-                address = new Address(country, district, city, pincode, ward, buildingName);
-                address = addressRepo.save(address);
+            if (userRegister.getAddress() != null) {
+                String country = userRegister.getAddress().getCountry();
+                String district = userRegister.getAddress().getDistrict();
+                String city = userRegister.getAddress().getCity();
+                String ward = userRegister.getAddress().getWard();
+                String buildingName = userRegister.getAddress().getBuildingName();
+                Address address = addressRepo
+                        .findByCountryAndDistrictAndCityAndWardAndBuildingName(
+                                country, district,
+                                city, ward, buildingName);
+                if (address == null) {
+                    address = new Address(country, district, city, ward, buildingName);
+                    address = addressRepo.save(address);
+                }
+                user.setAddress(address);
             }
-            user.setAddress(address);
             user.setCreatedAt(LocalDateTime.now());
             User registeredUser = userRepo.save(user);
 
@@ -217,39 +219,31 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String generateOTPEmail(String email) {
-        Optional<OTP> optionalOtp = otpRepo.findByEmailAndType(email, OTPType.ACCOUNT_VERIFICATION);
-        OTP otp;
-        if (optionalOtp.isPresent()) {
-            otp = optionalOtp.get();
-        } else {
-            otp = new OTP();
-            otp.setEmail(email);
-            otp.setType(OTPType.ACCOUNT_VERIFICATION);
-        }
+        String key = OTP_USER_CACHE_KEY + email;
         SecureRandom secureRandom = new SecureRandom();
         int code = secureRandom.nextInt(900000) + 100000;
         String strOTP = String.valueOf(code);
-        otp.setCode(strOTP);
-        otp.setExpiryDate(Instant.now().plus(5, ChronoUnit.MINUTES));
-        otpRepo.save(otp);
+        otpRedisService.set(key, strOTP);
+        otpRedisService.setTimeToLive(key, 5, TimeUnit.MINUTES);
+
         return strOTP;
     }
 
     @Override
     public Boolean verityOTPEmail(OtpDTO otpDTO) {
+        String key = OTP_USER_CACHE_KEY + otpDTO.getEmail();
+        String otp = otpRedisService.get(key);
         User user = userRepo.findByEmail(otpDTO.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", otpDTO.getEmail()));
-        OTP otp = otpRepo.findByEmailAndType(otpDTO.getEmail(), OTPType.ACCOUNT_VERIFICATION)
-                .orElseThrow(() -> new ResourceNotFoundException("OTP", "email", otpDTO.getEmail()));
-
-        if (!otp.getCode().equals(otpDTO.getCode())) {
+        if (otp == null) {
             return false;
         }
-        if (Instant.now().isAfter(otp.getExpiryDate())) {
+        if (!otp.equals(otpDTO.getCode())) {
             return false;
         }
         user.setVerified(true);
-        otpRepo.delete(otp);
+        userRepo.save(user);
+        otpRedisService.delete(key);
 
         return true;
     }

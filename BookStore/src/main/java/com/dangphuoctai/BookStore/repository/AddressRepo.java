@@ -7,6 +7,6 @@ import com.dangphuoctai.BookStore.entity.Address;
 
 @Repository
 public interface AddressRepo extends JpaRepository<Address, Long> {
-    Address findByCountryAndDistrictAndCityAndPincodeAndWardAndBuildingName(String country, String district,
-            String city, String pincode, String ward, String buildingName);
+    Address findByCountryAndDistrictAndCityAndWardAndBuildingName(String country, String district,
+            String city, String ward, String buildingName);
 }

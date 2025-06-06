@@ -1,7 +1,10 @@
 package com.dangphuoctai.BookStore.enums;
 
 public enum OrderStatus {
-    PENDING,
+    COMPLETED,
+    SHIPPED,
     PAID,
+    PENDING,
+    CANCELLED,
     FAILED
 }

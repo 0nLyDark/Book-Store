@@ -16,7 +16,8 @@ public interface CategoryService {
 
     CategoryDTO getCategoryBySlug(String slug);
 
-    CategoryResponse getAllCategories(Boolean status, String type, Integer pageNumber, Integer pageSize, String sortBy,
+    CategoryResponse getAllCategories(String keyword, Boolean status, String type, Integer pageNumber, Integer pageSize,
+            String sortBy,
             String sortOrder);
 
     CategoryDTO createCategory(ChildCategoryDTO categoryDTO, MultipartFile image) throws IOException;

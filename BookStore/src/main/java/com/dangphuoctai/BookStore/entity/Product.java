@@ -24,6 +24,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,14 +41,16 @@ public class Product {
     private Long productId;
 
     @NotBlank
-    @Size(min = 3, message = "Product name must contain atleast 3 characters")
+    @Size(min = 3, message = "Tên sản phẩm phải có ít nhất 3 ký tự")
     private String productName;
 
     @Column(nullable = false, unique = true)
     private String slug;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 13)
+    @Pattern(regexp = "^(\\d{10}|\\d{13})$", message = "ISBN phải có 10 hoặc 13 chữ số")
     private String isbn;
+
     @Column(nullable = false)
     private int weight;
 
@@ -76,7 +79,7 @@ public class Product {
 
     @NotBlank
     @Column(columnDefinition = "TEXT")
-    @Size(min = 6, message = "Product description must contain atleast 6 characters")
+    @Size(min = 6, message = "Mô tả sản phẩm phải có ít nhất 6 ký tự")
     private String description;
 
     // @NotBlank

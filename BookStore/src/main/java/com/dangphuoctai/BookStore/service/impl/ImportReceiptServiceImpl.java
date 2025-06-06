@@ -24,7 +24,7 @@ import com.dangphuoctai.BookStore.entity.Product;
 import com.dangphuoctai.BookStore.entity.Supplier;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
-import com.dangphuoctai.BookStore.payloads.ImportReceiptSpecification;
+import com.dangphuoctai.BookStore.payloads.Specification.ImportReceiptSpecification;
 import com.dangphuoctai.BookStore.payloads.dto.ImportReceiptDTO;
 import com.dangphuoctai.BookStore.payloads.response.ImportReceiptResponse;
 import com.dangphuoctai.BookStore.repository.ImportReceiptRepo;

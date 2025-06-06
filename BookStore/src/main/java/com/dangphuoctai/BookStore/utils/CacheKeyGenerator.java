@@ -15,7 +15,7 @@ public class CacheKeyGenerator {
             String keyword, String isbn, Double minPrice, Double maxPrice,
             Boolean isSale, Long categoryId,
             List<Long> authorIds, List<Long> languageIds,
-            Long supplierId, Long publisherId, Boolean status,
+            List<Long> supplierId, List<Long> publisherId, Boolean status,
             Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         try {
             Map<String, Object> params = new LinkedHashMap<>();

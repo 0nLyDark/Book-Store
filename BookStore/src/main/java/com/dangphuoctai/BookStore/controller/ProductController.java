@@ -60,8 +60,8 @@ public class ProductController {
             @RequestParam(name = "categoryId", required = false) Long categoryId,
             @RequestParam(name = "authorIds", required = false) List<Long> authorIds,
             @RequestParam(name = "languageIds", required = false) List<Long> languageIds,
-            @RequestParam(name = "supplierId", required = false) Long supplierId,
-            @RequestParam(name = "publisherId", required = false) Long publisherId,
+            @RequestParam(name = "supplierId", required = false) List<Long> supplierIds,
+            @RequestParam(name = "publisherId", required = false) List<Long> publisherIds,
             @RequestParam(name = "isSale", required = false) Boolean isSale,
             @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
@@ -70,7 +70,7 @@ public class ProductController {
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
         ProductResponse productResponse = productService.getAllProducts(
                 keyword, isbn, minPrice, maxPrice, isSale,
-                categoryId, authorIds, languageIds, supplierId, publisherId, status,
+                categoryId, authorIds, languageIds, supplierIds, publisherIds, status,
                 pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "productId" : sortBy,

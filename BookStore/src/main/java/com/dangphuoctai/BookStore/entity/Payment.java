@@ -1,7 +1,6 @@
 package com.dangphuoctai.BookStore.entity;
 
 import com.dangphuoctai.BookStore.enums.PaymentMethod;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;

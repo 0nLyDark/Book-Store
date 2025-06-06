@@ -18,6 +18,10 @@ public class CategoryDTO {
 
     private String slug;
 
+    private Long totalProducts;
+
+    private Long activeProducts;
+
     private Boolean status;
 
     private Long createdBy;

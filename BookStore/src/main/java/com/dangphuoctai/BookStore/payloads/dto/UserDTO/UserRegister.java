@@ -16,5 +16,5 @@ public class UserRegister extends UserDTO {
     @NotBlank
     private String password;
 
-    private AddressDTO address;
+    // private AddressDTO address;
 }

@@ -1,5 +1,6 @@
 package com.dangphuoctai.BookStore.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -25,4 +26,12 @@ public interface ProductRepo extends JpaRepository<Product, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE) // KHÓA GHI (Write lock)
     @Query("SELECT p FROM Product p WHERE p.productId = :productId")
     Optional<Product> findByIdForUpdate(Long productId);
+
+    @Query("SELECT c.id, COUNT(p) FROM Product p JOIN p.categories c WHERE c.id IN :categoryIds GROUP BY c.id")
+    List<Object[]> countProductsByCategoryIds(@Param("categoryIds") List<Long> categoryIds);
+
+    @Query("SELECT c.id, COUNT(p) FROM Product p JOIN p.categories c WHERE c.id IN :categoryIds AND p.status = true GROUP BY c.id")
+    List<Object[]> countActiveProductsByCategoryIds(@Param("categoryIds") List<Long> categoryIds);
+
+    long countByStatus(boolean b);
 }

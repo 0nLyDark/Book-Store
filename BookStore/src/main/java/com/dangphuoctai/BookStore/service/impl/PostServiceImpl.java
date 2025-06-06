@@ -1,5 +1,6 @@
 package com.dangphuoctai.BookStore.service.impl;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -7,25 +8,32 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.entity.Post;
+import com.dangphuoctai.BookStore.entity.Promotion;
 import com.dangphuoctai.BookStore.entity.Topic;
 import com.dangphuoctai.BookStore.enums.PostType;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
-import com.dangphuoctai.BookStore.payloads.dto.PostDTO;
+import com.dangphuoctai.BookStore.payloads.Specification.PostSpecification;
+import com.dangphuoctai.BookStore.payloads.Specification.PromotionSpecification;
+import com.dangphuoctai.BookStore.payloads.dto.PostDTO.PostDTO;
 import com.dangphuoctai.BookStore.payloads.response.PostResponse;
 import com.dangphuoctai.BookStore.repository.PostRepo;
 import com.dangphuoctai.BookStore.repository.TopicRepo;
 import com.dangphuoctai.BookStore.service.BaseRedisService;
+import com.dangphuoctai.BookStore.service.FileService;
 import com.dangphuoctai.BookStore.service.PostService;
 import com.dangphuoctai.BookStore.utils.CreateSlug;
 
@@ -40,6 +48,12 @@ public class PostServiceImpl implements PostService {
 
         @Autowired
         private ModelMapper modelMapper;
+
+        @Autowired
+        private FileService fileService;
+
+        @Value("${project.image}")
+        private String path;
 
         @Autowired
         private BaseRedisService<String, String, PostDTO> postRedisService;
@@ -88,28 +102,22 @@ public class PostServiceImpl implements PostService {
         }
 
         @Override
-        public PostResponse getAllPost(Boolean status, PostType type, Integer pageNumber, Integer pageSize,
+        public PostResponse getAllPost(Boolean status, PostType type, Long topicId, Integer pageNumber,
+                        Integer pageSize,
                         String sortBy,
                         String sortOrder) {
-                String field = String.format("status:%s|type:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
-                                status, type, pageNumber, pageSize, sortBy, sortOrder);
-                PostResponse cached = (PostResponse) postResponseRedisService.hashGet(POST_CACHE_KEY, field);
+                String field = String.format("status:%s|type:%s|topicId:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
+                                status, type, topicId, pageNumber, pageSize, sortBy, sortOrder);
+                PostResponse cached = (PostResponse) postResponseRedisService.hashGet(POST_PAGE_CACHE_KEY, field);
                 if (cached != null) {
                         return cached;
                 }
                 Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                                 : Sort.by(sortBy).descending();
                 Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-                Page<Post> pagePosts;
-                if (status != null && type != null) {
-                        pagePosts = postRepo.findAllByStatusAndType(status, type, pageDetails);
-                } else if (status != null) {
-                        pagePosts = postRepo.findAllByStatus(status, pageDetails);
-                } else if (type != null) {
-                        pagePosts = postRepo.findAllByType(type, pageDetails);
-                } else {
-                        pagePosts = postRepo.findAll(pageDetails);
-                }
+                Specification<Post> postSpecification = PostSpecification.filter(topicId, type, status);
+
+                Page<Post> pagePosts = postRepo.findAll(postSpecification, pageDetails);
 
                 List<PostDTO> postDTOs = pagePosts.getContent().stream()
                                 .map(post -> modelMapper.map(post, PostDTO.class))
@@ -124,14 +132,14 @@ public class PostServiceImpl implements PostService {
                 postResponse.setLastPage(pagePosts.isLast());
 
                 // Save cache post to redis
-                postResponseRedisService.hashSet(POST_CACHE_KEY, field, postResponse);
-                postResponseRedisService.setTimeToLiveOnce(POST_CACHE_KEY, 3, TimeUnit.HOURS);
+                postResponseRedisService.hashSet(POST_PAGE_CACHE_KEY, field, postResponse);
+                postResponseRedisService.setTimeToLiveOnce(POST_PAGE_CACHE_KEY, 3, TimeUnit.HOURS);
 
                 return postResponse;
         }
 
         @Override
-        public PostDTO createPost(PostDTO postDTO) {
+        public PostDTO createPost(PostDTO postDTO, MultipartFile image) throws IOException {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 Jwt jwt = (Jwt) authentication.getPrincipal();
                 Long userId = jwt.getClaim("userId");
@@ -145,6 +153,10 @@ public class PostServiceImpl implements PostService {
                 Post post = new Post();
                 post.setTitle(postDTO.getTitle());
                 post.setSlug(CreateSlug.toSlug(postDTO.getTitle()));
+                if (image != null) {
+                        String fileName = fileService.uploadImage(path, image);
+                        post.setImage(fileName);
+                }
                 post.setContent(postDTO.getContent());
                 post.setType(postDTO.getType());
                 post.setStatus(false);
@@ -167,7 +179,7 @@ public class PostServiceImpl implements PostService {
         }
 
         @Override
-        public PostDTO updatePost(PostDTO postDTO) {
+        public PostDTO updatePost(PostDTO postDTO, MultipartFile image) throws IOException {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 Jwt jwt = (Jwt) authentication.getPrincipal();
                 Long userId = jwt.getClaim("userId");
@@ -179,6 +191,10 @@ public class PostServiceImpl implements PostService {
                                                 postDTO.getPostId()));
                 post.setTitle(postDTO.getTitle());
                 post.setSlug(CreateSlug.toSlug(postDTO.getTitle()));
+                if (image != null) {
+                        String fileName = fileService.uploadImage(path, image);
+                        post.setImage(fileName);
+                }
                 post.setContent(postDTO.getContent());
                 post.setType(postDTO.getType());
                 post.setStatus(postDTO.getStatus());

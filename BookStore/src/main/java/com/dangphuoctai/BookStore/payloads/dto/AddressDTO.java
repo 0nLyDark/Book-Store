@@ -18,5 +18,5 @@ public class AddressDTO {
     private Long districtCode;
     private String wardCode;
 
-    private String pincode;
+    // private String pincode;
 }

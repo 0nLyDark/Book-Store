@@ -1,7 +1,11 @@
 package com.dangphuoctai.BookStore.service;
 
+import java.io.IOException;
+
+import org.springframework.web.multipart.MultipartFile;
+
 import com.dangphuoctai.BookStore.enums.PostType;
-import com.dangphuoctai.BookStore.payloads.dto.PostDTO;
+import com.dangphuoctai.BookStore.payloads.dto.PostDTO.PostDTO;
 import com.dangphuoctai.BookStore.payloads.response.PostResponse;
 
 public interface PostService {
@@ -9,12 +13,13 @@ public interface PostService {
 
     PostDTO getPostBySlug(String slug);
 
-    PostResponse getAllPost(Boolean status, PostType type, Integer pageNumber, Integer pageSize, String sortBy,
+    PostResponse getAllPost(Boolean status, PostType type, Long topicId, Integer pageNumber, Integer pageSize,
+            String sortBy,
             String sortOrder);
 
-    PostDTO createPost(PostDTO PostDTO);
+    PostDTO createPost(PostDTO PostDTO, MultipartFile image) throws IOException;
 
-    PostDTO updatePost(PostDTO PostDTO);
+    PostDTO updatePost(PostDTO PostDTO, MultipartFile image) throws IOException;
 
     String deletePost(Long PostId);
 }

@@ -34,6 +34,8 @@ public class Post {
     @Column(nullable = false, unique = true)
     private String slug;
 
+    private String image;
+
     @Column(columnDefinition = "TEXT")
     private String content;
 

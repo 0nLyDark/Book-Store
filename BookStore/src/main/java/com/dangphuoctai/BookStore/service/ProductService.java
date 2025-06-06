@@ -22,7 +22,7 @@ public interface ProductService {
         ProductResponse getAllProducts(String keyword, String isbn, Double minPrice, Double maxPrice,
                         Boolean isSale, Long categoryId,
                         List<Long> authorIds, List<Long> languageIds,
-                        Long supplierId, Long publisherId, Boolean status,
+                        List<Long> supplierIds, List<Long> publisherIds, Boolean status,
                         Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
         ProductDTO createProduct(ProductDTO productDTO, List<MultipartFile> images, List<Long> categoryIds,

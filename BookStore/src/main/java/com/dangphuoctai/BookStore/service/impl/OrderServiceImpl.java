@@ -1,16 +1,11 @@
 package com.dangphuoctai.BookStore.service.impl;
 
 import java.security.SecureRandom;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.time.Instant;
+
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.AbstractMap;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -20,8 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.jaxb.SpringDataJaxb.OrderDto;
-import org.springframework.data.redis.core.RedisTemplate;
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,6 +42,7 @@ import com.dangphuoctai.BookStore.payloads.dto.AddressDTO;
 import com.dangphuoctai.BookStore.payloads.dto.OtpDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderItemDTO;
+import com.dangphuoctai.BookStore.payloads.dto.Order.OrderStatusDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.PaymentDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.ProductQuantity;
 import com.dangphuoctai.BookStore.payloads.response.OrderResponse;
@@ -114,7 +109,7 @@ public class OrderServiceImpl implements OrderService {
     private BaseRedisService<String, Long, Integer> cartRedisService;
 
     @Autowired
-    private BaseRedisService<String, String, String> optRedisService;
+    private BaseRedisService<String, String, String> otpRedisService;
 
     @Autowired
     private BaseRedisService<String, String, OrderDTO> orderRedisService;
@@ -137,6 +132,14 @@ public class OrderServiceImpl implements OrderService {
         if (userId != order.getUserId() && !roles.contains("STAFF") && !roles.contains("ADMIN")) {
             throw new AccessDeniedException("You do not have permission to access this order.");
         }
+
+        return modelMapper.map(order, OrderDTO.class);
+    }
+
+    @Override
+    public OrderDTO getOrderByOrderCode(String orderCode) {
+        Order order = orderRepo.findByOrderCode(orderCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderCode", orderCode));
 
         return modelMapper.map(order, OrderDTO.class);
     }
@@ -190,6 +193,54 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public OrderDTO changeOrderStatus(OrderStatusDTO orderStatus) {
+        Order order = orderRepo.findById(orderStatus.getOrderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderId", orderStatus.getOrderId()));
+        OrderStatus status = orderStatus.getOrderStatus();
+        if (status.equals(order.getOrderStatus())) {
+            return modelMapper.map(order, OrderDTO.class);
+        }
+        if (OrderStatus.PENDING.equals(status) || OrderStatus.CANCELLED.equals(status)) {
+            throw new APIException("Không thể chuyển đơn hàng sang trạng thái chờ xử lý hoặc đã hủy.");
+        }
+        if (OrderStatus.FAILED.equals(order.getOrderStatus()) || OrderStatus.CANCELLED.equals(order.getOrderStatus())) {
+            throw new APIException("Không thể chuyển trạng thái đơn hàng khi đơn đã thất bại hoặc đã hủy.");
+        }
+        if (OrderStatus.COMPLETED.equals(status)) {
+            if (!OrderStatus.PAID.equals(order.getOrderStatus())
+                    && !OrderStatus.SHIPPED.equals(order.getOrderStatus())) {
+                throw new APIException("Đơn hàng chưa được xác nhận và không thể chuyển sang trạng thái hoàn thành.");
+            }
+        }
+        if (OrderStatus.SHIPPED.equals(status) && !OrderStatus.PAID.equals(order.getOrderStatus())) {
+            throw new APIException("Chỉ có thể Ship đơn hàng ở trạng thái đã xác nhận.");
+        }
+        if (OrderStatus.PAID.equals(status) && !OrderStatus.PENDING.equals(order.getOrderStatus())) {
+            throw new APIException("Chỉ có thể xác nhận đơn hàng ở trạng thái chờ xử lý.");
+        }
+        if (OrderStatus.FAILED.equals(status)) {
+            if (OrderStatus.COMPLETED.equals(order.getOrderStatus())) {
+                throw new APIException("Đơn hàng đã hoàn thành và không thể chuyển sang trạng thái thất bại.");
+            }
+            if (OrderStatus.CANCELLED.equals(order.getOrderStatus())) {
+                throw new APIException("Đơn hàng đã hủy và không thể chuyển sang trạng thái thất bại.");
+            }
+            order.getOrderItems().forEach((orderItem) -> {
+                Long productId = orderItem.getProduct().getProductId();
+                Product product = productRepo.findByIdForUpdate(productId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+                int newQuantity = orderItem.getQuantity() + product.getQuantity();
+                product.setQuantity(newQuantity);
+                productRepo.save(product);
+            });
+        }
+        order.setOrderStatus(status);
+        orderRepo.save(order);
+
+        return modelMapper.map(order, OrderDTO.class);
+    }
+
+    @Override
     public Object createCustomerOrder(OrderDTO orderDTO, List<ProductQuantity> productQuantities, String vnp_IpAddr) {
         Order order = convertToOrder(orderDTO);
         order.setOrderType(OrderType.ONLINE);
@@ -222,6 +273,7 @@ public class OrderServiceImpl implements OrderService {
                 orderDTO.getAddress().getDistrictCode(), orderDTO.getAddress().getWardCode(),
                 Long.valueOf((long) total),
                 order.getOrderItems());
+        order.setPriceShip(priceShip);
         // Set Promotion
         if (orderDTO.getCoupon() != null && orderDTO.getCoupon().getPromotionCode() != null) {
             String code = orderDTO.getCoupon().getPromotionCode();
@@ -246,7 +298,6 @@ public class OrderServiceImpl implements OrderService {
             priceShip = Math.max(priceShip, 0);
         }
         // Set Total
-        order.setPriceShip(priceShip);
         order.setTotalAmount(totalAmount + priceShip);
         // Set address
         Address address = convertToAddress(orderDTO.getAddress());
@@ -327,7 +378,9 @@ public class OrderServiceImpl implements OrderService {
         double priceShip = gHNService.calculateShippingFee(total < 20000000 ? 2 : 5,
                 orderDTO.getAddress().getDistrictCode(), orderDTO.getAddress().getWardCode(),
                 Long.valueOf((long) total),
-                order.getOrderItems()); // Set Promotion
+                order.getOrderItems());
+        order.setPriceShip(priceShip);
+        // Set Promotion
         if (orderDTO.getCoupon() != null && orderDTO.getCoupon().getPromotionCode() != null) {
             String code = orderDTO.getCoupon().getPromotionCode();
             Promotion voucher = promotionRepo.findByPromotionCode(code)
@@ -351,7 +404,6 @@ public class OrderServiceImpl implements OrderService {
             priceShip = Math.max(priceShip, 0);
         }
         // Set Total
-        order.setPriceShip(priceShip);
         order.setTotalAmount(totalAmount + priceShip);
         // Set address
         Address address = convertToAddress(orderDTO.getAddress());
@@ -372,7 +424,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderDTO createOrderOffline(OrderDTO orderDTO, List<ProductQuantity> productQuantities, String vnp_IpAddr) {
+    public Object createOrderOffline(OrderDTO orderDTO, List<ProductQuantity> productQuantities, String vnp_IpAddr) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
@@ -390,7 +442,7 @@ public class OrderServiceImpl implements OrderService {
         payment.setBankCode(orderDTO.getPayment().getBankCode());
         order.setPayment(payment);
         if (payment.getPaymentMethod().equals(PaymentMethod.COD)) {
-            order.setOrderStatus(OrderStatus.PAID);
+            order.setOrderStatus(OrderStatus.COMPLETED);
         } else {
             order.setOrderStatus(OrderStatus.PENDING);
         }
@@ -399,7 +451,7 @@ public class OrderServiceImpl implements OrderService {
             Product product = productRepo.findByIdForUpdate(p.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", p.getProductId()));
             if (!product.getStatus()) {
-                throw new APIException("Sản phẩm không còn hoạt động");
+                throw new APIException("Sản phẩm " + product.getProductName() + " không còn hoạt động");
             }
             OrderItem orderItem = new OrderItem();
             orderItem.setProduct(product);
@@ -443,7 +495,10 @@ public class OrderServiceImpl implements OrderService {
 
         OrderDTO orderResult = modelMapper.map(order, OrderDTO.class);
         orderResult.setUserId(userId);
-
+        String bankCode = order.getPayment().getBankCode();
+        if (PaymentMethod.VNPAY.equals(orderResult.getPayment().getPaymentMethod())) {
+            return paymentService.createPaymentVNPAY(vnp_IpAddr, bankCode, orderCode, (long) order.getTotalAmount());
+        }
         return orderResult;
     }
 
@@ -472,18 +527,17 @@ public class OrderServiceImpl implements OrderService {
         int code = secureRandom.nextInt(900000) + 100000;
         String strOTP = String.valueOf(code);
         // Save OTP to redis
-        optRedisService.set(key, strOTP);
-        optRedisService.setTimeToLive(key, 5, TimeUnit.MINUTES);
+        otpRedisService.set(key, strOTP);
+        otpRedisService.setTimeToLive(key, 5, TimeUnit.MINUTES);
 
         return strOTP;
     }
 
-    @Transactional
     @Override
     public Boolean verityOTPEmail(OtpDTO otpDTO) {
         String orderCode = otpDTO.getOrderCode();
         String key = OTP_ORDER_CACHE_KEY + orderCode;
-        String otpCode = optRedisService.get(key);
+        String otpCode = otpRedisService.get(key);
         Order order = orderRepo.findByOrderCode(orderCode)
                 .orElseThrow(() -> new APIException("Đơn hàng không tồn tại"));
         if (!order.getOrderStatus().equals(OrderStatus.PENDING)
@@ -498,7 +552,7 @@ public class OrderServiceImpl implements OrderService {
         // Save order to database
         orderRepo.save(order);
         // Delete OTP and Order from redis
-        optRedisService.delete(key);
+        otpRedisService.delete(key);
         return true;
     }
 
@@ -514,7 +568,11 @@ public class OrderServiceImpl implements OrderService {
         if (!result) {
             throw new APIException("Lỗi giao dịch, xác thực thất bại");
         }
-        order.setOrderStatus(OrderStatus.PAID);
+        if (order.getOrderType().equals(OrderType.ONLINE)) {
+            order.setOrderStatus(OrderStatus.PAID);
+        } else {
+            order.setOrderStatus(OrderStatus.COMPLETED);
+        }
         order.getPayment().setBankCode(bankCode);
         order.getPayment().setPaymentCode(BankTranNo);
         orderRepo.save(order);
@@ -567,15 +625,14 @@ public class OrderServiceImpl implements OrderService {
         String country = dto.getCountry();
         String district = dto.getDistrict();
         String city = dto.getCity();
-        String pincode = dto.getPincode();
         String ward = dto.getWard();
         String buildingName = dto.getBuildingName();
         Address address = addressRepo
-                .findByCountryAndDistrictAndCityAndPincodeAndWardAndBuildingName(
+                .findByCountryAndDistrictAndCityAndWardAndBuildingName(
                         country, district,
-                        city, pincode, ward, buildingName);
+                        city, ward, buildingName);
         if (address == null) {
-            address = new Address(country, district, city, pincode, ward, buildingName);
+            address = new Address(country, district, city, ward, buildingName);
             address = addressRepo.save(address);
         }
         return address;
@@ -605,34 +662,6 @@ public class OrderServiceImpl implements OrderService {
             promotionSnapshotRepo.save(promotionSnapshot);
         }
         return promotionSnapshot;
-    }
-
-    @Transactional
-    public void restoreProductQuantityFromOrder(String orderCode) {
-        String lockKey = "lock:order_restore:" + orderCode;
-        Boolean locked = orderRestoreRedisService.tryLock(lockKey, 10, TimeUnit.SECONDS);
-        if (Boolean.TRUE.equals(locked)) {
-            try {
-                String keyOrderRestore = ORDER_RESTORE_CACHE_KEY + orderCode;
-                List<OrderItemDTO> orderItemDTOs = (List<OrderItemDTO>) orderRestoreRedisService.get(keyOrderRestore);
-                log.info("orrr " + orderItemDTOs);
-                for (OrderItemDTO item : orderItemDTOs) {
-                    Long productId = item.getProduct().getProductId();
-                    Product product = productRepo.findByIdForUpdate(productId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
-                    Integer newQuantity = product.getQuantity() + item.getQuantity();
-                    product.setQuantity(newQuantity);
-                    productRepo.save(product);
-                }
-                orderRestoreRedisService.delete(keyOrderRestore);
-                orderRestoreRedisService.delete(lockKey);
-            } finally {
-                orderRestoreRedisService.delete(lockKey);
-            }
-        } else {
-            log.info("Restore order skipped because lock not acquired for orderCode: " + orderCode);
-        }
-
     }
 
 }

@@ -3,7 +3,9 @@ package com.dangphuoctai.BookStore.service.impl;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -14,33 +16,44 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.dangphuoctai.BookStore.entity.Category;
+import com.dangphuoctai.BookStore.entity.Product;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
+import com.dangphuoctai.BookStore.payloads.Specification.CategorySpecification;
+import com.dangphuoctai.BookStore.payloads.Specification.ProductSpecification;
 import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.CategoryDTO;
 import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.ChildCategoryDTO;
 import com.dangphuoctai.BookStore.payloads.dto.CategoryDTO.ParentCategoryDTO;
 import com.dangphuoctai.BookStore.payloads.response.CategoryResponse;
 import com.dangphuoctai.BookStore.repository.CategoryRepo;
+import com.dangphuoctai.BookStore.repository.ProductRepo;
 import com.dangphuoctai.BookStore.service.BaseRedisService;
 import com.dangphuoctai.BookStore.service.CategoryService;
 import com.dangphuoctai.BookStore.service.FileService;
 import com.dangphuoctai.BookStore.utils.CreateSlug;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Transactional
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private CategoryRepo categoryRepo;
+
+    @Autowired
+    private ProductRepo productRepo;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -112,11 +125,12 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse getAllCategories(Boolean status, String type, Integer pageNumber, Integer pageSize,
+    public CategoryResponse getAllCategories(String keyword, Boolean status, String type, Integer pageNumber,
+            Integer pageSize,
             String sortBy,
             String sortOrder) {
-        String field = String.format("status:%s|type:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
-                status, type, pageNumber, pageSize, sortBy, sortOrder);
+        String field = String.format("keyword:%s|status:%s|type:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
+                keyword, status, type, pageNumber, pageSize, sortBy, sortOrder);
         CategoryResponse cached = (CategoryResponse) categoryResponseRedisService.hashGet(CATEGORY_PAGE_CACHE_KEY,
                 field);
         if (cached != null) {
@@ -125,27 +139,42 @@ public class CategoryServiceImpl implements CategoryService {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+        Specification<Category> categorySpecification = CategorySpecification.filter(keyword, type, status);
+        // Get category
+        Page<Category> pageCategories = categoryRepo.findAll(categorySpecification, pageDetails);
+        List<Long> categoryIds = pageCategories.getContent()
+                .stream()
+                .map(Category::getCategoryId)
+                .collect(Collectors.toList());
+        // Count products to categorys
+        List<Object[]> counts = productRepo.countProductsByCategoryIds(categoryIds);
+        Map<Long, Long> totalMap = counts.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]));
 
-        Page<Category> pageCategories;
+        List<Object[]> activeCounts = productRepo.countActiveProductsByCategoryIds(categoryIds);
+        Map<Long, Long> activeMap = activeCounts.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]));
+        // Map list category
         List<CategoryDTO> categoryDTOs;
-
         if (type.equalsIgnoreCase("parent")) {
-            if (status == null) {
-                pageCategories = categoryRepo.findAllByParentIsNull(pageDetails);
-            } else {
-                pageCategories = categoryRepo.findAllByParentIsNullAndStatus(status, pageDetails);
-            }
             categoryDTOs = pageCategories.getContent().stream()
                     .map(category -> modelMapper.map(category, ParentCategoryDTO.class)).collect(Collectors.toList());
         } else {
-            if (status == null) {
-                pageCategories = categoryRepo.findAll(pageDetails);
-            } else {
-                pageCategories = categoryRepo.findAllByStatus(status, pageDetails);
-            }
             categoryDTOs = pageCategories.getContent().stream()
                     .map(category -> modelMapper.map(category, ChildCategoryDTO.class)).collect(Collectors.toList());
         }
+        // Set totalproducts to category
+        categoryDTOs.forEach(category -> {
+            Long id = category.getCategoryId();
+            Long total = totalMap.get(id);
+            Long active = activeMap.get(id);
+            category.setTotalProducts(total != null ? total : 0L);
+            category.setActiveProducts(active != null ? active : 0L);
+        });
 
         CategoryResponse categoryResponse = new CategoryResponse();
         categoryResponse.setContent(categoryDTOs);
@@ -200,6 +229,17 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRes;
     }
 
+    private void getListChild(Category parentCategory, List<Long> childCategoryIds) {
+        if (parentCategory == null || parentCategory.getChildrens() == null) {
+            return;
+        }
+        for (Category childCategory : parentCategory.getChildrens()) {
+            childCategoryIds.add(childCategory.getCategoryId());
+            getListChild(childCategory, childCategoryIds);
+        }
+
+    }
+
     @Override
     public CategoryDTO updateCategory(ChildCategoryDTO categoryDTO, MultipartFile image) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -217,6 +257,11 @@ public class CategoryServiceImpl implements CategoryService {
             Category parentCategory = categoryRepo.findById(categoryDTO.getParent().getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId",
                             categoryDTO.getParent().getCategoryId()));
+            List<Long> childCategoryIds = new ArrayList<>();
+            getListChild(category, childCategoryIds);
+            if (childCategoryIds.contains(parentCategory.getCategoryId())) {
+                throw new APIException("Cannot set a child category as its own parent");
+            }
             category.setParent(parentCategory);
         } else {
             category.setParent(null);

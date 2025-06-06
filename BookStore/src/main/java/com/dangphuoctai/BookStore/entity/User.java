@@ -22,7 +22,6 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -43,12 +42,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Size(min = 5, max = 50, message = "Full Name must be between 5 and 50 characters long")
+    @Size(min = 5, max = 50, message = "Họ tên phải từ 5 đến 50 ký tự")
     private String fullName;
 
     @Column(unique = true)
-    @Size(min = 10, max = 10, message = "Mobile Number must be exactly 10 digits long")
-    @Pattern(regexp = "^\\d{10}$", message = "Mobile Number must contain only Numbers")
+    @Pattern(regexp = "^\\d{10}$", message = "Số điện thoại phải gồm đúng 10 chữ số")
     private String mobileNumber;
 
     @Column(unique = true)
@@ -59,11 +57,11 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER)
+    @ManyToMany(cascade = { CascadeType.MERGE }, fetch = FetchType.EAGER)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
-    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @ManyToOne
     @JoinColumn(name = "address_id")
     private Address address;
 
@@ -85,7 +83,7 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @OneToMany(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, orphanRemoval = true)
     private List<RefreshToken> refreshTokens;
 
     @PrePersist

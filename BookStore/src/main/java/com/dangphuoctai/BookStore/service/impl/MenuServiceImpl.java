@@ -2,6 +2,7 @@ package com.dangphuoctai.BookStore.service.impl;
 
 import java.sql.Time;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import com.dangphuoctai.BookStore.entity.Category;
 import com.dangphuoctai.BookStore.entity.Menu;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
@@ -149,6 +151,17 @@ public class MenuServiceImpl implements MenuService {
         return modelMapper.map(menu, ChildMenuDTO.class);
     }
 
+    private void getListChild(Menu parentMenu, List<Long> childMenuIds) {
+        if (parentMenu == null || parentMenu.getChildrens() == null) {
+            return;
+        }
+        for (Menu childMenu : parentMenu.getChildrens()) {
+            childMenuIds.add(childMenu.getMenuId());
+            getListChild(childMenu, childMenuIds);
+        }
+
+    }
+
     @Override
     public MenuDTO updateMenu(ChildMenuDTO menuDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -169,6 +182,11 @@ public class MenuServiceImpl implements MenuService {
             Menu parentMenu = menuRepo.findById(menuDTO.getParent().getMenuId())
                     .orElseThrow(() -> new ResourceNotFoundException("Menu", "menuId",
                             menuDTO.getParent().getMenuId()));
+            List<Long> childMenuIds = new ArrayList<>();
+            getListChild(menu, childMenuIds);
+            if (childMenuIds.contains(parentMenu.getMenuId())) {
+                throw new APIException("Menu cannot be a child of its own child");
+            }
             menu.setParent(parentMenu);
         } else {
             menu.setParent(null);
