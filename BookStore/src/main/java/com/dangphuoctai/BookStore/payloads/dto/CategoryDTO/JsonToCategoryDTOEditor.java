@@ -17,10 +17,10 @@ public class JsonToCategoryDTOEditor extends PropertyEditorSupport {
     @Override
     public void setAsText(String text) {
         try {
-            CategoryDTO dto = objectMapper.readValue(text, CategoryDTO.class);
+            ChildCategoryDTO dto = objectMapper.readValue(text, ChildCategoryDTO.class);
             setValue(dto);
         } catch (IOException e) {
-            throw new APIException("Không thể chuyển JSON sang CategoryDTO" + e);
+            throw new APIException("Không thể chuyển JSON sang ChildCategoryDTO" + e);
         }
     }
 }

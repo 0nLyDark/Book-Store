@@ -36,39 +36,39 @@ public class CartController {
     }
 
     @PostMapping("/public/carts")
-    public ResponseEntity<CartDTO> addProductToCart(@RequestBody CartRequestDTO cart) {
-        CartDTO cartDTO = cartService.addProductToCart(cart.getUserId(), cart.getProductId(), cart.getQuantity());
+    public ResponseEntity<String> addProductToCart(@RequestBody CartRequestDTO cart) {
+        String message = cartService.addProductToCart(cart.getUserId(), cart.getProductId(), cart.getQuantity());
 
-        return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.CREATED);
+        return new ResponseEntity<String>(message, HttpStatus.CREATED);
     }
 
     @PutMapping("/public/carts")
-    public ResponseEntity<CartDTO> updateCart(@RequestBody CartRequestDTO cart) {
-        CartDTO cartDTO = cartService.updateCartQuantityProduct(cart.getUserId(), cart.getProductId(),
+    public ResponseEntity<String> updateCart(@RequestBody CartRequestDTO cart) {
+        String message = cartService.updateCartQuantityProduct(cart.getUserId(), cart.getProductId(),
                 cart.getQuantity());
 
-        return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.OK);
+        return new ResponseEntity<String>(message, HttpStatus.OK);
     }
 
     @DeleteMapping("/public/carts/user/{userId}/product")
-    public ResponseEntity<CartDTO> deleteProductFromCart(@PathVariable Long userId, @RequestBody Long productId) {
-        CartDTO cartDTO = cartService.deleteProductFromCart(userId, productId);
+    public ResponseEntity<String> deleteProductFromCart(@PathVariable Long userId, @RequestBody Long productId) {
+        String message = cartService.deleteProductFromCart(userId, productId);
 
-        return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.OK);
+        return new ResponseEntity<String>(message, HttpStatus.OK);
     }
 
     @DeleteMapping("/public/carts/user/{userId}/products")
-    public ResponseEntity<CartDTO> deleteProductFromCart(@PathVariable Long userId,
+    public ResponseEntity<String> deleteProductFromCart(@PathVariable Long userId,
             @RequestBody List<Long> productIds) {
-        CartDTO cartDTO = cartService.deleteProductFromCartAll(userId, productIds);
+        String message = cartService.deleteProductFromCartAll(userId, productIds);
 
-        return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.OK);
+        return new ResponseEntity<String>(message, HttpStatus.OK);
     }
 
     @DeleteMapping("/public/carts/user/{userId}")
     public ResponseEntity<String> deleteCart(@PathVariable Long userId) {
-        String result = cartService.clearCart(userId);
+        String message = cartService.clearCart(userId);
 
-        return new ResponseEntity<String>(result, HttpStatus.OK);
+        return new ResponseEntity<String>(message, HttpStatus.OK);
     }
 }

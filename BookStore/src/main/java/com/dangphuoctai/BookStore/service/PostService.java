@@ -1,6 +1,7 @@
 package com.dangphuoctai.BookStore.service;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,6 +13,8 @@ public interface PostService {
     PostDTO getPostById(Long postId);
 
     PostDTO getPostBySlug(String slug);
+
+    List<PostDTO> getManyPostById(List<Long> postIds);
 
     PostResponse getAllPost(Boolean status, PostType type, Long topicId, Integer pageNumber, Integer pageSize,
             String sortBy,

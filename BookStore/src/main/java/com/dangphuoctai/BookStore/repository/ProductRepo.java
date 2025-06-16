@@ -13,11 +13,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.dangphuoctai.BookStore.entity.Product;
+import com.dangphuoctai.BookStore.payloads.Stock.ProductStock;
 
 import jakarta.persistence.LockModeType;
 
 @Repository
-public interface ProductRepo extends JpaRepository<Product, Long> {
+public interface ProductRepo extends JpaRepository<Product, Long>, ProductRepositoryCustom {
 
     Optional<Product> findBySlug(String slug);
 
@@ -34,4 +35,34 @@ public interface ProductRepo extends JpaRepository<Product, Long> {
     List<Object[]> countActiveProductsByCategoryIds(@Param("categoryIds") List<Long> categoryIds);
 
     long countByStatus(boolean b);
+
+    @Query(value = """
+                SELECT
+                    p.product_id,
+                    p.product_name,
+                    COALESCE(SUM(oi.quantity), 0) AS total_quantity_sold,
+                    COALESCE(SUM(oi.quantity * oi.price), 0) AS total_revenue,
+                    COALESCE(SUM(iri.quantity), 0) AS total_quantity_imported,
+                    COALESCE(SUM(iri.quantity * iri.price), 0) AS total_cost
+                FROM product p
+                LEFT JOIN order_item oi ON p.product_id = oi.product_id
+                LEFT JOIN import_receipt_item iri ON p.product_id = iri.product_id
+                GROUP BY p.product_id, p.product_name
+            """, nativeQuery = true)
+    List<Object[]> getProductProfitRaw();
+
+    @Query("""
+                SELECT new com.dangphuoctai.BookStore.payloads.Stock.ProductStock(p.productId, p.quantity)
+                FROM Product p
+                WHERE p.quantity > 0
+            """)
+    List<ProductStock> getProductStocks();
+
+    @Query(value = """
+                SELECT COUNT(*)
+                FROM products
+                WHERE quantity <= :qtyWarning
+                  AND status = :status
+            """, nativeQuery = true)
+    Long countProductWarning(int qtyWarning, boolean status);
 }

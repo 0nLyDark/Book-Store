@@ -30,7 +30,7 @@ public class Payment {
     @OneToOne(mappedBy = "payment", cascade = { CascadeType.ALL })
     private Order order;
 
-    @NotNull(message = "Payment method is required")
+    @NotNull(message = "Phương thức thanh toán là bắt buộc")
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 

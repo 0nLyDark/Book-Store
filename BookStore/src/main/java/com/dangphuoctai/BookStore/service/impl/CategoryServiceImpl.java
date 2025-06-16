@@ -247,20 +247,20 @@ public class CategoryServiceImpl implements CategoryService {
         Long userId = jwt.getClaim("userId");
         Category category = categoryRepo.findById(categoryDTO.getCategoryId())
                 .orElseThrow(
-                        () -> new ResourceNotFoundException("Category", "categoryId", categoryDTO.getCategoryId()));
+                        () -> new ResourceNotFoundException("Danh mục", "categoryId", categoryDTO.getCategoryId()));
         category.setCategoryName(categoryDTO.getCategoryName());
         category.setSlug(CreateSlug.toSlug(categoryDTO.getCategoryName()));
         if (categoryDTO.getParent() != null && categoryDTO.getParent().getCategoryId() != null) {
             if (categoryDTO.getCategoryId() == categoryDTO.getParent().getCategoryId()) {
-                throw new APIException("Category cannot be its own parent");
+                throw new APIException("Danh mục không thể là cha của chính nó");
             }
             Category parentCategory = categoryRepo.findById(categoryDTO.getParent().getCategoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId",
+                    .orElseThrow(() -> new ResourceNotFoundException("Danh mục", "categoryId",
                             categoryDTO.getParent().getCategoryId()));
             List<Long> childCategoryIds = new ArrayList<>();
             getListChild(category, childCategoryIds);
             if (childCategoryIds.contains(parentCategory.getCategoryId())) {
-                throw new APIException("Cannot set a child category as its own parent");
+                throw new APIException("Không thể đặt danh mục con làm cha của chính nó");
             }
             category.setParent(parentCategory);
         } else {

@@ -14,7 +14,8 @@ public interface AuthorService {
 
     List<AuthorDTO> getManyAuthorById(List<Long> authorIds);
 
-    AuthorResponse getAllAuthors(Boolean status,Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    AuthorResponse getAllAuthors(String keyword, Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+            String sortOrder);
 
     AuthorDTO createAuthor(AuthorDTO AuthorDTO, MultipartFile image) throws IOException;
 

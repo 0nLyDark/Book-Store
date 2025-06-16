@@ -1,5 +1,6 @@
 package com.dangphuoctai.BookStore.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,13 +40,13 @@ public class CartServiceImpl implements CartService {
     private static final String CART_CACHE_KEY = "cart";
 
     @Override
-    public CartDTO addProductToCart(Long userId, Long productId, Integer quantity) {
+    public String addProductToCart(Long userId, Long productId, Integer quantity) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long id = jwt.getClaim("userId");
         String key = CART_CACHE_KEY + ":user:" + userId;
         if (id != userId) {
-            throw new APIException("You are not authorized to add product to this cart");
+            throw new APIException("Bạn không có quyền thêm sản phẩm vào giỏ hàng này");
         }
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
@@ -54,40 +55,37 @@ public class CartServiceImpl implements CartService {
             quantity += quantityInCart;
         }
         if (product.getQuantity() < quantity) {
-            throw new APIException("Product quantity is not sufficient to add to the cart");
+            throw new APIException("Số lượng sản phẩm không đủ để thêm vào giỏ hàng");
         }
         // Save cart to redis
         cartRedisService.hashSet(key, productId, quantity);
         cartRedisService.setTimeToLive(key, 30, TimeUnit.DAYS);
-        CartDTO cartDTO = mapToCartDTO(key);
 
-        return cartDTO;
+        return "Thêm sản phẩm vào giỏ hàng thành công";
     }
 
     @Override
-    public CartDTO updateCartQuantityProduct(Long userId, Long productId, Integer quantity) {
+    public String updateCartQuantityProduct(Long userId, Long productId, Integer quantity) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long id = jwt.getClaim("userId");
         String key = CART_CACHE_KEY + ":user:" + userId;
         if (id != userId) {
-            throw new APIException("You are not authorized to add product to this cart");
+            throw new APIException("Bạn không có quyền cập nhật sản phẩm trong giỏ hàng này");
         }
         if (quantity <= 0) {
-            throw new APIException("Quantity must be greater than 0");
+            throw new APIException("Số lượng phải lớn hơn 0");
         }
         Product product = productRepo.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm", "id", productId));
         if (product.getQuantity() < quantity) {
-            throw new APIException("Product quantity is not sufficient to add to the cart");
+            throw new APIException("Số lượng sản phẩm không đủ để cập nhật trong giỏ hàng");
         }
         // Update cart in redis
         cartRedisService.hashSet(key, productId, quantity);
         cartRedisService.setTimeToLive(key, 30, TimeUnit.DAYS);
 
-        CartDTO cartDTO = mapToCartDTO(key);
-
-        return cartDTO;
+        return "Cập nhật số lượng thành công";
     }
 
     @Override
@@ -99,7 +97,7 @@ public class CartServiceImpl implements CartService {
         boolean isAdmin = role.contains("ADMIN");
         String key = CART_CACHE_KEY + ":user:" + userId;
         if (id != userId && !isAdmin) {
-            throw new APIException("You are not authorized to add product to this cart");
+            throw new APIException("Bạn không có quyền truy cập giỏ hàng này");
         }
 
         CartDTO cartDTO = mapToCartDTO(key);
@@ -108,7 +106,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartDTO deleteProductFromCart(Long userId, Long productId) {
+    public String deleteProductFromCart(Long userId, Long productId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long id = jwt.getClaim("userId");
@@ -116,17 +114,16 @@ public class CartServiceImpl implements CartService {
         boolean isAdmin = role.contains("ADMIN");
         String key = CART_CACHE_KEY + ":user:" + userId;
         if (id != userId && !isAdmin) {
-            throw new APIException("You are not authorized to add product to this cart");
+            throw new APIException("Bạn không có quyền xóa sản phẩm khỏi giỏ hàng này");
         }
         cartRedisService.delete(key, productId);
         cartRedisService.setTimeToLive(key, 30, TimeUnit.DAYS);
-        CartDTO cartDTO = mapToCartDTO(key);
 
-        return cartDTO;
+        return "Xóa sản phẩm theo khỏi giỏ hàng thành công";
     }
 
     @Override
-    public CartDTO deleteProductFromCartAll(Long userId, List<Long> productIds) {
+    public String deleteProductFromCartAll(Long userId, List<Long> productIds) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long id = jwt.getClaim("userId");
@@ -134,13 +131,12 @@ public class CartServiceImpl implements CartService {
         boolean isAdmin = role.contains("ADMIN");
         String key = CART_CACHE_KEY + ":user:" + userId;
         if (id != userId && !isAdmin) {
-            throw new APIException("You are not authorized to add product to this cart");
+            throw new APIException("Bạn không có quyền xóa sản phẩm khỏi giỏ hàng này");
         }
         cartRedisService.delete(key, productIds);
         cartRedisService.setTimeToLive(key, 30, TimeUnit.DAYS);
-        CartDTO cartDTO = mapToCartDTO(key);
 
-        return cartDTO;
+        return "Xóa sản phẩm theo khỏi giỏ hàng thành công";
     }
 
     @Override
@@ -152,35 +148,39 @@ public class CartServiceImpl implements CartService {
         boolean isAdmin = role.contains("ADMIN");
         String key = CART_CACHE_KEY + ":user:" + userId;
         if (id != userId && !isAdmin) {
-            throw new APIException("You are not authorized to add product to this cart");
+            throw new APIException("Bạn không có quyền xóa giỏ hàng này");
         }
         cartRedisService.delete(key);
 
-        return "Clear Cart successfully";
+        return "Xóa toàn bộ giỏ hàng thành công";
     }
 
     private CartDTO mapToCartDTO(String key) {
         CartDTO cartDTO = new CartDTO();
         Map<Long, Integer> cartItems = cartRedisService.getField(key);
         List<CartItemDTO> cartItemList = cartItems.entrySet().stream()
-                .map(entry -> {
+                .map((Map.Entry<Long, Integer> entry) -> {
                     Long productIdKey = ((Number) entry.getKey()).longValue();
                     Integer quantityValue = entry.getValue();
-                    Product productItem = productRepo.findById(productIdKey)
-                            .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productIdKey));
-                    ProductDTO productDTO = modelMapper.map(productItem, ProductDTO.class);
+                    Product product = productRepo.findById(productIdKey).orElse(null);
+                    if (product == null) {
+                        cartRedisService.delete(key, productIdKey);
+                        return null;
+                    }
+                    ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
                     CartItemDTO cartItem = new CartItemDTO();
                     cartItem.setProduct(productDTO);
                     cartItem.setQuantity(quantityValue);
+                    // Optionally, you can set more product info to cartItem if needed
                     return cartItem;
-                }).collect(Collectors.toList());
-        Double totalPrice = cartItemList.stream()
-                .mapToDouble(item -> {
-                    ProductDTO productItem = item.getProduct();
-                    return productItem.getPrice() * item.getQuantity() * (100 - productItem.getDiscount()) / 100;
-                }).sum();
+                }).filter(item -> item != null).collect(Collectors.toList());
+        Double total = cartItemList.stream().mapToDouble(item -> {
+            ProductDTO productDTO = item.getProduct();
+            return item.getQuantity() * productDTO.getPrice() * (100 - productDTO.getDiscount()) / 100;
+        }).sum();
+
         cartDTO.setCartItems(cartItemList);
-        cartDTO.setTotalPrice(totalPrice);
+        cartDTO.setTotalPrice(total);
 
         return cartDTO;
     }

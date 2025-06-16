@@ -1,19 +1,16 @@
 package com.dangphuoctai.BookStore.service.impl;
 
 import org.springframework.data.redis.core.RedisTemplate;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.stereotype.Service;
 
 import com.dangphuoctai.BookStore.service.BaseRedisService;
 
-import lombok.RequiredArgsConstructor;
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

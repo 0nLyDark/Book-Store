@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -22,7 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.entity.Author;
+import com.dangphuoctai.BookStore.entity.Category;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
+import com.dangphuoctai.BookStore.payloads.Specification.AuthorSpecification;
+import com.dangphuoctai.BookStore.payloads.Specification.CategorySpecification;
 import com.dangphuoctai.BookStore.payloads.dto.AuthorDTO;
 import com.dangphuoctai.BookStore.payloads.response.AuthorResponse;
 import com.dangphuoctai.BookStore.repository.AuthorRepo;
@@ -84,9 +88,10 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public AuthorResponse getAllAuthors(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+    public AuthorResponse getAllAuthors(String keyword, Boolean status, Integer pageNumber, Integer pageSize,
+            String sortBy,
             String sortOrder) {
-        String field = String.format("status:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
+        String field = String.format("keyword:%s|status:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s", keyword,
                 status, pageNumber, pageSize, sortBy, sortOrder);
         AuthorResponse cached = (AuthorResponse) authorResponseRedisService.hashGet(AUTHOR_PAGE_CACHE_KEY, field);
         if (cached != null) {
@@ -95,12 +100,9 @@ public class AuthorServiceImpl implements AuthorService {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-        Page<Author> pageAuthors;
-        if (status == null) {
-            pageAuthors = authorRepo.findAll(pageDetails);
-        } else {
-            pageAuthors = authorRepo.findAllByStatus(status, pageDetails);
-        }
+        Specification<Author> authorSpecification = AuthorSpecification.filter(keyword, status);
+
+        Page<Author> pageAuthors = authorRepo.findAll(authorSpecification, pageDetails);
 
         List<AuthorDTO> authorDTOs = pageAuthors.getContent().stream()
                 .map(author -> modelMapper.map(author, AuthorDTO.class))
@@ -192,6 +194,6 @@ public class AuthorServiceImpl implements AuthorService {
         authorRedisService.delete(AUTHOR_CACHE_KEY, field);
         authorResponseRedisService.delete(AUTHOR_PAGE_CACHE_KEY);
 
-        return "Author with ID: " + authorId + " deleted successfully";
+        return "Tác giả với ID: " + authorId + " đã được xóa thành công";
     }
 }

@@ -155,7 +155,7 @@ public class BannerServiceImpl implements BannerService {
         // Save cache banner to redis
         bannerResponseRedisService.delete(BANNER_PAGE_CACHE_KEY);
 
-        return "Banner with ID: " + bannerId + " deleted successfully";
+        return "Xóa banner với ID: " + bannerId + " thành công";
     }
 
 }

@@ -10,7 +10,7 @@ public interface LanguageService {
 
     List<LanguageDTO> getManyLanguageById(List<Long> languageIds);
 
-    LanguageResponse getAllLanguages(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+    LanguageResponse getAllLanguages(String keyword,Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
             String sortOrder);
 
     LanguageDTO createLanguage(LanguageDTO languageDTO);

@@ -83,6 +83,18 @@ public class PostServiceImpl implements PostService {
         }
 
         @Override
+        public List<PostDTO> getManyPostById(List<Long> postIds) {
+                List<Post> posts = postRepo.findAllById(postIds);
+                if (posts.size() != postIds.size()) {
+                        throw new ResourceNotFoundException("Post", "postId", postIds);
+                }
+                List<PostDTO> postDTOs = posts.stream()
+                                .map(post -> modelMapper.map(post, PostDTO.class))
+                                .collect(Collectors.toList());
+                return postDTOs;
+        }
+
+        @Override
         public PostDTO getPostBySlug(String slug) {
                 String field = "slug:" + slug;
                 PostDTO cached = (PostDTO) postRedisService.hashGet(POST_CACHE_KEY, field);
@@ -143,14 +155,18 @@ public class PostServiceImpl implements PostService {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 Jwt jwt = (Jwt) authentication.getPrincipal();
                 Long userId = jwt.getClaim("userId");
-                // Check if the topic exists
-                if (postDTO.getTopic() == null || postDTO.getTopic().getTopicId() == null) {
-                        throw new APIException(" Topic ID is required to create a post.");
-                }
-                Topic topic = topicRepo.findById(postDTO.getTopic().getTopicId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Topic", "topicId",
-                                                postDTO.getTopic().getTopicId()));
                 Post post = new Post();
+                // Check if the topic exists
+                if (PostType.POST.equals(postDTO.getType())) {
+                        if (postDTO.getTopic() == null || postDTO.getTopic().getTopicId() == null) {
+                                throw new APIException("Cần chọn chủ đề để tạo bài viết.");
+                        }
+                        Topic topic = topicRepo.findById(postDTO.getTopic().getTopicId())
+                                        .orElseThrow(() -> new ResourceNotFoundException("Topic", "topicId",
+                                                        postDTO.getTopic().getTopicId()));
+                        post.setTopic(topic);
+                }
+
                 post.setTitle(postDTO.getTitle());
                 post.setSlug(CreateSlug.toSlug(postDTO.getTitle()));
                 if (image != null) {
@@ -160,7 +176,6 @@ public class PostServiceImpl implements PostService {
                 post.setContent(postDTO.getContent());
                 post.setType(postDTO.getType());
                 post.setStatus(false);
-                post.setTopic(topic);
                 post.setCreatedBy(userId);
                 post.setUpdatedBy(userId);
                 post.setCreatedAt(LocalDateTime.now());
@@ -183,12 +198,16 @@ public class PostServiceImpl implements PostService {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 Jwt jwt = (Jwt) authentication.getPrincipal();
                 Long userId = jwt.getClaim("userId");
-                Topic topic = topicRepo.findById(postDTO.getTopic().getTopicId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Topic", "topicId",
-                                                postDTO.getTopic().getTopicId()));
                 Post post = postRepo.findById(postDTO.getPostId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Post", "postId",
                                                 postDTO.getPostId()));
+                if (PostType.POST.equals(postDTO.getType())) {
+                        Topic topic = topicRepo.findById(postDTO.getTopic().getTopicId())
+                                        .orElseThrow(() -> new ResourceNotFoundException("Topic", "topicId",
+                                                        postDTO.getTopic().getTopicId()));
+                        post.setTopic(topic);
+                }
+
                 post.setTitle(postDTO.getTitle());
                 post.setSlug(CreateSlug.toSlug(postDTO.getTitle()));
                 if (image != null) {
@@ -198,7 +217,6 @@ public class PostServiceImpl implements PostService {
                 post.setContent(postDTO.getContent());
                 post.setType(postDTO.getType());
                 post.setStatus(postDTO.getStatus());
-                post.setTopic(topic);
                 post.setUpdatedBy(userId);
                 post.setUpdatedAt(LocalDateTime.now());
                 postRepo.save(post);
@@ -227,6 +245,6 @@ public class PostServiceImpl implements PostService {
                 postRedisService.delete(POST_CACHE_KEY, fieldSlug);
                 postResponseRedisService.delete(POST_PAGE_CACHE_KEY);
 
-                return "Post with ID: " + postId + " deleted successfully";
+                return "Xóa bài viết với ID: " + postId + " thành công";
         }
 }

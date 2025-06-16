@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -42,7 +43,7 @@ public class Review {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToMany(mappedBy = "review", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "review", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<File> images = new ArrayList<>();
 
     @Min(1)
@@ -52,9 +53,12 @@ public class Review {
 
     private String comment;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "order_item_id")
     private OrderItem orderItem;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updateAt;
+
 }

@@ -39,9 +39,9 @@ public class Post {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'POST'")
-    private PostType type = PostType.POST;
+    private PostType type;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean status;

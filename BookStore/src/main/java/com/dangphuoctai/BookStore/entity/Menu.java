@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.dangphuoctai.BookStore.enums.MenuPosition;
+import com.dangphuoctai.BookStore.enums.MenuType;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -32,14 +33,18 @@ public class Menu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long menuId;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
     private String link;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'MAINMENU'")
+    @Column(nullable = false)
+    private MenuType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private MenuPosition position;
 
     @Column(nullable = false, columnDefinition = "INT DEFAULT 0")

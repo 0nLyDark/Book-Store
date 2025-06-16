@@ -205,7 +205,7 @@ public class UserServiceImpl implements UserService {
 
         userRepo.save(user);
 
-        return "Password changed successfully";
+        return "Thay đổi mật khẩu thành công";
     }
 
     @Override
@@ -221,7 +221,7 @@ public class UserServiceImpl implements UserService {
         }
         userRepo.save(user);
 
-        return "Account status updated successfully";
+        return "Cập nhật trạng thái tài khoản thành công";
     }
 
     @Override
@@ -236,7 +236,7 @@ public class UserServiceImpl implements UserService {
 
         userRepo.save(user);
 
-        return "Password reset successfully";
+        return "Đặt lại mật khẩu thành công";
     }
 
     // Hàm chuyển đổi AddressDTO -> Address

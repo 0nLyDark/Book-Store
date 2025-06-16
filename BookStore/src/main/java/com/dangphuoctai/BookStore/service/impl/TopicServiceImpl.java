@@ -130,6 +130,6 @@ public class TopicServiceImpl implements TopicService {
                 .orElseThrow(() -> new ResourceNotFoundException("Topic", "topicId", topicId));
         topicRepo.delete(topic);
 
-        return "Topic with ID: " + topicId + " deleted successfully";
+        return "Chủ đề với ID: " + topicId + " đã được xóa thành công";
     }
 }

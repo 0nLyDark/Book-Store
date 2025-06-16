@@ -39,7 +39,7 @@ public class CategoryController {
 
     @InitBinder
     public void initBinder(WebDataBinder binder) {
-        binder.registerCustomEditor(CategoryDTO.class, new JsonToCategoryDTOEditor());
+        binder.registerCustomEditor(ChildCategoryDTO.class, new JsonToCategoryDTOEditor());
     }
 
     @GetMapping("/public/categories/{categoryId}")

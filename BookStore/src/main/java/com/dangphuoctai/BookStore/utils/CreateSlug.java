@@ -22,4 +22,14 @@ public class CreateSlug {
 
         return slug;
     }
+
+    public static String removeAccents(String input) {
+        if (input == null)
+            return null;
+        String lower = input.toLowerCase();
+
+        String normalized = Normalizer.normalize(lower, Normalizer.Form.NFD);
+
+        return normalized.replaceAll("\\p{M}", "").replaceAll("đ", "d").replaceAll("Đ", "D");
+    }
 }

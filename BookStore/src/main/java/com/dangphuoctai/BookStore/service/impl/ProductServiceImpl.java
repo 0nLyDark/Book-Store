@@ -25,10 +25,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.entity.Category;
 import com.dangphuoctai.BookStore.entity.File;
+import com.dangphuoctai.BookStore.entity.OrderItem;
 import com.dangphuoctai.BookStore.entity.Product;
 import com.dangphuoctai.BookStore.entity.Publisher;
 import com.dangphuoctai.BookStore.entity.Supplier;
 import com.dangphuoctai.BookStore.enums.FileType;
+import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
 import com.dangphuoctai.BookStore.payloads.Specification.ProductSpecification;
 import com.dangphuoctai.BookStore.payloads.dto.ProductDTO;
@@ -37,6 +39,7 @@ import com.dangphuoctai.BookStore.repository.AuthorRepo;
 import com.dangphuoctai.BookStore.repository.CategoryRepo;
 import com.dangphuoctai.BookStore.repository.FileRepo;
 import com.dangphuoctai.BookStore.repository.LanguageRepo;
+import com.dangphuoctai.BookStore.repository.OrderItemRepo;
 import com.dangphuoctai.BookStore.repository.ProductRepo;
 import com.dangphuoctai.BookStore.repository.PublisherRepo;
 import com.dangphuoctai.BookStore.repository.SupplierRepo;
@@ -77,6 +80,9 @@ public class ProductServiceImpl implements ProductService {
         private PublisherRepo publisherRepo;
 
         @Autowired
+        private OrderItemRepo orderItemRepo;
+
+        @Autowired
         private ModelMapper modelMapper;
 
         @Autowired
@@ -97,17 +103,19 @@ public class ProductServiceImpl implements ProductService {
         @Override
         public ProductDTO getProductById(Long productId) {
                 // Check in Redis cache
-                String field = "id:" + productId;
-                ProductDTO cached = (ProductDTO) productRedisService.hashGet(PRODUCT_CACHE_KEY, field);
-                if (cached != null) {
-                        return cached;
-                }
+                // String field = "id:" + productId;
+                // ProductDTO cached = (ProductDTO)
+                // productRedisService.hashGet(PRODUCT_CACHE_KEY, field);
+                // if (cached != null) {
+                // return cached;
+                // }
                 Product product = productRepo.findById(productId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
                 ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
                 // Save cache product to redis
-                productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productDTO);
-                productRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30, TimeUnit.MINUTES);
+                // productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productDTO);
+                // productRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30,
+                // TimeUnit.MINUTES);
 
                 return productDTO;
         }
@@ -115,18 +123,20 @@ public class ProductServiceImpl implements ProductService {
         @Override
         public ProductDTO getProductBySlug(String slug) {
                 // Check in Redis cache
-                String field = "slug:" + slug;
-                ProductDTO cached = (ProductDTO) productRedisService.hashGet(PRODUCT_CACHE_KEY, field);
-                if (cached != null) {
-                        return cached;
-                }
+                // String field = "slug:" + slug;
+                // ProductDTO cached = (ProductDTO)
+                // productRedisService.hashGet(PRODUCT_CACHE_KEY, field);
+                // if (cached != null) {
+                // return cached;
+                // }
                 Product product = productRepo.findBySlug(slug)
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "slug", slug));
 
                 ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
                 // Save cache product to redis
-                productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productDTO);
-                productRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30, TimeUnit.MINUTES);
+                // productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productDTO);
+                // productRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30,
+                // TimeUnit.MINUTES);
 
                 return productDTO;
         }
@@ -176,11 +186,19 @@ public class ProductServiceImpl implements ProductService {
                                                         categoryId));
                         getListCategoryIds(category, categoryIds);
                 }
-                Specification<Product> productSpecification = ProductSpecification.filter(keyword, isbn,
+                Specification<Product> productSpecification = ProductSpecification.filter(isbn,
                                 minPrice, maxPrice, isSale, status, categoryIds, null,
                                 authorIds, languageIds, supplierIds, publisherIds);
 
-                Page<Product> pageProducts = productRepo.findAll(productSpecification, pageDetails);
+                Page<Product> pageProducts;
+                if (keyword == null || keyword.trim().isEmpty()) {
+                        pageProducts = productRepo.findAll(productSpecification, pageDetails);
+                } else {
+                        pageProducts = productRepo.fullTextSearchWithFilters(keyword,
+                                        productSpecification,
+                                        pageDetails);
+                }
+
                 List<ProductDTO> productDTOs = pageProducts.getContent().stream()
                                 .map(product -> modelMapper.map(product, ProductDTO.class))
                                 .collect(Collectors.toList());
@@ -209,13 +227,14 @@ public class ProductServiceImpl implements ProductService {
                 Long userId = jwt.getClaim("userId");
                 Product product = new Product();
                 product.setProductName(productDTO.getProductName());
+                product.setSearchText(CreateSlug.removeAccents(productDTO.getProductName()));
                 product.setSlug(CreateSlug.toSlug(productDTO.getProductName()));
                 product.setIsbn(productDTO.getIsbn());
                 product.setWeight(productDTO.getWeight());
                 product.setSize(productDTO.getSize());
                 product.setFormat(productDTO.getFormat());
                 product.setYear(productDTO.getYear());
-                product.setQuantity(productDTO.getQuantity());
+                product.setQuantity(0);
                 product.setPrice(productDTO.getPrice());
                 product.setDiscount(productDTO.getDiscount());
                 product.setPageNumber(productDTO.getPageNumber());
@@ -255,11 +274,12 @@ public class ProductServiceImpl implements ProductService {
                 productRepo.save(product);
                 ProductDTO productRes = modelMapper.map(product, ProductDTO.class);
                 // Save cache product to redis
-                String field = "id:" + productRes.getProductId();
-                String fieldSlug = "slug:" + productRes.getSlug();
-                productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productRes);
-                productRedisService.hashSet(PRODUCT_CACHE_KEY, fieldSlug, productRes);
-                productResponseRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30, TimeUnit.MINUTES);
+                // String field = "id:" + productRes.getProductId();
+                // String fieldSlug = "slug:" + productRes.getSlug();
+                // productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productRes);
+                // productRedisService.hashSet(PRODUCT_CACHE_KEY, fieldSlug, productRes);
+                // productResponseRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30,
+                // TimeUnit.MINUTES);
                 productResponseRedisService.delete(PRODUCT_PAGE_CACHE_KEY);
 
                 return modelMapper.map(product, ProductDTO.class);
@@ -276,14 +296,23 @@ public class ProductServiceImpl implements ProductService {
                 Product product = productRepo.findById(productDTO.getProductId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "productId",
                                                 productDTO.getProductId()));
+                // Only update ISBN if product is not in any OrderItem
+                if (!product.getIsbn().equals(productDTO.getIsbn())) {
+                        boolean hasOrderItem = orderItemRepo.existsByProduct_ProductId(product.getProductId());
+                        if (hasOrderItem) {
+                                throw new APIException(
+                                                "Sản phẩm không thể thay đổi mã ISBN vì đã tồn tại trong đơn hàng.");
+                        }
+                        product.setIsbn(productDTO.getIsbn());
+                }
+
                 product.setProductName(productDTO.getProductName());
-                product.setSlug(productDTO.getSlug());
-                product.setIsbn(productDTO.getIsbn());
+                product.setSearchText(CreateSlug.removeAccents(productDTO.getProductName()));
+                product.setSlug(CreateSlug.toSlug(productDTO.getProductName()));
                 product.setWeight(productDTO.getWeight());
                 product.setSize(productDTO.getSize());
                 product.setFormat(productDTO.getFormat());
                 product.setYear(productDTO.getYear());
-                product.setQuantity(productDTO.getQuantity());
                 product.setPrice(productDTO.getPrice());
                 product.setDiscount(productDTO.getDiscount());
                 product.setPageNumber(productDTO.getPageNumber());
@@ -326,11 +355,12 @@ public class ProductServiceImpl implements ProductService {
                 productRepo.save(product);
                 ProductDTO productRes = modelMapper.map(product, ProductDTO.class);
                 // Save cache product to redis
-                String field = "id:" + productRes.getProductId();
-                String fieldSlug = "slug:" + productRes.getSlug();
-                productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productRes);
-                productRedisService.hashSet(PRODUCT_CACHE_KEY, fieldSlug, productRes);
-                productResponseRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30, TimeUnit.MINUTES);
+                // String field = "id:" + productRes.getProductId();
+                // String fieldSlug = "slug:" + productRes.getSlug();
+                // productRedisService.hashSet(PRODUCT_CACHE_KEY, field, productRes);
+                // productRedisService.hashSet(PRODUCT_CACHE_KEY, fieldSlug, productRes);
+                // productResponseRedisService.setTimeToLiveOnce(PRODUCT_CACHE_KEY, 30,
+                // TimeUnit.MINUTES);
                 productResponseRedisService.delete(PRODUCT_PAGE_CACHE_KEY);
 
                 return modelMapper.map(product, ProductDTO.class);
@@ -340,13 +370,18 @@ public class ProductServiceImpl implements ProductService {
                 Product product = productRepo.findById(productId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "productId",
                                                 productId));
-                String field = "id:" + product.getProductId();
-                String fieldSlug = "slug:" + product.getSlug();
-                productRepo.delete(product);
-                productRedisService.delete(PRODUCT_CACHE_KEY, List.of(field, fieldSlug));
+                // Only Delete if product is not in any OrderItem
+                boolean hasOrderItem = orderItemRepo.existsByProduct_ProductId(product.getProductId());
+                if (hasOrderItem) {
+                        throw new APIException("Sản phẩm không thể xóa vì đã tồn tại trong đơn hàng.");
+                }
+                // String field = "id:" + product.getProductId();
+                // String fieldSlug = "slug:" + product.getSlug();
+                // productRepo.delete(product);
+                // productRedisService.delete(PRODUCT_CACHE_KEY, List.of(field, fieldSlug));
                 productResponseRedisService.delete(PRODUCT_PAGE_CACHE_KEY);
 
-                return "Product with ID: " + productId + " deleted successfully";
+                return "Xóa sản phẩm với ID: " + productId + " thành công";
         }
 
 }

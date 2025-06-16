@@ -81,7 +81,7 @@ public class Promotion {
     private void validateSave() {
         if (valueType) {
             if (value > 100) {
-                throw new IllegalArgumentException("Value cannot be greater than 100 when valueType is %");
+                throw new IllegalArgumentException("Giá trị không được lớn hơn 100 khi kiểu giá trị là %");
             }
         }
     }

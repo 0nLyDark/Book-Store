@@ -78,17 +78,17 @@ public class AuthServiceImpl implements AuthService {
     public UserDTO registerUser(UserRegister userRegister) {
         try {
             if (Email.isValidEmail(userRegister.getUsername())) {
-                throw new APIException("Invalid username");
+                throw new APIException("Tên người dùng không hợp lệ");
             }
             if (userRegister.getPassword() == null || userRegister.getPassword().isBlank()) {
-                throw new APIException("Password is not Valid");
+                throw new APIException("Mật khẩu không hợp lệ");
             }
             Optional<User> userOptional = userRepo.findByEmail(userRegister.getEmail());
             User user = null;
             if (userOptional.isPresent()) {
                 user = userOptional.get();
                 if (user.getVerified()) {
-                    throw new APIException("User already exists and is verified");
+                    throw new APIException("Người dùng đã tồn tại và đã được xác thực");
                 }
             }
             String encodedPass = passwordEncoder.encode(userRegister.getPassword());
@@ -124,15 +124,15 @@ public class AuthServiceImpl implements AuthService {
 
             return modelMapper.map(registeredUser, UserDTO.class);
         } catch (Exception e) {
-            throw new APIException("User already exists with emailId: " +
-                    userRegister.getEmail() + " And " + e.getMessage());
+            throw new APIException("Người dùng đã tồn tại với email: " +
+                    userRegister.getEmail() + " và lỗi: " + e.getMessage());
         }
     }
 
     @Override
     public UserDTO loginUser(String username, String password) {
         if (password == null) {
-            throw new APIException("Password is not Valid");
+            throw new APIException("Mật khẩu không hợp lệ");
         }
         User user;
         if (Email.isValidEmail(username)) {
@@ -145,13 +145,13 @@ public class AuthServiceImpl implements AuthService {
 
         boolean authentication = passwordEncoder.matches(password, user.getPassword());
         if (!authentication) {
-            throw new APIException("Invalid password");
+            throw new APIException("Mật khẩu không đúng");
         }
         if (user.getEnabled() == false) {
-            throw new AccessDeniedException("Account has been locked");
+            throw new AccessDeniedException("Tài khoản đã bị khóa");
         }
         if (user.getVerified() == false) {
-            throw new AccessDeniedException("Account has not been verified");
+            throw new AccessDeniedException("Tài khoản chưa được xác thực");
         }
         return modelMapper.map(user, UserDTO.class);
     }
@@ -163,7 +163,7 @@ public class AuthServiceImpl implements AuthService {
         if (userOptional.isPresent()) {
             user = userOptional.get();
             if (!user.getEnabled()) {
-                throw new AccessDeniedException("Account has been locked");
+                throw new AccessDeniedException("Tài khoản đã bị khóa");
             }
             return modelMapper.map(user, UserDTO.class);
         }
@@ -195,7 +195,7 @@ public class AuthServiceImpl implements AuthService {
                         refreshtoken));
         Instant expiryDate = refreshToken.getExpiryDate();
         if (Instant.now().isAfter(expiryDate)) {
-            throw new BadCredentialsException("Refresh token has expired");
+            throw new BadCredentialsException("Refresh token đã hết hạn");
         }
 
         return modelMapper.map(refreshToken.getUser(), UserDTO.class);

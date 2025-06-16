@@ -137,7 +137,7 @@ public class SupplierServiceImpl implements SupplierService {
                 .orElseThrow(() -> new ResourceNotFoundException("Supplier", "supplierId", supplierId));
         supplierRepo.delete(supplier);
 
-        return "Supplier with ID: " + supplierId + " deleted successfully";
+        return "Nhà cung cấp với ID: " + supplierId + " đã được xóa thành công";
     }
 
 }

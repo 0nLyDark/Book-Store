@@ -15,7 +15,7 @@ public class ResourceNotFoundException extends RuntimeException {
     }
 
     public ResourceNotFoundException(String resourceName, String field, String fieldName) {
-        super("%s not found with %s: %s".formatted(resourceName, field, fieldName));
+        super("%s không tìm thấy với %s: %s".formatted(resourceName, field, fieldName));
         this.resourceName = resourceName;
         this.field = field;
         this.fieldName = fieldName;
@@ -23,14 +23,14 @@ public class ResourceNotFoundException extends RuntimeException {
     }
 
     public ResourceNotFoundException(String resourceName, String field, Long fieldId) {
-        super("%s not found with %s: %d".formatted(resourceName, field, fieldId));
+        super("%s không tìm thấy với %s: %d".formatted(resourceName, field, fieldId));
         this.resourceName = resourceName;
         this.field = field;
         this.fieldId = fieldId;
     }
 
     public ResourceNotFoundException(String resourceName, String field, List<Long> fieldList) {
-        super("%s not found with %s: %d".formatted(resourceName, field, fieldList));
+        super("%s không tìm thấy với %s: %d".formatted(resourceName, field, fieldList));
         this.resourceName = resourceName;
         this.field = field;
         this.fieldList = fieldList;

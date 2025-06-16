@@ -30,7 +30,7 @@ public class Topic {
 
     @NotNull
     @Column(nullable = false)
-    @Size(min = 3, message = "Topic name must contain atleast 3 characters")
+    @Size(min = 3, message = "Tên chủ đề phải có ít nhất 3 ký tự")
     private String topicName;
 
     @Column(nullable = false, unique = true)

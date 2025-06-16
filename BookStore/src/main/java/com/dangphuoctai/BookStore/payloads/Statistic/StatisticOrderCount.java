@@ -7,14 +7,18 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StatisticOrderCount {
+public class StatisticOrderCount extends StatisticOrder {
 
     private String date;
-    private Long completedCount;
-    private Long shippedCount;
-    private Long paidCount;
-    private Long pendingCount;
-    private Long cancelledCount;
-    private Long failedCount;
 
+    public StatisticOrderCount(
+            String date,
+            Long completedCount,
+            Long shippedCount,
+            Long paidCount,
+            Long cancelledCount,
+            Long failedCount) {
+        super(completedCount, shippedCount, paidCount, cancelledCount, failedCount);
+        this.date = date;
+    }
 }

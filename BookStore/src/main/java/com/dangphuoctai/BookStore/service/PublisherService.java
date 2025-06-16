@@ -13,7 +13,8 @@ public interface PublisherService {
 
     List<PublisherDTO> getManyPublisherById(List<Long> publisherIds);
 
-    PublisherResponse getAllPublisher(Boolean status, Integer pageNumber, Integer pageSize, String sortBy,
+    PublisherResponse getAllPublisher(String keyword, Boolean status, Integer pageNumber, Integer pageSize,
+            String sortBy,
             String sortOrder);
 
     PublisherDTO createPublisher(PublisherDTO PublisherDTO, MultipartFile image) throws IOException;

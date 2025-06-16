@@ -59,10 +59,10 @@ public class Order {
     @Email
     private String email;
 
-    @Size(min = 2, message = "Delivery name must contain atleast 3 characters")
+    @Size(min = 2, message = "Tên người nhận phải có ít nhất 2 ký tự")
     private String deliveryName;
 
-    @Size(min = 10, max = 10, message = "Delivery phone must be exactly 10 characters")
+    @Size(min = 10, max = 10, message = "Số điện thoại người nhận phải có đúng 10 ký tự")
     private String deliveryPhone;
 
     @OneToMany(mappedBy = "order", cascade = { CascadeType.ALL }, orphanRemoval = true)
@@ -96,11 +96,11 @@ public class Order {
     @JoinColumn(name = "payment_id")
     private Payment payment;
 
-    @NotNull(message = "Order status is required")
+    @NotNull(message = "Trạng thái đơn hàng là bắt buộc")
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
-    @NotNull(message = "Order type is required")
+    @NotNull(message = "Loại đơn hàng là bắt buộc")
     @Enumerated(EnumType.STRING)
     private OrderType orderType;
 
@@ -109,16 +109,16 @@ public class Order {
     private void validateSave() {
         if (OrderType.ONLINE.equals(orderType)) {
             if (email.isEmpty()) {
-                throw new IllegalArgumentException("Email cannot be empty");
+                throw new IllegalArgumentException("Email không được để trống");
             }
             if (deliveryName.isEmpty()) {
-                throw new IllegalArgumentException("Delivery name cannot be empty");
+                throw new IllegalArgumentException("Tên người nhận không được để trống");
             }
             if (deliveryPhone.isEmpty()) {
-                throw new IllegalArgumentException("Delivery phone cannot be empty");
+                throw new IllegalArgumentException("Số điện thoại người nhận không được để trống");
             }
             if (address == null) {
-                throw new IllegalArgumentException("Address cannot be null");
+                throw new IllegalArgumentException("Địa chỉ không được để trống");
             }
         }
     }

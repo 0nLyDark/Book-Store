@@ -13,6 +13,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -43,6 +44,9 @@ public class Product {
     @NotBlank
     @Size(min = 3, message = "Tên sản phẩm phải có ít nhất 3 ký tự")
     private String productName;
+
+    @Column(name = "search_text", columnDefinition = "TEXT")
+    private String searchText;
 
     @Column(nullable = false, unique = true)
     private String slug;
@@ -125,16 +129,16 @@ public class Product {
     @PreUpdate
     private void validateSave() {
         if (categories.size() == 0) {
-            throw new IllegalArgumentException("Categories can not be Empty");
+            throw new IllegalArgumentException("Danh mục không được để trống");
         }
         if (authors.size() == 0) {
-            throw new IllegalArgumentException("Authors can not be Empty");
+            throw new IllegalArgumentException("Tác giả không được để trống");
         }
         if (languages.size() == 0) {
-            throw new IllegalArgumentException("Languages can not be Empty");
+            throw new IllegalArgumentException("Ngôn ngữ không được để trống");
         }
         if (images.size() == 0) {
-            throw new IllegalArgumentException("Images can not be Empty");
+            throw new IllegalArgumentException("Hình ảnh không được để trống");
         }
 
     }

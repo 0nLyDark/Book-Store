@@ -147,11 +147,11 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Import Receipt", "importReceiptId",
                                                 importReceiptId));
                 if (!importReceipt.getCreatedBy().equals(userId) && !"ADMIN".equals(role)) {
-                        throw new AccessDeniedException("You are not authorized to update this import receipt");
+                        throw new AccessDeniedException("Bạn không có quyền cập nhật phiếu nhập này");
                 }
                 if (importReceipt.getImportDate().isBefore(LocalDateTime.now().minusDays(3))) {
                         throw new AccessDeniedException(
-                                        "Cannot update the status. It has been more than 3 days since the import date.");
+                                        "Không thể cập nhật trạng thái. Đã quá 3 ngày kể từ ngày nhập.");
                 }
                 if (status != importReceipt.getStatus()) {
                         if (status == true) {
@@ -198,6 +198,6 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
 
                 importReceiptRepo.delete(importReceipt);
 
-                return "Import receipt deleted successfully";
+                return "Xóa phiếu nhập thành công";
         }
 }

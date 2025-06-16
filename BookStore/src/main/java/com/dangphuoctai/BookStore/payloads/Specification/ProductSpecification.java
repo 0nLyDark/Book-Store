@@ -12,7 +12,6 @@ import jakarta.persistence.criteria.Predicate;
 
 public class ProductSpecification {
     public static Specification<Product> filter(
-            String keyword,
             String isbn,
             Double minPrice,
             Double maxPrice,
@@ -27,10 +26,6 @@ public class ProductSpecification {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Tìm theo tên sản phẩm (productName)
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("productName")), "%" + keyword.toLowerCase() + "%"));
-            }
             // Tìm theo mã sản phẩm (isbn)
             if (isbn != null && !isbn.trim().isEmpty()) {
                 predicates.add(cb.like(root.get("isbn"), "%" + isbn + "%"));
@@ -73,6 +68,31 @@ public class ProductSpecification {
             // Lọc theo publisher
             if (publisherIds != null && !publisherIds.isEmpty())
                 predicates.add(root.get("publisher").get("publisherId").in(publisherIds));
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    public static Specification<Product> filterStock(
+            String isbn,
+            Boolean status,
+            Integer qty) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Tìm theo mã sản phẩm (isbn)
+            if (isbn != null && !isbn.trim().isEmpty()) {
+                predicates.add(cb.like(root.get("isbn"), "%" + isbn + "%"));
+            }
+
+            // Lọc theo trạng thái
+            if (status != null)
+                predicates.add(cb.equal(root.get("status"), status));
+
+            // Lọc theo số lượng tồn kho
+            if (qty != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("quantity"), qty));
+            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };

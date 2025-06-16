@@ -21,6 +21,7 @@ import com.dangphuoctai.BookStore.payloads.dto.MenuDTO.ChildMenuDTO;
 import com.dangphuoctai.BookStore.payloads.response.MenuResponse;
 import com.dangphuoctai.BookStore.service.MenuService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -47,6 +48,7 @@ public class MenuController {
 
     @GetMapping("/public/menus")
     public ResponseEntity<MenuResponse> getAllMenus(
+            @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "type", defaultValue = "parent", required = false) String type,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
@@ -54,7 +56,7 @@ public class MenuController {
             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_MENUS_BY, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
 
-        MenuResponse menuResponse = menuService.getAllMenus(status, type,
+        MenuResponse menuResponse = menuService.getAllMenus(keyword, status, type,
                 pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "menuId" : sortBy,
@@ -64,14 +66,14 @@ public class MenuController {
     }
 
     @PostMapping("/admin/menus")
-    public ResponseEntity<MenuDTO> createMenu(@RequestBody ChildMenuDTO menu) {
+    public ResponseEntity<MenuDTO> createMenu(@Valid @RequestBody ChildMenuDTO menu) {
         MenuDTO menuDTO = menuService.createMenu(menu);
 
         return new ResponseEntity<MenuDTO>(menuDTO, HttpStatus.CREATED);
     }
 
     @PutMapping("/admin/menus")
-    public ResponseEntity<MenuDTO> updateMenu(@RequestBody ChildMenuDTO menu) {
+    public ResponseEntity<MenuDTO> updateMenu(@Valid @RequestBody ChildMenuDTO menu) {
         MenuDTO menuDTO = menuService.updateMenu(menu);
 
         return new ResponseEntity<MenuDTO>(menuDTO, HttpStatus.OK);

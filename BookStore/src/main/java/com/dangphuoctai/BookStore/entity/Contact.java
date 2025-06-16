@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,8 +30,10 @@ public class Contact {
     @Column(nullable = false)
     private String email;
 
+    @NotBlank
     @Column(nullable = false)
-    @Size(min = 10, max = 10, message = "Delivery phone must be exactly 10 characters")
+    @Size(min = 10, max = 10, message = "Số điện thoại phải đúng 10 ký tự")
+    @Pattern(regexp = "\\d{10}", message = "Số điện thoại chỉ được chứa số")
     private String mobileNumber;
 
     @NotBlank

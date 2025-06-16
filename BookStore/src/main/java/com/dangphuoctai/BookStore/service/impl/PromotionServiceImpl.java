@@ -224,7 +224,7 @@ public class PromotionServiceImpl implements PromotionService {
         promotionRedisService.delete(PROMOTION_CACHE_KEY, fieldCode);
         promotionResponseRedisService.delete(PROMOTION_PAGE_CACHE_KEY);
 
-        return "Promotion with ID " + promotionId + " has been deleted successfully.";
+        return "Khuyến mãi với ID " + promotionId + " đã được xóa thành công.";
     }
 
     @Override

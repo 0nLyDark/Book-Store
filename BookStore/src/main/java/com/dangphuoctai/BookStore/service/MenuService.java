@@ -12,7 +12,8 @@ public interface MenuService {
 
     List<MenuDTO> getManyMenuById(List<Long> menuIds);
 
-    MenuResponse getAllMenus(Boolean status, String type, Integer pageNumber, Integer pageSize, String sortBy,
+    MenuResponse getAllMenus(String keyword, Boolean status, String type, Integer pageNumber, Integer pageSize,
+            String sortBy,
             String sortOrder);
 
     MenuDTO createMenu(ChildMenuDTO menuDTO);

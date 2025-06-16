@@ -19,4 +19,9 @@ public class AddressDTO {
     private String wardCode;
 
     // private String pincode;
+
+    @Override
+    public String toString() {
+        return buildingName + ", " + ward + ", " + district + ", " + city + ", " + country;
+    }
 }

@@ -25,20 +25,22 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long addressId;
     @NotBlank
-    @NotBlank
-    @Size(min = 4, message = "City name must contain atleast 4 characters")
+    @Size(min = 4, message = "Tên thành phố phải có ít nhất 4 ký tự")
     private String city;
-    @NotBlank
-    @Size(min = 2, message = "District name must contain atleast 2 characters")
+
+    @NotBlank(message = "Quận/Huyện không được để trống")
+    @Size(min = 2, message = "Tên quận/huyện phải có ít nhất 2 ký tự")
     private String district;
 
-    @Size(min = 5, message = "Ward name must contain atleast 5 characters")
+    @Size(min = 5, message = "Tên phường/xã phải có ít nhất 5 ký tự")
     private String ward;
-    @NotBlank
-    @Size(min = 5, message = "Building name must contain atleast 5 characters")
+
+    @NotBlank(message = "Tên tòa nhà không được để trống")
+    @Size(min = 5, message = "Tên tòa nhà phải có ít nhất 5 ký tự")
     private String buildingName;
-    @NotBlank
-    @Size(min = 2, message = "Country name must contain atleast 2 characters")
+
+    @NotBlank(message = "Quốc gia không được để trống")
+    @Size(min = 2, message = "Tên quốc gia phải có ít nhất 2 ký tự")
     private String country;
     // @NotBlank
     // @Size(min = 6, message = "Pincode must contain atleast 6 characters")

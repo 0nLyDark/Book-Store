@@ -1,6 +1,7 @@
 package com.dangphuoctai.BookStore.controller;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -53,6 +54,12 @@ public class PostController {
         PostDTO postDTO = postService.getPostBySlug(slug);
 
         return new ResponseEntity<PostDTO>(postDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/posts/ids")
+    public ResponseEntity<List<PostDTO>> getPostByIds(@RequestParam(value = "id") List<Long> postIds) {
+        List<PostDTO> postResponse = postService.getManyPostById(postIds);
+        return new ResponseEntity<List<PostDTO>>(postResponse, HttpStatus.OK);
     }
 
     @GetMapping("/public/posts")

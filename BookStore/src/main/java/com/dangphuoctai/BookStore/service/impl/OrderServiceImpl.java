@@ -130,7 +130,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "orderId", orderId));
         if (userId != order.getUserId() && !roles.contains("STAFF") && !roles.contains("ADMIN")) {
-            throw new AccessDeniedException("You do not have permission to access this order.");
+            throw new AccessDeniedException("Bạn không có quyền truy cập đơn hàng này.");
         }
 
         return modelMapper.map(order, OrderDTO.class);
@@ -347,6 +347,8 @@ public class OrderServiceImpl implements OrderService {
         if (cartItems.size() != productIds.size()) {
             throw new APIException("Giỏ hàng không tồn tại sản phẩm trong danh sách sản phẩm đặt hàng.");
         }
+        // Set Cart
+        cartRedisService.delete(key, productIds);
         // Set OrderItem
         double total = cartItems.entrySet().stream()
                 .mapToDouble(entry -> {
@@ -553,6 +555,14 @@ public class OrderServiceImpl implements OrderService {
         orderRepo.save(order);
         // Delete OTP and Order from redis
         otpRedisService.delete(key);
+        // Send email info order
+        OrderDTO orderDTO = modelMapper.map(order, OrderDTO.class);
+        String htmlContent = Email.generateOrderEmailContent(orderDTO);
+        EmailDetails emailDetails = new EmailDetails(order.getEmail(), htmlContent,
+                "BookStore - Thông báo đặt hàng thành công",
+                null);
+        emailService.sendMailWithAttachment(emailDetails);
+
         return true;
     }
 
@@ -576,7 +586,13 @@ public class OrderServiceImpl implements OrderService {
         order.getPayment().setBankCode(bankCode);
         order.getPayment().setPaymentCode(BankTranNo);
         orderRepo.save(order);
-
+        // Send email info order
+        OrderDTO orderDTO = modelMapper.map(order, OrderDTO.class);
+        String htmlContent = Email.generateOrderEmailContent(orderDTO);
+        EmailDetails emailDetails = new EmailDetails(order.getEmail(), htmlContent,
+                "BookStore - Thông báo đặt hàng thành công",
+                null);
+        emailService.sendMailWithAttachment(emailDetails);
         return true;
     }
 

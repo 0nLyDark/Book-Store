@@ -91,21 +91,20 @@ public class User {
     private void validateSave() {
         if (this.accountType == AccountType.USER || this.accountType == null) {
             if (this.email == null) {
-                throw new IllegalArgumentException("Email is required for this account type");
+            throw new IllegalArgumentException("Email là bắt buộc cho loại tài khoản này");
             }
             // if (this.mobileNumber == null) {
-            // throw new IllegalArgumentException("Mobile Number is required for this
-            // account type");
+            // throw new IllegalArgumentException("Số điện thoại là bắt buộc cho loại tài khoản này");
             // }
             if (this.username == null || this.username.isBlank()) {
-                throw new IllegalArgumentException("Username is required for this account type");
+            throw new IllegalArgumentException("Tên đăng nhập là bắt buộc cho loại tài khoản này");
             }
             if (this.password == null || this.password.isBlank()) {
-                throw new IllegalArgumentException("Password is required for this account type");
+            throw new IllegalArgumentException("Mật khẩu là bắt buộc cho loại tài khoản này");
             }
         } else if (this.accountType == AccountType.GOOGLE) {
             if (this.email == null) {
-                throw new IllegalArgumentException("Email is required for this account type");
+            throw new IllegalArgumentException("Email là bắt buộc cho loại tài khoản này");
             }
         }
     }

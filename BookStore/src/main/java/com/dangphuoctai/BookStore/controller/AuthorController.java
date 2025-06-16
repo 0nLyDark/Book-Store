@@ -49,13 +49,14 @@ public class AuthorController {
 
     @GetMapping("/public/authors")
     public ResponseEntity<AuthorResponse> getAllAuthor(
+            @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_AUTHORS_BY, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
 
-        AuthorResponse authorResponse = authorService.getAllAuthors(status,
+        AuthorResponse authorResponse = authorService.getAllAuthors(keyword, status,
                 pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "authorId" : sortBy,
