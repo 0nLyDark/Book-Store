@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BooleanField,
   Datagrid,
@@ -7,11 +8,17 @@ import {
   ImageField,
   List,
   TextField,
+  TextInput,
 } from "react-admin";
-
+const categoryFields = [
+  <TextInput label="Tìm theo tên" source="keyword" alwaysOn />,
+];
 const CategoryList = () => {
+  useEffect(() => {
+    document.title = "Danh sách danh mục";
+  }, []);
   return (
-    <List>
+    <List filters={categoryFields}>
       <Datagrid>
         <TextField source="categoryId" label="ID" />
         <TextField source="categoryName" label="Tên danh mục" />

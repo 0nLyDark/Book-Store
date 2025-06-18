@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BooleanField,
   Datagrid,
@@ -10,6 +11,9 @@ import {
 } from "react-admin";
 
 const SupplierList = () => {
+  useEffect(() => {
+    document.title = "Danh sách nhà cung cấp";
+  }, []);
   return (
     <List>
       <Datagrid>
@@ -17,7 +21,7 @@ const SupplierList = () => {
         <TextField source="supplierName" label="Tên chủ đề" />
         <EmailField source="email" label="Email" />
         <TextField source="mobieNumber" label="Số điện thoại" />
-         <FunctionField
+        <FunctionField
           label="Trạng thái"
           render={(record) => (record.status ? "Hiện" : "Ẩn")}
           sortBy="status"

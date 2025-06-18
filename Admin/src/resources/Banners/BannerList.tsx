@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Datagrid,
   DeleteButton,
@@ -9,6 +10,9 @@ import {
 } from "react-admin";
 
 const BannerList = () => {
+  useEffect(() => {
+    document.title = "Danh sách banner";
+  }, []);
   return (
     <List>
       <Datagrid>
@@ -16,7 +20,7 @@ const BannerList = () => {
         <TextField source="bannerName" label="Tên Banner" />
         <ImageField source="image" title="Hình ảnh" label="Hình ảnh" />
         <TextField source="position" label="Vị trí" />
-         <FunctionField
+        <FunctionField
           label="Trạng thái"
           render={(record) => (record.status ? "Hiện" : "Ẩn")}
           sortBy="status"

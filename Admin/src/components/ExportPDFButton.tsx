@@ -1,8 +1,9 @@
 import { BlobProvider, pdf } from "@react-pdf/renderer";
-import ReceiptPDF from "./ReceiptPDF";
+import ReceiptPDF from "./Receipts/ReceiptPDF";
 import { HiOutlinePrinter } from "react-icons/hi";
+import OrderPDF from "./Orders/OrderPDF";
 
-const ExportPDFButton = ({ data }: { data: any }) => {
+const ExportPDFButton = ({ data, type }: { data: any; type: string }) => {
   const styles: { btn: React.CSSProperties; hover: React.CSSProperties } = {
     btn: {
       borderRadius: "3px",
@@ -33,7 +34,7 @@ const ExportPDFButton = ({ data }: { data: any }) => {
     e.currentTarget.style.color = styles.btn.color ?? "";
   };
   return (
-    <BlobProvider document={<ReceiptPDF data={data} />}>
+    <BlobProvider document={type == "order" ? <OrderPDF data={data} /> : <ReceiptPDF data={data} />}>
       {({ url, blob }) => (
         <a
           href={url ?? ""}

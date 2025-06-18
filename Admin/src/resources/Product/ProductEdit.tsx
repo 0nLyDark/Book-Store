@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BooleanInput,
   Button,
@@ -11,7 +11,6 @@ import {
   SelectInput,
   SimpleForm,
   TextInput,
-  useRefresh,
 } from "react-admin";
 import CategoryCreateDialog from "../Categories/CategoryCreateDialog";
 import LanguageCreateDialog from "../Languages/LanguageCreateDialog";
@@ -19,6 +18,8 @@ import SupplierCreateDialog from "../Suppliers/SupplierCreateDialog";
 import PublisherCreateDialog from "../Publishers/PublisherCreateDialog";
 import AuthorCreateDialog from "../Authors/AuthorCreateDialog";
 import { Box } from "@mui/material";
+import { validateIsbn } from "./ProductCreate";
+import CustomRichTextInput from "../../components/CustomRichTextInput";
 
 const ProductEdit = () => {
   const [openAuthorDialog, setOpenAuthorDialog] = useState(false);
@@ -26,13 +27,11 @@ const ProductEdit = () => {
   const [openLanguageDialog, setOpenLanguageDialog] = useState(false);
   const [openPublisherDialog, setOpenPublisherDialog] = useState(false);
   const [openSupplierDialog, setOpenSupplierDialog] = useState(false);
-
+  useEffect(() => {
+    document.title = "Chỉnh sửa sản phẩm";
+  }, []);
   return (
-    <Edit
-      transform={(data) => ({
-        ...data,
-      })}
-    >
+    <Edit mutationMode="pessimistic">
       <SimpleForm
         defaultValues={(record: any) => ({
           ...record,
@@ -50,8 +49,16 @@ const ProductEdit = () => {
               required
               fullWidth
             />
-            <TextInput source="isbn" label="Mã sách" required fullWidth />
-            <TextInput source="size" label="Kích thước" fullWidth />
+            <TextInput
+              source="isbn"
+              label="Mã sách"
+              validate={validateIsbn}
+              inputProps={{ maxLength: 13 }}
+              fullWidth
+            />
+            <TextInput source="size" label="Kích thước" fullWidth />{" "}
+            <TextInput source="weight" label="Trọng lượng" fullWidth />
+            <TextInput source="format" label="Hình thức" fullWidth />
             <NumberInput
               source="year"
               label="Năm xuất bản"
@@ -69,13 +76,6 @@ const ProductEdit = () => {
             <NumberInput
               source="price"
               label="Giá"
-              min={0}
-              required
-              fullWidth
-            />
-            <NumberInput
-              source="quantity"
-              label="Số lượng"
               min={0}
               required
               fullWidth
@@ -211,7 +211,8 @@ const ProductEdit = () => {
             >
               <ImageField source="src" title="title" sx={{ width: 135 }} />
             </ImageInput>
-            <TextInput source="description" label="Mô tả" multiline fullWidth />
+            {/* <TextInput source="description" label="Mô tả" multiline fullWidth /> */}
+            <CustomRichTextInput source="description" label="Mô tả" />
           </Box>
         </Box>
         <AuthorCreateDialog

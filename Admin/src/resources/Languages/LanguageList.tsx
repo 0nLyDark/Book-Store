@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BooleanField,
   Datagrid,
@@ -6,15 +7,21 @@ import {
   FunctionField,
   List,
   TextField,
+  TextInput,
 } from "react-admin";
-
+const languageFields = [
+  <TextInput label="Tìm theo tên" source="keyword" alwaysOn />,
+];
 const LanguageList = () => {
+  useEffect(() => {
+    document.title = "Danh sách ngôn ngữ";
+  }, []);
   return (
-    <List>
+    <List filters={languageFields}>
       <Datagrid>
         <TextField source="languageId" label="ID" />
         <TextField source="name" label="Tên ngôn ngữ" />
-         <FunctionField
+        <FunctionField
           label="Trạng thái"
           render={(record) => (record.status ? "Hiện" : "Ẩn")}
           sortBy="status"

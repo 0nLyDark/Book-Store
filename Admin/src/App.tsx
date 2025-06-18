@@ -1,4 +1,4 @@
-import { Admin, mergeTranslations, Resource } from "react-admin";
+import { Admin, CustomRoutes, mergeTranslations, Resource } from "react-admin";
 import { Layout } from "./Layout";
 import authProvider from "./authProvider";
 import { Dashboard } from "./Dashboard";
@@ -41,8 +41,7 @@ import ProductList from "./resources/Product/ProductList";
 import ProductCreate from "./resources/Product/ProductCreate";
 import ProductEdit from "./resources/Product/ProductEdit";
 import ProductShow from "./resources/Product/ProducShow";
-import CartList from "./resources/Cart/CartList";
-import CartShow from "./resources/Cart/CartShow";
+
 import ImportReceiptList from "./resources/ImportReceipt/ImportReceiptList";
 import ImportReceiptShow from "./resources/ImportReceipt/ImportReceiptShow";
 import ImportReceiptCreate from "./resources/ImportReceipt/ImportReceiptCreate";
@@ -56,8 +55,7 @@ import PromotionShow from "./resources/Promotion/PromotionShow";
 import PromotionCreate from "./resources/Promotion/PromotionCreate";
 import polyglotI18nProvider from "ra-i18n-polyglot";
 import vietnameseMessages from "./i18n/vi";
-import englishMessages from "ra-language-english";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Route } from "react-router-dom";
 import ContactShow from "./resources/Contacts/ContactShow";
 import CategoryIcon from "@mui/icons-material/Category";
 import LanguageIcon from "@mui/icons-material/Language";
@@ -73,143 +71,175 @@ import TopicIcon from "@mui/icons-material/TopicOutlined";
 import PostIcon from "@mui/icons-material/ArticleOutlined";
 import BannerIcon from "@mui/icons-material/Stars";
 import ContactIcon from "@mui/icons-material/People";
+import UserIcon from "@mui/icons-material/Person";
+
+import OrderList from "./resources/Orders/OrderList";
+import OrderShow from "./resources/Orders/OrderShow";
+import OrderCreate from "./resources/Orders/OrderCreate";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import MyLoginPage from "./MyLoginPage";
+import UserList from "./resources/Users/UserList";
+import UserShow from "./resources/Users/UserShow";
+import ExcelImportPage from "./components/ImportProduct/ExcelImportPage";
+import StockList from "./resources/Stock/StockList";
+// import ImportProductExcel from "./components/ImportProduct/ImportProductExcel";
 
 const i18nProvider = polyglotI18nProvider(
-  () => mergeTranslations(englishMessages, vietnameseMessages),
+  () => mergeTranslations(vietnameseMessages),
   "vi",
 );
 
 export const App = () => (
   <BrowserRouter basename="/admin">
-    <Admin
-      i18nProvider={i18nProvider}
-      authProvider={authProvider}
-      layout={Layout}
-      dataProvider={dataProvider}
-      dashboard={Dashboard}
-    >
-      <Resource
-        name="categories"
-        list={CategoryList}
-        create={CategoryCreate}
-        edit={CategoryEdit}
-        show={CategoryShow}
-        options={{ label: "Danh mục" }}
-        icon={CategoryIcon}
-      />
-      <Resource
-        name="languages"
-        list={LanguageList}
-        create={LanguageCreate}
-        edit={LanguageEdit}
-        show={LanguageShow}
-        options={{ label: "Ngôn ngữ" }}
-        icon={LanguageIcon}
-      />
-      <Resource
-        name="authors"
-        list={AuthorList}
-        create={AuthorCreate}
-        edit={AuthorEdit}
-        show={AuthorShow}
-        options={{ label: "Tác giả" }}
-        icon={AuthorIcon}
-      />
-      <Resource
-        name="publishers"
-        list={PublisherList}
-        create={PublisherCreate}
-        edit={PublisherEdit}
-        show={PublisherShow}
-        options={{ label: "Nhà sản xuất" }}
-        icon={PublisherIcon}
-      />
-      <Resource
-        name="suppliers"
-        list={SupplierList}
-        create={SupplierCreate}
-        edit={SupplierEdit}
-        show={SupplierShow}
-        options={{ label: "Nhà cung cấp" }}
-        icon={SupplierIcon}
-      />
-      <Resource
-        name="products"
-        list={ProductList}
-        create={ProductCreate}
-        edit={ProductEdit}
-        show={ProductShow}
-        options={{ label: "Sản phẩm" }}
-        icon={ProductIcon}
-      />
-      <Resource
-        name="promotions"
-        list={PromotionList}
-        create={PromotionCreate}
-        edit={PromotionEdit}
-        show={PromotionShow}
-        options={{ label: "Phiếu giảm giá" }}
-        icon={PromotionIcon}
-      />
-      <Resource
-        name="carts"
-        list={CartList}
-        show={CartShow}
-        options={{ label: "Giỏ hàng" }}
-        icon={CartIcon}
-      />
-      <Resource
-        name="import-receipts"
-        list={ImportReceiptList}
-        create={ImportReceiptCreate}
-        show={ImportReceiptShow}
-        options={{ label: "Nhập hàng" }}
-        icon={ImportReceiptIcon}
-      />
-      <Resource
-        name="menus"
-        list={MenuList}
-        create={MenuCreate}
-        edit={MenuEdit}
-        show={MenuShow}
-        options={{ label: "Menu" }}
-        icon={MenuIcon}
-      />
-      <Resource
-        name="topics"
-        list={TopicList}
-        create={TopicCreate}
-        edit={TopicEdit}
-        show={TopicShow}
-        options={{ label: "Chủ đề" }}
-        icon={TopicIcon}
-      />
-      <Resource
-        name="posts"
-        list={PostList}
-        create={PostCreate}
-        edit={PostEdit}
-        show={PostShow}
-        options={{ label: "Bài viết" }}
-        icon={PostIcon}
-      />
-      <Resource
-        name="banners"
-        list={BannerList}
-        create={BannerCreate}
-        edit={BannerEdit}
-        show={BannerShow}
-        options={{ label: "Banner" }}
-        icon={BannerIcon}
-      />
-      <Resource
-        name="contacts"
-        list={ContactList}
-        edit={ContactEdit}
-        show={ContactShow}
-        options={{ label: "Liên hệ" }}
-        icon={ContactIcon}
-      />
-    </Admin>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <Admin
+        i18nProvider={i18nProvider}
+        authProvider={authProvider}
+        layout={Layout}
+        loginPage={MyLoginPage}
+        dataProvider={dataProvider}
+        dashboard={Dashboard}
+      >
+        <CustomRoutes>
+          <Route path="/products/import" element={<ExcelImportPage />} />
+        </CustomRoutes>
+        <Resource
+          name="categories"
+          list={CategoryList}
+          create={CategoryCreate}
+          edit={CategoryEdit}
+          show={CategoryShow}
+          options={{ label: "Danh mục" }}
+          icon={CategoryIcon}
+        />
+        <Resource
+          name="languages"
+          list={LanguageList}
+          create={LanguageCreate}
+          edit={LanguageEdit}
+          show={LanguageShow}
+          options={{ label: "Ngôn ngữ" }}
+          icon={LanguageIcon}
+        />
+        <Resource
+          name="authors"
+          list={AuthorList}
+          create={AuthorCreate}
+          edit={AuthorEdit}
+          show={AuthorShow}
+          options={{ label: "Tác giả" }}
+          icon={AuthorIcon}
+        />
+        <Resource
+          name="publishers"
+          list={PublisherList}
+          create={PublisherCreate}
+          edit={PublisherEdit}
+          show={PublisherShow}
+          options={{ label: "Nhà sản xuất" }}
+          icon={PublisherIcon}
+        />
+        <Resource
+          name="suppliers"
+          list={SupplierList}
+          create={SupplierCreate}
+          edit={SupplierEdit}
+          show={SupplierShow}
+          options={{ label: "Nhà cung cấp" }}
+          icon={SupplierIcon}
+        />
+        <Resource
+          name="stocks"
+          list={StockList}
+          options={{ label: "Tồn kho" }}
+          icon={ProductIcon}
+        />
+        <Resource
+          name="products"
+          list={ProductList}
+          create={ProductCreate}
+          edit={ProductEdit}
+          show={ProductShow}
+          options={{ label: "Sản phẩm" }}
+          icon={ProductIcon}
+        />
+        <Resource
+          name="promotions"
+          list={PromotionList}
+          create={PromotionCreate}
+          edit={PromotionEdit}
+          show={PromotionShow}
+          options={{ label: "Phiếu giảm giá" }}
+          icon={PromotionIcon}
+        />
+        <Resource
+          name="orders"
+          list={OrderList}
+          create={OrderCreate}
+          show={OrderShow}
+          options={{ label: "Đơn hàng" }}
+          icon={CartIcon}
+        />
+        <Resource
+          name="import-receipts"
+          list={ImportReceiptList}
+          create={ImportReceiptCreate}
+          show={ImportReceiptShow}
+          options={{ label: "Nhập hàng" }}
+          icon={ImportReceiptIcon}
+        />
+        <Resource
+          name="menus"
+          list={MenuList}
+          create={MenuCreate}
+          edit={MenuEdit}
+          show={MenuShow}
+          options={{ label: "Menu" }}
+          icon={MenuIcon}
+        />
+        <Resource
+          name="topics"
+          list={TopicList}
+          create={TopicCreate}
+          edit={TopicEdit}
+          show={TopicShow}
+          options={{ label: "Chủ đề" }}
+          icon={TopicIcon}
+        />
+        <Resource
+          name="posts"
+          list={PostList}
+          create={PostCreate}
+          edit={PostEdit}
+          show={PostShow}
+          options={{ label: "Bài viết" }}
+          icon={PostIcon}
+        />
+        <Resource
+          name="banners"
+          list={BannerList}
+          create={BannerCreate}
+          edit={BannerEdit}
+          show={BannerShow}
+          options={{ label: "Banner" }}
+          icon={BannerIcon}
+        />
+        <Resource
+          name="contacts"
+          list={ContactList}
+          edit={ContactEdit}
+          show={ContactShow}
+          options={{ label: "Liên hệ" }}
+          icon={ContactIcon}
+        />
+        <Resource
+          name="users"
+          list={UserList}
+          show={UserShow}
+          options={{ label: "Tài khoản" }}
+          icon={UserIcon}
+        />
+      </Admin>
+    </GoogleOAuthProvider>
   </BrowserRouter>
 );

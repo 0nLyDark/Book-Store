@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Font,
 } from "@react-pdf/renderer";
-import Roboto from "./font/Roboto-Regular.ttf";
+import Roboto from "../font/Roboto-Regular.ttf";
 
 Font.register({ family: "Roboto", src: Roboto });
 function formatNumber(number: { toLocaleString: (arg0: string) => any }) {
@@ -103,6 +103,7 @@ const ReceiptPDF = ({ data }: { data: any }) => {
         <View style={styles.table}>
           {/* Header */}
           <View style={styles.tableRow}>
+            <Text style={styles.tableColHeader}>Mã sách</Text>
             <Text style={styles.tableColHeader}>Tên sách</Text>
             <Text style={[styles.tableColHeader, styles.tableColCenter]}>
               Số lượng
@@ -117,12 +118,13 @@ const ReceiptPDF = ({ data }: { data: any }) => {
           {/* Rows */}
           {data.importReceiptItems.map((ir: any, index: number) => (
             <View style={styles.tableRow} key={index}>
+              <Text style={styles.tableCol}>{ir.product.isbn}</Text>
               <Text style={styles.tableCol}>{ir.product.productName}</Text>
               <Text style={[styles.tableCol, styles.tableColCenter]}>
                 {ir.quantity}
               </Text>
               <Text style={[styles.tableCol, styles.tableColRight]}>
-                {ir.price.toLocaleString("vi-VN")}
+                {ir.price.toLocaleString("vi-VN")} đ
               </Text>
               <Text style={[styles.tableCol, styles.tableColRight]}>
                 {ir.totalPrice.toLocaleString("vi-VN")} đ

@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import {
+  AutocompleteInput,
   BooleanInput,
   Edit,
   FileInput,
+  ImageField,
   ImageInput,
   ReferenceInput,
   SelectInput,
@@ -9,49 +12,35 @@ import {
   TextInput,
   useGetList,
 } from "react-admin";
-import { useWatch } from "react-hook-form";
 
-const ParentCategoryInput = () => {
-  const currentId = useWatch({ name: "categoryId" }); // ID của category đang edit
-
-  const { data: categories, isLoading } = useGetList("categories");
-
-  const filteredChoices = categories
-    ? categories.filter((category) => category.categoryId !== currentId)
-    : [];
-
+const CategoryEdit = () => {
+  useEffect(() => {
+    document.title = "Chỉnh sửa danh mục";
+  }, []);
   return (
-    <SelectInput
-      source="parent.categoryId"
-      label="Danh mục cha"
-      choices={filteredChoices}
-      optionText="categoryName"
-      optionValue="categoryId"
-      isLoading={isLoading}
-    />
+    <Edit mutationMode="pessimistic">
+      <SimpleForm>
+        <TextInput source="categoryId" label="Category ID" disabled />
+        <TextInput source="categoryName" label="Tên danh mục" />
+        <TextInput source="slug" label="Slug" disabled />
+        <ReferenceInput source="parent.categoryId" reference="categories">
+          <AutocompleteInput
+            optionText="categoryName"
+            variant="outlined"
+            label="Danh mục cha"
+            filterToQuery={(searchText: string) => ({ keyword: searchText })}
+          />
+        </ReferenceInput>
+        <ImageInput
+          source="image"
+          label="Hình ảnh"
+          accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
+        >
+          <ImageField source="src" title="title" />
+        </ImageInput>
+        <BooleanInput source="status" label="Trạng thái" />
+      </SimpleForm>
+    </Edit>
   );
 };
-const CategoryEdit = () => (
-  <Edit>
-    <SimpleForm>
-      <TextInput source="categoryId" label="Category ID" disabled />
-      <TextInput source="categoryName" label="Tên danh mục" />
-      <TextInput source="slug" label="Slug" disabled />
-      {/* <ParentCategoryInput /> */}
-      <ReferenceInput source="parent.categoryId" reference="categories">
-        <SelectInput
-          optionText="categoryName"
-          variant="outlined"
-          label="Danh mục cha"
-        />
-      </ReferenceInput>
-      <ImageInput
-        source="image"
-        label="Hình ảnh"
-        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
-      />
-      <BooleanInput source="status" label="Trạng thái" />
-    </SimpleForm>
-  </Edit>
-);
 export default CategoryEdit;

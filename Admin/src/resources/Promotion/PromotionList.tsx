@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BooleanField,
   Datagrid,
@@ -12,6 +13,9 @@ import {
 } from "react-admin";
 
 const PromotionList = () => {
+  useEffect(() => {
+    document.title = "Danh sách phiếu khuyến mãi";
+  }, []);
   return (
     <List>
       <Datagrid>

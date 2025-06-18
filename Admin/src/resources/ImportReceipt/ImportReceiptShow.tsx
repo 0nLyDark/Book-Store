@@ -16,7 +16,8 @@ import {
   useRefresh,
   useUpdate,
 } from "react-admin";
-import ExportPDFButton from "../../components/Receipts/ExportPDFButton";
+import ExportPDFButton from "../../components/ExportPDFButton";
+import { useEffect } from "react";
 const ChangeStatusButton = () => {
   const record = useRecordContext();
   const notify = useNotify();
@@ -81,9 +82,12 @@ const CustomPDFButton = () => {
   }
   console.log("record", record);
 
-  return <ExportPDFButton data={record} />;
+  return <ExportPDFButton type="importReceipt" data={record} />;
 };
 const ImportReceiptShow = () => {
+  useEffect(() => {
+    document.title = "Chi tiết phiếu nhập hàng";
+  }, []);
   return (
     <Show actions={<ShowActions />}>
       <SimpleShowLayout sx={{ mb: 4 }}>
@@ -103,16 +107,16 @@ const ImportReceiptShow = () => {
         />
         <ArrayField source="importReceiptItems" label="Sản phẩm nhập hàng">
           <Datagrid bulkActionButtons={false} rowClick={false}>
-            <TextField source="product.productId" label="Product ID" />
-            <TextField source="product.productName" label="Tên sản phẩm" />
+            {/* <TextField source="product.productId" label="Product ID" /> */}
             <TextField source="product.isbn" label="Mã sản phẩm" />
+            <TextField source="product.productName" label="Tên sản phẩm" />
             <ImageField
               source="product.images[0]"
               label="Hình ảnh"
               title="product.images[0]"
             />
             <NumberField
-              source="product.price"
+              source="price"
               label="Giá"
               options={{ style: "currency", currency: "VND" }}
               locales="vi-VN"

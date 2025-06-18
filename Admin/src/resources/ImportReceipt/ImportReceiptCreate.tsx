@@ -13,12 +13,14 @@ import {
 
 const ImportReceiptCreate = () => {
   const [supplierId, setSupplierId] = useState(null);
-
+  useEffect(() => {
+    document.title = "Tạo mới phiếu nhập hàng";
+  }, []);
   useEffect(() => {
     console.log("Supplier ID changed:", supplierId);
   }, [supplierId]);
   return (
-    <Create>
+    <Create mutationMode="pessimistic">
       <SimpleForm>
         <ReferenceInput source="supplier.supplierId" reference="suppliers">
           <SelectInput

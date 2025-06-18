@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Datagrid,
   DateField,
@@ -9,6 +10,9 @@ import {
 } from "react-admin";
 
 const ContactList = () => {
+  useEffect(() => {
+    document.title = "Danh sách liên hệ";
+  }, []);
   return (
     <List sort={{ field: "isRead", order: "ASC" }}>
       <Datagrid>

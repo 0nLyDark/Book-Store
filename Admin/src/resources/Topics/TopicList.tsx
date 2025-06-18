@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BooleanField,
   Datagrid,
@@ -9,12 +10,15 @@ import {
 } from "react-admin";
 
 const TopicList = () => {
+  useEffect(() => {
+    document.title = "Danh sách chủ đề";
+  }, []);
   return (
     <List>
       <Datagrid>
         <TextField source="topicId" label="ID" />
         <TextField source="topicName" label="Tên chủ đề" />
-         <FunctionField
+        <FunctionField
           label="Trạng thái"
           render={(record) => (record.status ? "Hiện" : "Ẩn")}
           sortBy="status"

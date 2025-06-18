@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Create,
   ImageField,
@@ -6,20 +7,25 @@ import {
   TextInput,
 } from "react-admin";
 
-const AuthorCreate = () => (
-  <Create>
-    <SimpleForm>
-      <TextInput source="authorName" label="Tên tác giả" />
-      <ImageInput
-        source="image"
-        label="Hình ảnh"
-        accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
+const AuthorCreate = () => {
+  useEffect(() => {
+    document.title = "Tạo mới tác giả";
+  }, []);
+  return (
+    <Create mutationMode="pessimistic">
+      <SimpleForm>
+        <TextInput source="authorName" label="Tên tác giả" />
+        <ImageInput
+          source="image"
+          label="Hình ảnh"
+          accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
         >
-        <ImageField source="src" title="title" />
-      </ImageInput>
-      <TextInput source="description" label="Mô tả" multiline />
-    </SimpleForm>
-  </Create>
-);
+          <ImageField source="src" title="title" />
+        </ImageInput>
+        <TextInput source="description" label="Mô tả" multiline />
+      </SimpleForm>
+    </Create>
+  );
+};
 
 export default AuthorCreate;

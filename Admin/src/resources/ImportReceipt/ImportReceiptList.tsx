@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Datagrid,
   DateField,
@@ -25,6 +26,9 @@ const ImportReceiptFilter = [
   </ReferenceInput>,
 ];
 const ImportReceiptList = () => {
+  useEffect(() => {
+    document.title = "Danh sách phiếu nhập hàng";
+  }, []);
   return (
     <List
       filters={ImportReceiptFilter}

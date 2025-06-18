@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   DateField,
@@ -76,7 +76,9 @@ const ContactShow = () => {
         console.log("Error: ", error);
       });
   };
-
+  useEffect(() => {
+    document.title = "Chi tiết liên hệ";
+  }, []);
   return (
     <Show>
       <CustomShowLayout />

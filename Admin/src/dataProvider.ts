@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
   DataProvider,
   DeleteManyParams,
@@ -90,15 +89,20 @@ const dataProvider: DataProvider = {
     const { field = "id", order = "ASC" } = sort;
     console.log("resource: ", resource);
     let baseUrl = "public";
-    if (resource === "contacts" || resource === "import-receipts") {
+    if (
+      resource === "contacts" ||
+      resource === "import-receipts" ||
+      resource === "orders" ||
+      resource === "stocks"
+    ) {
       baseUrl = "staff";
-    }
-    if (resource === "carts") {
+    } else if (resource === "users") {
       baseUrl = "admin";
     }
+
     const idField = idFieldMapping[resource] || "id";
 
-    const query = {
+    let query = {
       pageNumber: page.toString(),
       pageSize: perPage.toString(),
       sortBy: field,
@@ -108,6 +112,12 @@ const dataProvider: DataProvider = {
     if (resource === "categories") {
       query.type = "children";
     }
+    if (resource === "menus") {
+      query = {
+        ...query,
+        type: "children",
+      };
+    }
 
     const queryString = new URLSearchParams(query).toString();
     const url = `${API_URL}/${baseUrl}/${resource}?${queryString}`;
@@ -115,44 +125,46 @@ const dataProvider: DataProvider = {
     if (!response) {
       throw new Error("Failed to fetch data from API");
     }
+    console.log("data: ", response.json.content);
+
     // console.log("response: ", url);
     // console.log("response: ", queryString);
     // console.log("response: ", response.json);
     const data = response.json.content.map(
-      (item: { [x: string]: any; image: any }) => ({
+      (item: {
+        [x: string]: any;
+        image?: string;
+        images?: { fileName: string }[];
+        avatar?: string;
+      }) => ({
         id: item[idField],
         ...item,
-        image: item.image ? `${API_IMAGE}${item.image}` : null,
+        avatar: item.avatar ? API_IMAGE + item.avatar : null,
+        image: item.image ? API_IMAGE + item.image : null,
+        images: item.images
+          ? item.images.map(
+              (img: { fileName: string }) => API_IMAGE + img.fileName,
+            )
+          : [],
       }),
     );
-    if (resource === "carts") {
-      data.forEach((item: any) => {
-        item.products = item.cartItems.map((item: any) => ({
-          ...item,
-          product: {
-            ...item.product,
-            images: item.product.images
-              ? item.product.images.map(
-                  (img: any) => `${API_IMAGE}${img.fileName}`,
-                )
-              : null,
-          },
-        }));
-      });
-    }
 
+    console.log("data: ", data);
     return {
       data: data,
       total: response.json.totalElements,
+      lastPage: response.json.lastPage,
     };
   },
 
   getOne: async (resource, params) => {
     let baseUrl = "public";
+    const supUrl = resource === "carts" ? "/user" : "";
     if (resource === "contacts" || resource === "import-receipts") {
       baseUrl = "staff";
     }
-    const url = `${API_URL}/${baseUrl}/${resource}/${params.id}`;
+
+    const url = `${API_URL}/${baseUrl}/${resource}${supUrl}/${params.id}`;
     const idField = idFieldMapping[resource] || "id";
     const response = await httpClient.get(url);
     if (!response) {
@@ -161,6 +173,7 @@ const dataProvider: DataProvider = {
     const data = {
       id: response.json[idField],
       ...response.json,
+      avatar: response.json.avatar ? API_IMAGE + response.json.avatar : null,
       image: response.json.image ? API_IMAGE + response.json.image : null,
       images: response.json.images
         ? response.json.images.map((img: any) => {
@@ -169,6 +182,19 @@ const dataProvider: DataProvider = {
           })
         : null,
     };
+    if (resource === "orders") {
+      data.orderItems = response.json.orderItems.map((item: any) => ({
+        ...item,
+        product: {
+          ...item.product,
+          images: item.product.images
+            ? item.product.images.map(
+                (img: any) => `${API_IMAGE}${img.fileName}`,
+              )
+            : null,
+        },
+      }));
+    }
     if (resource === "carts") {
       data.cartItems = response.json.cartItems.map((item: any) => ({
         ...item,
@@ -254,7 +280,8 @@ const dataProvider: DataProvider = {
       resource === "banners" ||
       resource === "products" ||
       resource === "categories" ||
-      resource === "publishers"
+      resource === "publishers" ||
+      resource === "posts"
     ) {
       if (data.images && Array.isArray(data.images)) {
         data.images.forEach((img: any) => {
@@ -279,7 +306,7 @@ const dataProvider: DataProvider = {
         if (data[key] !== undefined && data[key] !== null) {
           formData.append(
             key,
-            typeof data[key] === "object"
+            typeof data[key] === "object" && !Array.isArray(data[key])
               ? JSON.stringify(data[key])
               : data[key],
           );
@@ -326,7 +353,8 @@ const dataProvider: DataProvider = {
       resource === "banners" ||
       resource === "products" ||
       resource === "categories" ||
-      resource === "publishers"
+      resource === "publishers" ||
+      resource === "posts"
     ) {
       if (data.images && Array.isArray(data.images)) {
         data.images.forEach((img: any) => {

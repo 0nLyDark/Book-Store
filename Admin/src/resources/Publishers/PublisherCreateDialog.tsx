@@ -1,5 +1,5 @@
 import { Dialog, DialogTitle, DialogContent } from "@mui/material";
-import { Create, ImageInput, SimpleForm, TextInput } from "react-admin";
+import { Create, ImageField, ImageInput, SimpleForm, TextInput } from "react-admin";
 
 interface DialogProps {
   open: boolean;
@@ -26,7 +26,9 @@ const PublisherCreateDialog: React.FC<DialogProps> = ({ open, onClose }) => {
               source="image"
               label="Hình ảnh"
               accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
-            />
+            >
+              <ImageField source="src" title="title" />
+            </ImageInput>
           </SimpleForm>
         </Create>
       </DialogContent>

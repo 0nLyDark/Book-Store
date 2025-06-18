@@ -1,10 +1,13 @@
 import axios from "axios";
-import { API_URL, httpClient } from "./dataProvider";
+import { API_URL } from "./dataProvider";
 
 interface LoginParams {
   username: string;
   password: string;
 }
+type GoogleLoginParams = {
+  id_token: string;
+};
 interface CheckParamsErr {
   status: number;
   response?: {
@@ -17,43 +20,57 @@ interface CheckParamsErr {
 // authProvider.ts
 
 const authProvider = {
-  login: async ({ username, password }: LoginParams) => {
+  login: async (params: LoginParams | GoogleLoginParams) => {
+    const { username, password, id_token } = params as LoginParams &
+      GoogleLoginParams;
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/auth/login",
-        {
-          username: username,
-          password: password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
+      let response;
+      if (id_token) {
+        response = await axios.post(
+          `${API_URL}/auth/google`,
+          {
+            token: id_token,
           },
-          withCredentials: true,
-        },
-      );
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          },
+        );
+      } else {
+        response = await axios.post(
+          `${API_URL}/auth/login`,
+          {
+            username: username,
+            password: password,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          },
+        );
+      }
       // Store the JWT token in local storage
       const token = response.data["jwt-token"];
       localStorage.setItem("token", token);
-      const responseUser = await axios.get(
-        "http://localhost:8080/api/public/users/infor",
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
+      const responseUser = await axios.get(`${API_URL}/public/users/infor`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        withCredentials: true,
+      });
       const roles = responseUser.data.roles;
       const roleArray = roles.map((role: any) => role.roleName);
       console.log("roles:: ", roleArray);
       localStorage.setItem("role", JSON.stringify(roleArray));
       return Promise.resolve();
     } catch (error) {
-      return Promise.reject(
-        new Error("Sai tài khoản hoặc mật khẩu. Vui lòng thử lại."),
-      );
+      console.error("Login error:   ", error);
+      return Promise.reject(new Error("Đăng nhập thất bại. Vui lòng thử lại."));
       //   return Promise.reject(error);
     }
   },
@@ -75,7 +92,8 @@ const authProvider = {
     ) {
       return Promise.resolve();
     }
-    return Promise.reject();
+
+    return Promise.reject("Tài khoản không có quyền truy cập");
   },
 
   getPermissions: () => {
@@ -98,7 +116,9 @@ const authProvider = {
     } else if (error.status === 403) {
       throw new Error("Bạn không có quyền truy cập thông tin này");
     } else if (error.status === 400) {
-      throw new Error("Dữ liệu không hợp lệ hoặc trùng lặp");
+      const message =
+        error.response?.data?.message || "Dữ liệu không hợp lệ hoặc trùng lặp";
+      throw new Error(message);
     }
     return Promise.resolve();
   },

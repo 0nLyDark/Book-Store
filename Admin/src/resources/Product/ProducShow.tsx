@@ -1,5 +1,4 @@
-import { Label } from "@mui/icons-material";
-import { Box, Stack } from "@mui/material";
+import { Box } from "@mui/material";
 import {
   ArrayField,
   ChipField,
@@ -22,11 +21,11 @@ const ProductShow = () => (
           gap: 3,
         }}
       >
-        <Box>
+        {/* <Box>
           <Labeled label="Product ID" sx={{ fontWeight: "bold" }}>
             <TextField source="productId" />
           </Labeled>
-        </Box>
+        </Box> */}
         <Box>
           <Labeled label="Tên sách" sx={{ fontWeight: "bold" }}>
             <TextField source="productName" />
@@ -35,6 +34,11 @@ const ProductShow = () => (
         <Box>
           <Labeled label="Mã sách" sx={{ fontWeight: "bold" }}>
             <TextField source="isbn" />
+          </Labeled>
+        </Box>
+        <Box>
+          <Labeled label="Hình thức" sx={{ fontWeight: "bold" }}>
+            <TextField source="format" />
           </Labeled>
         </Box>
         <Box>
@@ -67,8 +71,11 @@ const ProductShow = () => (
           </Labeled>
         </Box>
         <Box>
-          <Labeled label="% Giảm giá" sx={{ fontWeight: "bold" }}>
-            <NumberField source="discount" />
+          <Labeled label="Giảm giá" sx={{ fontWeight: "bold" }}>
+            <FunctionField
+              label="Giảm giá"
+              render={(record: any) => `${record.discount}%`}
+            />
           </Labeled>
         </Box>
 
@@ -126,7 +133,7 @@ const ProductShow = () => (
       <Box>
         <Labeled label="Ảnh" sx={{ fontWeight: "bold" }}>
           <ArrayField source="images" label="Ảnh">
-            <SingleFieldList>
+            <SingleFieldList linkType={false}>
               <FunctionField
                 render={(image) => (
                   <img
@@ -134,7 +141,8 @@ const ProductShow = () => (
                     alt="Ảnh"
                     style={{
                       width: 100,
-                      height: "auto",
+                      height: 100,
+                      objectFit: "contain",
                       marginRight: 8,
                       borderRadius: 4,
                     }}
@@ -148,7 +156,15 @@ const ProductShow = () => (
 
       <Box>
         <Labeled label="Mô tả" sx={{ fontWeight: "bold" }}>
-          <TextField source="description" />
+          <FunctionField
+            label="Mô tả"
+            render={(record) => (
+              <div
+                dangerouslySetInnerHTML={{ __html: record.description }}
+                style={{ whiteSpace: "normal" }}
+              />
+            )}
+          />
         </Labeled>
       </Box>
     </SimpleShowLayout>

@@ -1,11 +1,15 @@
 import { Box } from "@mui/material";
 import {
+  AutocompleteInput,
   Button,
   Create,
   ImageField,
   ImageInput,
+  minLength,
   NumberInput,
   ReferenceInput,
+  regex,
+  required,
   SelectArrayInput,
   SelectInput,
   SimpleForm,
@@ -13,23 +17,30 @@ import {
   useRefresh,
 } from "react-admin";
 import AuthorCreateDialog from "../Authors/AuthorCreateDialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CategoryCreateDialog from "../Categories/CategoryCreateDialog";
 import LanguageCreateDialog from "../Languages/LanguageCreateDialog";
 import SupplierCreateDialog from "../Suppliers/SupplierCreateDialog";
 import PublisherCreateDialog from "../Publishers/PublisherCreateDialog";
+import CustomRichTextInput from "../../components/CustomRichTextInput";
 
+const minLength6 = minLength(6, "Phải nhập ít nhất 6 ký tự");
+export const validateIsbn = [
+  required(),
+  regex(/^\d{10}(\d{3})?$/, "ISBN phải có 10 hoặc 13 chữ số, không dấu gạch"),
+];
 const ProductCreate = () => {
   const [openAuthorDialog, setOpenAuthorDialog] = useState(false);
   const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
   const [openLanguageDialog, setOpenLanguageDialog] = useState(false);
   const [openPublisherDialog, setOpenPublisherDialog] = useState(false);
   const [openSupplierDialog, setOpenSupplierDialog] = useState(false);
-
   const refresh = useRefresh();
-
+  useEffect(() => {
+    document.title = "Tạo mới sản phẩm";
+  }, []);
   return (
-    <Create>
+    <Create mutationMode="pessimistic">
       <SimpleForm>
         <Box display="flex" gap={2} flexWrap="wrap">
           {/* Cột 1 */}
@@ -40,8 +51,16 @@ const ProductCreate = () => {
               required
               fullWidth
             />
-            <TextInput source="isbn" label="Mã sách" required fullWidth />
+            <TextInput
+              source="isbn"
+              label="Mã sách"
+              validate={validateIsbn}
+              inputProps={{ maxLength: 13 }}
+              fullWidth
+            />
             <TextInput source="size" label="Kích thước" fullWidth />
+            <TextInput source="weight" label="Trọng lượng" fullWidth />
+            <TextInput source="format" label="Hình thức" fullWidth />
             <NumberInput
               source="year"
               label="Năm xuất bản"
@@ -63,13 +82,7 @@ const ProductCreate = () => {
               required
               fullWidth
             />
-            <NumberInput
-              source="quantity"
-              label="Số lượng"
-              min={0}
-              required
-              fullWidth
-            />
+
             <NumberInput
               source="discount"
               label="% Giảm giá"
@@ -86,11 +99,13 @@ const ProductCreate = () => {
             <Box display="flex" gap={2} flexWrap="wrap">
               <Box flex={1}>
                 <ReferenceInput source="authorIds" reference="authors" multiple>
-                  <SelectArrayInput
+                  <AutocompleteInput
                     optionText="authorName"
                     label="Tác giả"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
+                    multiple
                   />
                 </ReferenceInput>
               </Box>
@@ -107,11 +122,13 @@ const ProductCreate = () => {
                   reference="categories"
                   multiple
                 >
-                  <SelectArrayInput
+                  <AutocompleteInput
                     optionText="categoryName"
                     label="Danh mục"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
+                    multiple
                   />
                 </ReferenceInput>
               </Box>
@@ -128,11 +145,13 @@ const ProductCreate = () => {
                   reference="languages"
                   multiple
                 >
-                  <SelectArrayInput
+                  <AutocompleteInput
                     optionText="name"
                     label="Ngôn ngữ"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
+                    multiple
                   />
                 </ReferenceInput>
               </Box>
@@ -148,9 +167,10 @@ const ProductCreate = () => {
                   source="supplier.supplierId"
                   reference="suppliers"
                 >
-                  <SelectInput
+                  <AutocompleteInput
                     optionText="supplierName"
                     label="Nhà cung cấp"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
                   />
@@ -168,9 +188,10 @@ const ProductCreate = () => {
                   source="publisher.publisherId"
                   reference="publishers"
                 >
-                  <SelectInput
+                  <AutocompleteInput
                     optionText="publisherName"
                     label="Nhà sản xuất"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
                   />
@@ -182,7 +203,6 @@ const ProductCreate = () => {
                 </Button>
               </Box>
             </Box>
-
             <ImageInput
               source="images"
               accept={{ "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] }}
@@ -190,7 +210,8 @@ const ProductCreate = () => {
             >
               <ImageField source="src" title="title" sx={{ width: 135 }} />
             </ImageInput>
-            <TextInput source="description" label="Mô tả" multiline fullWidth />
+
+            <CustomRichTextInput source="description" label="Mô tả" />
           </Box>
         </Box>
         <AuthorCreateDialog
