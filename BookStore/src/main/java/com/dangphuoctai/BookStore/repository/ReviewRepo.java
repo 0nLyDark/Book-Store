@@ -21,13 +21,14 @@ public interface ReviewRepo extends JpaRepository<Review, Long> {
 
     Page<Review> findAll(Specification<Review> reviewSpecification, Pageable pageDetails);
 
-    @Query(value = """
-            SELECT
-                COALESCE(AVG(r.star), 0) AS averageStar,
-                COUNT(*) AS totalReviews
-            FROM reviews r
-            WHERE r.product_id = :productId
-            """, nativeQuery = true)
+    @Query("""
+                SELECT new com.dangphuoctai.BookStore.payloads.dto.Review.StarDTO(
+                    COALESCE(AVG(r.star), 0),
+                    COUNT(r)
+                )
+                FROM Review r
+                WHERE r.product.productId = :productId
+            """)
     StarDTO getStarsByProductId(Long productId);
 
 }

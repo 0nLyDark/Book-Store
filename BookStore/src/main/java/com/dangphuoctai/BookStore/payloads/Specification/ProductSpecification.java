@@ -1,5 +1,6 @@
 package com.dangphuoctai.BookStore.payloads.Specification;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,12 +14,12 @@ import jakarta.persistence.criteria.Predicate;
 public class ProductSpecification {
     public static Specification<Product> filter(
             String isbn,
+            Integer day,
             Double minPrice,
             Double maxPrice,
             Boolean isSale,
             Boolean status,
             List<Long> categoryIds,
-            String slugCategory,
             List<Long> authorIds,
             List<Long> languageIds,
             List<Long> supplierIds,
@@ -39,6 +40,11 @@ public class ProductSpecification {
             // Lọc theo discount
             if (isSale != null && isSale == true)
                 predicates.add(cb.notEqual(root.get("discount"), 0));
+            // Lọc theo thời gian
+            if (day != null && day > 0) {
+                LocalDate thresholdDate = LocalDate.now().minusDays(day);
+                predicates.add(cb.greaterThan(root.get("createdAt"), thresholdDate));
+            }
 
             // Lọc theo trạng thái
             if (status != null)
@@ -47,10 +53,6 @@ public class ProductSpecification {
             // Lọc theo categoryIds
             if (categoryIds != null && !categoryIds.isEmpty()) {
                 predicates.add(root.join("categories", JoinType.LEFT).get("categoryId").in(categoryIds));
-            }
-            // Lọc theo category slug
-            if (slugCategory != null && !slugCategory.trim().isEmpty()) {
-                predicates.add(cb.equal(root.join("categories").get("slug"), slugCategory));
             }
 
             // Lọc theo author

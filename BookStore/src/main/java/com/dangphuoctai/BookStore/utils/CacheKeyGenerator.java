@@ -13,7 +13,7 @@ public class CacheKeyGenerator {
 
     public static String generateProductCacheKey(
             String keyword, String isbn, Double minPrice, Double maxPrice,
-            Boolean isSale, Long categoryId,
+            Boolean isSale, Boolean isNew, Long categoryId, String slugCategory,
             List<Long> authorIds, List<Long> languageIds,
             List<Long> supplierId, List<Long> publisherId, Boolean status,
             Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
@@ -24,6 +24,8 @@ public class CacheKeyGenerator {
             params.put("minPrice", minPrice);
             params.put("maxPrice", maxPrice);
             params.put("isSale", isSale);
+            params.put("isNew", isNew);
+            params.put("slugCategory", slugCategory);
             params.put("categoryId", categoryId);
             params.put("authorIds", authorIds);
             params.put("languageIds", languageIds);

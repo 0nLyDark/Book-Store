@@ -20,7 +20,7 @@ public interface ProductService {
         // sortBy, String sortOrder);
 
         ProductResponse getAllProducts(String keyword, String isbn, Double minPrice, Double maxPrice,
-                        Boolean isSale, Long categoryId,
+                        Boolean isSale, Boolean isNew, Long categoryId, String slugCategory,
                         List<Long> authorIds, List<Long> languageIds,
                         List<Long> supplierIds, List<Long> publisherIds, Boolean status,
                         Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);

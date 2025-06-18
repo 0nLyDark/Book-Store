@@ -59,6 +59,6 @@ public class Review {
 
     private LocalDateTime createdAt;
 
-    private LocalDateTime updateAt;
+    private LocalDateTime updatedAt;
 
 }

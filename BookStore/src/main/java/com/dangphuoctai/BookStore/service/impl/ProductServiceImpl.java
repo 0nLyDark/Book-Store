@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -90,6 +89,8 @@ public class ProductServiceImpl implements ProductService {
 
         @Value("${project.image}")
         private String path;
+        @Autowired
+        private BaseRedisService<String, String, Integer> productDayNewRedisService;
 
         @Autowired
         private BaseRedisService<String, String, ProductDTO> productRedisService;
@@ -98,6 +99,8 @@ public class ProductServiceImpl implements ProductService {
         private BaseRedisService<String, String, ProductResponse> productResponseRedisService;
 
         private static final String PRODUCT_CACHE_KEY = "product";
+        private static final String PRODUCT_DAY_NEW_KEY = "product:dayNew";
+
         private static final String PRODUCT_PAGE_CACHE_KEY = "product:pages";
 
         @Override
@@ -160,20 +163,24 @@ public class ProductServiceImpl implements ProductService {
         @Transactional
         @Override
         public ProductResponse getAllProducts(String keyword, String isbn, Double minPrice, Double maxPrice,
-                        Boolean isSale, Long categoryId,
+                        Boolean isSale, Boolean isNew, Long categoryId, String slugCategory,
                         List<Long> authorIds, List<Long> languageIds,
                         List<Long> supplierIds, List<Long> publisherIds, Boolean status,
                         Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
                 // Check in Redis cache
                 String field = CacheKeyGenerator.generateProductCacheKey(
                                 keyword, isbn, minPrice, maxPrice,
-                                isSale, categoryId, authorIds, languageIds,
+                                isSale, isNew, categoryId, slugCategory, authorIds, languageIds,
                                 supplierIds, publisherIds, status,
                                 pageNumber, pageSize, sortBy, sortOrder);
                 ProductResponse cached = (ProductResponse) productResponseRedisService.hashGet(PRODUCT_PAGE_CACHE_KEY,
                                 field);
                 if (cached != null) {
                         return cached;
+                }
+                Integer dayNew = productDayNewRedisService.get(PRODUCT_DAY_NEW_KEY);
+                if (dayNew == null) {
+                        dayNew = 7;
                 }
                 // Select products from database
                 Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
@@ -185,9 +192,15 @@ public class ProductServiceImpl implements ProductService {
                                         .orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId",
                                                         categoryId));
                         getListCategoryIds(category, categoryIds);
+                } else if (slugCategory != null && !slugCategory.trim().isEmpty()) {
+                        Category category = categoryRepo.findBySlug(slugCategory)
+                                        .orElseThrow(() -> new ResourceNotFoundException("Category", "slugCategory",
+                                                        slugCategory));
+                        getListCategoryIds(category, categoryIds);
                 }
-                Specification<Product> productSpecification = ProductSpecification.filter(isbn,
-                                minPrice, maxPrice, isSale, status, categoryIds, null,
+
+                Specification<Product> productSpecification = ProductSpecification.filter(isbn, isNew ? dayNew : null,
+                                minPrice, maxPrice, isSale, status, categoryIds,
                                 authorIds, languageIds, supplierIds, publisherIds);
 
                 Page<Product> pageProducts;

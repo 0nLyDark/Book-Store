@@ -172,7 +172,7 @@ public class MenuServiceImpl implements MenuService {
                 Author author = authorRepo.findById(menuDTO.getRefId())
                         .orElseThrow(() -> new ResourceNotFoundException("Author", "authorId", menuDTO.getRefId()));
                 menu.setName(author.getAuthorName());
-                menu.setLink(author.getAuthorId() + "-" + CreateSlug.toSlug(author.getAuthorName()));
+                menu.setLink(author.getAuthorId() + "");
                 break;
             case PAGE:
                 Post page = postRepo.findById(menuDTO.getRefId())

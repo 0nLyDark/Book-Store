@@ -9,10 +9,13 @@ public interface ImportReceiptService {
 
     ImportReceiptDTO getImportReceiptById(Long importReceiptId);
 
-    ImportReceiptResponse getAllImportReceipts(Boolean status,Long userId,Long supplierId, Integer pageNumber, Integer pageSize, String sortBy,
+    ImportReceiptResponse getAllImportReceipts(Boolean status, Long userId, Long supplierId, Integer pageNumber,
+            Integer pageSize, String sortBy,
             String sortOrderBy);
 
     ImportReceiptDTO updateImportReceiptStatus(Long importReceiptId, Boolean status);
+
+    ImportReceiptDTO updateImportReceiptNote(Long importReceiptId, String note);
 
     String deleteImportReceipt(Long importReceiptId);
 

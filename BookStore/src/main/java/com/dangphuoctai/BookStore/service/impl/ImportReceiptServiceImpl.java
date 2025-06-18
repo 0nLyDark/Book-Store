@@ -191,6 +191,24 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
         }
 
         @Override
+        public ImportReceiptDTO updateImportReceiptNote(Long importReceiptId, String note) {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                Jwt jwt = (Jwt) authentication.getPrincipal();
+                Long userId = jwt.getClaim("userId");
+                String role = jwt.getClaim("role");
+                ImportReceipt importReceipt = importReceiptRepo.findById(importReceiptId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Import Receipt", "importReceiptId",
+                                                importReceiptId));
+                if (!importReceipt.getCreatedBy().equals(userId) && !"ADMIN".equals(role)) {
+                        throw new AccessDeniedException("Bạn không có quyền cập nhật phiếu nhập này");
+                }
+                importReceipt.setNote(note);
+                importReceiptRepo.save(importReceipt);
+
+                return modelMapper.map(importReceipt, ImportReceiptDTO.class);
+        }
+
+        @Override
         public String deleteImportReceipt(Long importReceiptId) {
                 ImportReceipt importReceipt = importReceiptRepo.findById(importReceiptId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Import Receipt", "importReceiptId",

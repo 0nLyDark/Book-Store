@@ -22,16 +22,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.entity.File;
+import com.dangphuoctai.BookStore.entity.Order;
 import com.dangphuoctai.BookStore.entity.OrderItem;
-import com.dangphuoctai.BookStore.entity.Publisher;
 import com.dangphuoctai.BookStore.entity.Review;
 import com.dangphuoctai.BookStore.entity.User;
 import com.dangphuoctai.BookStore.enums.FileType;
+import com.dangphuoctai.BookStore.enums.OrderStatus;
 import com.dangphuoctai.BookStore.exceptions.APIException;
 import com.dangphuoctai.BookStore.exceptions.ResourceNotFoundException;
-import com.dangphuoctai.BookStore.payloads.Specification.PublisherSpecification;
 import com.dangphuoctai.BookStore.payloads.Specification.ReviewSpecification;
 import com.dangphuoctai.BookStore.payloads.dto.Review.ReviewDTO;
+import com.dangphuoctai.BookStore.payloads.dto.Review.ReviewRequest;
 import com.dangphuoctai.BookStore.payloads.dto.Review.StarDTO;
 import com.dangphuoctai.BookStore.payloads.response.ReviewResponse;
 import com.dangphuoctai.BookStore.repository.OrderItemRepo;
@@ -112,11 +113,12 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public ReviewDTO createReviewByOrderItem(ReviewDTO reviewDTO, List<MultipartFile> images) throws IOException {
+    public ReviewDTO createReviewByOrderItem(ReviewRequest reviewRequest, List<MultipartFile> images)
+            throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
-        Long orderItemId = reviewDTO.getOrderItemId();
+        Long orderItemId = reviewRequest.getOrderItemId();
         if (orderItemId == null) {
             throw new APIException("Không có thông tin orderItemId");
         }
@@ -125,24 +127,30 @@ public class ReviewServiceImpl implements ReviewService {
         }
         OrderItem orderItem = orderItemRepo.findById(orderItemId)
                 .orElseThrow(() -> new ResourceNotFoundException("OrderItem", "orderItemId", orderItemId));
-        User user = orderItem.getOrder().getUser();
+        Order order = orderItem.getOrder();
+        User user = order.getUser();
         if (userId != user.getUserId()) {
             throw new AccessDeniedException("Bạn không có quyền tạo đánh giá cho sản phẩm của đơn hàng này");
+        }
+        if (!OrderStatus.COMPLETED.equals(order.getOrderStatus())) {
+            throw new APIException("Đơn hàng của bạn chưa hoàn tất, bạn chưa thể đánh giá");
         }
         Review review = new Review();
         review.setFullName(user.getFullName());
         review.setAvatar(user.getAvatar());
-        review.setStar(reviewDTO.getStar());
-        review.setComment(reviewDTO.getComment());
+        review.setStar(reviewRequest.getStar());
+        review.setComment(reviewRequest.getComment());
         review.setProduct(orderItem.getProduct());
         review.setOrderItem(orderItem);
-        for (MultipartFile image : images) {
-            String fileName = fileService.uploadImage(path, image);
-            File file = new File();
-            file.setFileName(fileName);
-            file.setType(FileType.IMAGE);
-            file.setReview(review);
-            review.getImages().add(file);
+        if (images != null) {
+            for (MultipartFile image : images) {
+                String fileName = fileService.uploadImage(path, image);
+                File file = new File();
+                file.setFileName(fileName);
+                file.setType(FileType.IMAGE);
+                file.setReview(review);
+                review.getImages().add(file);
+            }
         }
         review.setCreatedAt(LocalDateTime.now());
         reviewRepo.save(review);
@@ -152,31 +160,35 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public ReviewDTO updateReviewByOrderItem(ReviewDTO reviewDTO, List<MultipartFile> images) throws IOException {
+    public ReviewDTO updateReviewByOrderItem(ReviewRequest reviewRequest, List<MultipartFile> images)
+            throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Long userId = jwt.getClaim("userId");
-        Long reviewId = reviewDTO.getReviewId();
+        Long reviewId = reviewRequest.getReviewId();
         Review review = reviewRepo.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review", "reviewId", reviewId));
         if (userId != review.getOrderItem().getOrder().getUserId()) {
             throw new AccessDeniedException("Bạn không có quyền tạo đánh giá cho sản phẩm của đơn hàng này");
         }
-        if (review.getUpdateAt() != null) {
+        if (review.getUpdatedAt() != null) {
             throw new APIException("Đánh giá chỉ được chỉnh sửa 1 lần, bạn đã thực hiện chỉnh sửa rồi!");
         }
-        review.setStar(reviewDTO.getStar());
-        review.setComment(reviewDTO.getComment());
+        review.setStar(reviewRequest.getStar());
+        review.setComment(reviewRequest.getComment());
         review.getImages().clear();
-        for (MultipartFile image : images) {
-            String fileName = fileService.uploadImage(path, image);
-            File file = new File();
-            file.setFileName(fileName);
-            file.setType(FileType.IMAGE);
-            file.setReview(review);
-            review.getImages().add(file);
+        log.info("images: " + review.getImages());
+        if (images != null) {
+            for (MultipartFile image : images) {
+                String fileName = fileService.uploadImage(path, image);
+                File file = new File();
+                file.setFileName(fileName);
+                file.setType(FileType.IMAGE);
+                file.setReview(review);
+                review.getImages().add(file);
+            }
         }
-        review.setUpdateAt(LocalDateTime.now());
+        review.setUpdatedAt(LocalDateTime.now());
         reviewRepo.save(review);
 
         ReviewDTO reviewRes = modelMapper.map(review, ReviewDTO.class);

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.dangphuoctai.BookStore.payloads.dto.Review.ReviewDTO;
+import com.dangphuoctai.BookStore.payloads.dto.Review.ReviewRequest;
 import com.dangphuoctai.BookStore.payloads.dto.Review.StarDTO;
 import com.dangphuoctai.BookStore.payloads.response.ReviewResponse;
 import com.dangphuoctai.BookStore.service.ReviewService;
@@ -47,9 +48,9 @@ public class ReviewController {
     @PostMapping("/public/reviews/orderItem")
     public ResponseEntity<ReviewDTO> createReviewByOrderItem(
             @RequestParam(value = "files", required = false) List<MultipartFile> images,
-            @ModelAttribute("review") ReviewDTO reviewDTO) throws IOException {
+            @ModelAttribute ReviewRequest reviewRequest) throws IOException {
 
-        ReviewDTO created = reviewService.createReviewByOrderItem(reviewDTO, images);
+        ReviewDTO created = reviewService.createReviewByOrderItem(reviewRequest, images);
 
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
@@ -57,9 +58,9 @@ public class ReviewController {
     @PutMapping("/public/reviews/orderItem")
     public ResponseEntity<ReviewDTO> updateReviewByOrderItem(
             @RequestParam(value = "files", required = false) List<MultipartFile> images,
-            @ModelAttribute("review") ReviewDTO reviewDTO) throws IOException {
+            @ModelAttribute ReviewRequest reviewRequest) throws IOException {
 
-        ReviewDTO updated = reviewService.updateReviewByOrderItem(reviewDTO, images);
+        ReviewDTO updated = reviewService.updateReviewByOrderItem(reviewRequest, images);
 
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
@@ -68,7 +69,7 @@ public class ReviewController {
     public ResponseEntity<ReviewResponse> getAllReviewsByProductId(
             @PathVariable Long productId,
             @RequestParam(value = "star", required = false) Integer star,
-            @RequestParam(value = "isImage", required = false) Boolean isImage,
+            @RequestParam(value = "isImage", required = false, defaultValue = "false") Boolean isImage,
             @RequestParam(defaultValue = "0") Integer pageNumber,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(defaultValue = "reviewId") String sortBy,

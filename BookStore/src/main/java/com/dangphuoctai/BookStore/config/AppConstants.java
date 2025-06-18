@@ -42,11 +42,12 @@ public class AppConstants {
             "/api/public/categories/**",
             "/api/public/products/**",
             "/api/public/file/**",
-            "api/public/orders/customer",
-            "api/public/orders/otp",
-            "api/public/orders/code/**",
-            "api/public/promotions/**",
-            "api/public/payment/**" };
+            "/api/public/reviews/product/**",
+            "/api/public/orders/customer",
+            "/api/public/orders/otp",
+            "/api/public/orders/code/**",
+            "/api/public/promotions/**",
+            "/api/public/payment/**" };
     public static final String[] USER_URLS = { "/api/public/**" };
     public static final String[] STAFF_URLS = { "/api/staff/**" };
     public static final String[] ADMIN_URLS = { "/api/admin/**" };

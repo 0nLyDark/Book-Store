@@ -82,7 +82,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000", // nếu frontend dev chạy ở đây
+                "http://localhost:5173", // nếu frontend dev chạy ở đây
+                "https://b4b3-2405-4802-8008-5730-2128-d62-1739-62a0.ngrok-free.app", // nếu frontend máy khác customer
+                "https://bcef-2402-800-63b8-bcfc-7010-af69-2e41-78d7.ngrok-free.app", // nếu frontend máy khác admin
+                "https://6883-2405-4802-8008-5730-e441-dc-8ae6-29ce.ngrok-free.app" // nếu frontend gọi qua ngrok
+        )); // configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
