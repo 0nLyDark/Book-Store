@@ -147,6 +147,7 @@ public class AuthController {
         @PostMapping("auth/refresh-token")
         public ResponseEntity<?> refreshToken(HttpServletRequest request) throws JOSEException, ParseException {
                 // 1. Lấy refresh token từ cookie
+
                 Cookie[] cookies = request.getCookies();
                 if (cookies == null) {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No cookies found");
@@ -158,6 +159,7 @@ public class AuthController {
                                 break;
                         }
                 }
+
                 // 2. Kiểm tra token
                 if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid refresh token");

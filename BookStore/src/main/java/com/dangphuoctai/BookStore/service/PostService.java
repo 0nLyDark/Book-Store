@@ -16,7 +16,8 @@ public interface PostService {
 
     List<PostDTO> getManyPostById(List<Long> postIds);
 
-    PostResponse getAllPost(Boolean status, PostType type, Long topicId, Integer pageNumber, Integer pageSize,
+    PostResponse getAllPost(Boolean status, PostType type, Long topicId, String slugTopic, Integer pageNumber,
+            Integer pageSize,
             String sortBy,
             String sortOrder);
 

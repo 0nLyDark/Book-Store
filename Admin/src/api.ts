@@ -57,7 +57,7 @@ axiosInstance.interceptors.response.use(
             withCredentials: true,
           },
         );
-
+        console.log("a");
         const newAccessToken = res.data["jwt-token"];
         localStorage.setItem("token", newAccessToken);
         axiosInstance.defaults.headers.common["Authorization"] =

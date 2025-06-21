@@ -114,12 +114,14 @@ public class PostServiceImpl implements PostService {
         }
 
         @Override
-        public PostResponse getAllPost(Boolean status, PostType type, Long topicId, Integer pageNumber,
+        public PostResponse getAllPost(Boolean status, PostType type, Long topicId, String slugTopic,
+                        Integer pageNumber,
                         Integer pageSize,
                         String sortBy,
                         String sortOrder) {
-                String field = String.format("status:%s|type:%s|topicId:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
-                                status, type, topicId, pageNumber, pageSize, sortBy, sortOrder);
+                String field = String.format(
+                                "status:%s|type:%s|topicId:%s|slugTopic:%s|page:%d|size:%d|sortBy:%s|sortOrder:%s",
+                                status, type, topicId, slugTopic, pageNumber, pageSize, sortBy, sortOrder);
                 PostResponse cached = (PostResponse) postResponseRedisService.hashGet(POST_PAGE_CACHE_KEY, field);
                 if (cached != null) {
                         return cached;
@@ -127,7 +129,7 @@ public class PostServiceImpl implements PostService {
                 Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
                                 : Sort.by(sortBy).descending();
                 Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-                Specification<Post> postSpecification = PostSpecification.filter(topicId, type, status);
+                Specification<Post> postSpecification = PostSpecification.filter(topicId, slugTopic, type, status);
 
                 Page<Post> pagePosts = postRepo.findAll(postSpecification, pageDetails);
 

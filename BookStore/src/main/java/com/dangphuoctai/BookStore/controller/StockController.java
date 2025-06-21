@@ -1,8 +1,6 @@
 package com.dangphuoctai.BookStore.controller;
 
-import java.util.List;
 
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,13 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dangphuoctai.BookStore.config.AppConstants;
 import com.dangphuoctai.BookStore.payloads.Stock.StockOverview;
-import com.dangphuoctai.BookStore.payloads.response.ProductResponse;
 import com.dangphuoctai.BookStore.payloads.response.StockResponse;
 import com.dangphuoctai.BookStore.service.StockService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  AutocompleteInput,
   BooleanInput,
   Button,
   Edit,
@@ -97,11 +98,13 @@ const ProductEdit = () => {
             <Box display="flex" gap={2} flexWrap="wrap">
               <Box flex={1}>
                 <ReferenceInput source="authorIds" reference="authors" multiple>
-                  <SelectArrayInput
+                  <AutocompleteInput
                     optionText="authorName"
                     label="Tác giả"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
+                    multiple
                   />
                 </ReferenceInput>
               </Box>
@@ -118,11 +121,13 @@ const ProductEdit = () => {
                   reference="categories"
                   multiple
                 >
-                  <SelectArrayInput
+                  <AutocompleteInput
                     optionText="categoryName"
                     label="Danh mục"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
+                    multiple
                   />
                 </ReferenceInput>
               </Box>
@@ -139,11 +144,13 @@ const ProductEdit = () => {
                   reference="languages"
                   multiple
                 >
-                  <SelectArrayInput
+                  <AutocompleteInput
                     optionText="name"
                     label="Ngôn ngữ"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
+                    multiple
                   />
                 </ReferenceInput>
               </Box>
@@ -159,9 +166,10 @@ const ProductEdit = () => {
                   source="supplier.supplierId"
                   reference="suppliers"
                 >
-                  <SelectInput
+                  <AutocompleteInput
                     optionText="supplierName"
                     label="Nhà cung cấp"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
                   />
@@ -179,9 +187,10 @@ const ProductEdit = () => {
                   source="publisher.publisherId"
                   reference="publishers"
                 >
-                  <SelectInput
+                  <AutocompleteInput
                     optionText="publisherName"
                     label="Nhà sản xuất"
+                    filterToQuery={(searchText) => ({ keyword: searchText })}
                     variant="outlined"
                     fullWidth
                   />
@@ -211,8 +220,7 @@ const ProductEdit = () => {
             >
               <ImageField source="src" title="title" sx={{ width: 135 }} />
             </ImageInput>
-            {/* <TextInput source="description" label="Mô tả" multiline fullWidth /> */}
-            <CustomRichTextInput source="description" label="Mô tả" />
+            <TextInput source="description" label="Mô tả" multiline fullWidth />
           </Box>
         </Box>
         <AuthorCreateDialog

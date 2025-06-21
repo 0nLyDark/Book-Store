@@ -236,8 +236,15 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setOrderStatus(status);
         orderRepo.save(order);
-
-        return modelMapper.map(order, OrderDTO.class);
+        OrderDTO orderRes = modelMapper.map(order, OrderDTO.class);
+        if (orderRes.getOrderStatus().equals(OrderStatus.COMPLETED)) {
+            String htmlContent = Email.generateOrderEmailContent(orderRes);
+            EmailDetails emailDetails = new EmailDetails(order.getEmail(), htmlContent,
+                    "BookStore - Thông báo giao hàng thành công",
+                    null);
+            emailService.sendMailWithAttachment(emailDetails);
+        }
+        return orderRes;
     }
 
     @Override

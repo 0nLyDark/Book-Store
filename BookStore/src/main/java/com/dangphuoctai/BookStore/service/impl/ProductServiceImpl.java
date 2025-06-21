@@ -180,7 +180,7 @@ public class ProductServiceImpl implements ProductService {
                 }
                 Integer dayNew = productDayNewRedisService.get(PRODUCT_DAY_NEW_KEY);
                 if (dayNew == null) {
-                        dayNew = 7;
+                        dayNew = 14;
                 }
                 // Select products from database
                 Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()

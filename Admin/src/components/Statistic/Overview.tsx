@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import axiosInstance from "../../api";
 import { Box, Card, CardContent, Typography } from "@mui/material";
 

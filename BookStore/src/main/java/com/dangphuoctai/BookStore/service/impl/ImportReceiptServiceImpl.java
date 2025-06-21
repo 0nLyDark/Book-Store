@@ -213,7 +213,9 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
                 ImportReceipt importReceipt = importReceiptRepo.findById(importReceiptId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Import Receipt", "importReceiptId",
                                                 importReceiptId));
-
+                if (importReceipt.getStatus() != true) {
+                        throw new APIException("Đơn hàng không ở trạng thái lỗ không thể xóa");
+                }
                 importReceiptRepo.delete(importReceipt);
 
                 return "Xóa phiếu nhập thành công";

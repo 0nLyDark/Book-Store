@@ -14,7 +14,6 @@ import com.dangphuoctai.BookStore.payloads.dto.Order.OrderDTO;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderRequest;
 import com.dangphuoctai.BookStore.payloads.dto.Order.OrderStatusDTO;
 import com.dangphuoctai.BookStore.payloads.response.OrderResponse;
-import com.dangphuoctai.BookStore.service.EmailService;
 import com.dangphuoctai.BookStore.service.OrderService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,9 +32,6 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
-
-    @Autowired
-    private EmailService emailService;
 
     @GetMapping("/public/orders/{orderId}")
     public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long orderId) {

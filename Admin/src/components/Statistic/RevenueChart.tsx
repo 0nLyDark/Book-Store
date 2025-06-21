@@ -23,7 +23,8 @@ const RevenueChart = () => {
   const [startDate, setStartDate] = useState("2024-01-01");
   const [endDate, setEndDate] = useState(() => {
     const today = new Date();
-    return today.toISOString().slice(0, 10);
+    today.setDate(today.getDate() + 1); // cộng thêm 1 ngày
+    return today.toISOString().slice(0, 10); // yyyy-MM-dd
   });
   const [loading, setLoading] = useState(false);
 
@@ -115,7 +116,9 @@ const RevenueChart = () => {
                 }
               />
               <Tooltip
-                formatter={(value: number) => `${value.toLocaleString()} đ`}
+                formatter={(value: number) =>
+                  `${Math.round(value).toLocaleString()} đ`
+                }
               />
               <Line
                 name="Doanh thu"

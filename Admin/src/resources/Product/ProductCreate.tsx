@@ -211,7 +211,7 @@ const ProductCreate = () => {
               <ImageField source="src" title="title" sx={{ width: 135 }} />
             </ImageInput>
 
-            <CustomRichTextInput source="description" label="Mô tả" />
+            <TextInput source="description" label="Mô tả" multiline fullWidth />
           </Box>
         </Box>
         <AuthorCreateDialog

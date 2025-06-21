@@ -13,6 +13,7 @@ import jakarta.persistence.criteria.Predicate;
 public class PostSpecification {
     public static Specification<Post> filter(
             Long topicId,
+            String slugTopic,
             PostType type,
             Boolean status) {
         return (root, query, cb) -> {
@@ -20,6 +21,9 @@ public class PostSpecification {
             // Lọc theo topicId
             if (topicId != null) {
                 predicates.add(cb.equal(root.get("topic").get("topicId"), topicId));
+            }
+            if (slugTopic != null && !slugTopic.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("topic").get("slug"), slugTopic));
             }
 
             // Lọc theo Status

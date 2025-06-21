@@ -67,12 +67,13 @@ public class PostController {
             @RequestParam(name = "status", required = false) Boolean status,
             @RequestParam(name = "type", required = false) PostType type,
             @RequestParam(name = "topicId", required = false) Long topicId,
+            @RequestParam(name = "slugTopic", required = false) String slugTopic,
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_POSTS_BY, required = false) String sortBy,
             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
 
-        PostResponse postResponse = postService.getAllPost(status, type, topicId,
+        PostResponse postResponse = postService.getAllPost(status, type, topicId, slugTopic,
                 pageNumber == 0 ? pageNumber : pageNumber - 1,
                 pageSize,
                 "id".equals(sortBy) ? "postId" : sortBy,

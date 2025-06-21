@@ -83,6 +83,9 @@ public class AuthServiceImpl implements AuthService {
             if (userRegister.getPassword() == null || userRegister.getPassword().isBlank()) {
                 throw new APIException("Mật khẩu không hợp lệ");
             }
+            if (userRegister.getPassword().length() < 6) {
+                throw new APIException("Mật khẩu phải ít nhất 6 ký tự");
+            }
             Optional<User> userOptional = userRepo.findByEmail(userRegister.getEmail());
             User user = null;
             if (userOptional.isPresent()) {

@@ -29,6 +29,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Roboto",
   },
+  titleh: {
+    fontSize: 24,
+    marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
   title: {
     fontSize: 20,
     marginBottom: 20,
@@ -112,6 +118,7 @@ const OrderPDF = ({ data }: { data: any }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
+        <Text style={styles.titleh}>BOOK STORE</Text>
         <Text style={styles.title}>Hóa đơn mua hàng</Text>
 
         {/* Thông tin đơn hàng */}
@@ -134,7 +141,8 @@ const OrderPDF = ({ data }: { data: any }) => {
             Phương thức thanh toán: {data.payment.paymentMethod}
           </Text>
           <Text style={styles.infoText}>
-            Ngày đặt hàng: {formatDate(data.orderDateTime)}
+            Ngày {data.OrderType == "COD" ? "Mua hàng" : "Đặt hàng"}:
+            {formatDate(data.orderDateTime)}
           </Text>
           {data.adddress && (
             <Text style={styles.infoText}>
@@ -162,7 +170,8 @@ const OrderPDF = ({ data }: { data: any }) => {
           </View>
 
           {data.orderItems.map((item: any, index: number) => {
-            const total = item.price * item.quantity;
+            const total =
+              (item.quantity * item.price * (100 - item.discount)) / 100;
             return (
               <View style={styles.tableRow} key={index}>
                 <Text style={styles.tableCol}>{item.product.isbn}</Text>
@@ -171,7 +180,7 @@ const OrderPDF = ({ data }: { data: any }) => {
                   {item.quantity}
                 </Text>
                 <Text style={[styles.tableCol, styles.tableColRight]}>
-                  {formatNumber(item.price)}
+                  {formatNumber((item.price * (100 - item.discount)) / 100)}
                 </Text>
                 <Text style={[styles.tableCol, styles.tableColRight]}>
                   {formatNumber(total)}
@@ -206,7 +215,14 @@ const OrderPDF = ({ data }: { data: any }) => {
             <Text style={[styles.totalText, styles.totalLabel]}>
               Phí vận chuyển:
             </Text>
-            <Text style={styles.totalText}>{formatNumber(data.priceShip)}</Text>
+            <Text style={styles.totalText}>
+              {formatNumber(
+                data.priceShip -
+                  (data.freeship.valueType
+                    ? (data.freeship.value * data.priceShip) / 100
+                    : data.freeship.value),
+              )}
+            </Text>
           </View>
           <View style={styles.row}>
             <Text style={[styles.totalText, styles.totalLabel]}>

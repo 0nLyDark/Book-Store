@@ -200,6 +200,9 @@ public class UserServiceImpl implements UserService {
         if (!checkPassword) {
             throw new APIException("Mật khẩu hiện tại không đúng");
         }
+        if (newPassword.length() < 6) {
+            throw new APIException("Mật khẩu phải ít nhất 6 ký tự");
+        }
         String encodedPass = passwordEncoder.encode(newPassword);
         user.setPassword(encodedPass);
 
@@ -230,6 +233,9 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
         if ("admin".equals(user.getUsername())) {
             throw new AccessDeniedException("Đây là tài khoản chính không thể thay đổi password!");
+        }
+        if (newPassword.length() < 6) {
+            throw new APIException("Mật khẩu phải ít nhất 6 ký tự");
         }
         String encodedPass = passwordEncoder.encode(newPassword);
         user.setPassword(encodedPass);
